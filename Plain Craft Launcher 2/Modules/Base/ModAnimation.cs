@@ -979,6 +979,7 @@ namespace PCL
                 AniStop(Name);
             }
             AniGroups.Add(Name, NewEntry);
+            EnsureAniRendering();
         }
         /// <summary>
     /// 开始一个动画组。
@@ -1014,68 +1015,86 @@ namespace PCL
         public static int AniFPS = 0;
 
         /// <summary>
-    /// 开始动画执行。
-    /// </summary>
+        /// 开始动画执行。
+        /// 动画帧跟随 WPF 的渲染帧（CompositionTarget.Rendering）在 UI 线程上执行，且只在有动画组时挂接。
+        /// 原实现为一条每 1ms 唤醒一次的专用线程，每帧都同步调度到 UI 线程，即使没有动画也一直空转。
+        /// </summary>
         public static void AniStart()
         {
-            // 初始化计时器
             AniLastTick = ModBase.GetTimeMs();
             AniFPSTimer = AniLastTick;
             AniRunning = true; // 标记动画执行开始
-
-            ModBase.RunInNewThread(() =>
+            Logger.Info("动画循环开始（跟随渲染帧）");
+            EnsureAniRendering();
+        }
+        private static bool AniRenderingHooked = false;
+        /// <summary>
+        /// 确保已挂接渲染帧事件。可从任意线程调用。
+        /// </summary>
+        private static void EnsureAniRendering()
+        {
+            if (!AniRunning || AniRenderingHooked)
+                return;
+            var Dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (Dispatcher is null)
+                return;
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(new Action(EnsureAniRendering));
+                return;
+            }
+            if (AniRenderingHooked)
+                return;
+            AniLastTick = ModBase.GetTimeMs(); // 空闲后重新开始计时，避免第一帧的间隔过大导致动画瞬间完成
+            CompositionTarget.Rendering += AniOnRendering;
+            AniRenderingHooked = true;
+        }
+        private static void AniOnRendering(object sender, EventArgs e)
         {
             try
             {
-                Logger.Info("动画线程开始");
-                while (true)
+                // 两帧之间的间隔时间
+                long DeltaTime = (ModBase.GetTimeMs() - AniLastTick).Clamp(0L, 100000L);
+                if (DeltaTime < 3L)
+                    return;
+                AniLastTick = ModBase.GetTimeMs();
+                // 记录 FPS
+                if (ModBase.ModeDebug)
                 {
-                    // 两帧之间的间隔时间
-                    long DeltaTime = (ModBase.GetTimeMs() - AniLastTick).Clamp(0L, 100000L);
-                    if (DeltaTime < 3L)
-                        goto Sleeper;
-                    AniLastTick = ModBase.GetTimeMs();
-                    // 记录 FPS
-                    if (ModBase.ModeDebug)
+                    if ((AniLastTick - AniFPSTimer).Clamp(0L, 100000L) >= 500L)
                     {
-                        if ((AniLastTick - AniFPSTimer).Clamp(0L, 100000L) >= 500L)
-                        {
-                            AniFPS = AniFPSCounter;
-                            AniFPSCounter = 0;
-                            AniFPSTimer = AniLastTick;
-                        }
-                        AniFPSCounter += 2;
+                        AniFPS = AniFPSCounter;
+                        AniFPSCounter = 0;
+                        AniFPSTimer = AniLastTick;
                     }
-                    // 执行动画
-                    ModBase.RunInUiWait(() =>
-        {
-                        AniCount = 0;
-                        AniTimer(DeltaTime * AniSpeed);
-                        if (ModBase.RandomInteger(0, 64 * (ModBase.ModeDebug ? 5 : 30)) == 0 && (AniFPS < 62 && AniFPS > 0 || AniCount > 4 || ModNet.NetManager.FileRemain != 0))
+                    AniFPSCounter += 2;
+                }
+                // 执行动画
+                AniCount = 0;
+                AniTimer(DeltaTime * AniSpeed);
+                if (ModBase.RandomInteger(0, 64 * (ModBase.ModeDebug ? 5 : 30)) == 0 && (AniFPS < 62 && AniFPS > 0 || AniCount > 4 || ModNet.NetManager.FileRemain != 0))
+                {
+                    Logger.Info($"FPS {AniFPS}, 动画 {AniCount}, 下载中 {ModNet.NetManager.FileRemain}（{StringUtils.FormatByteSize(ModNet.NetManager.Speed)}/s）");
+                    if (ModNet.NetManager.FileRemain < 5)
+                    {
+                        foreach (var File in ModNet.NetManager.AllFiles.Values)
                         {
-                            Logger.Info($"FPS {AniFPS}, 动画 {AniCount}, 下载中 {ModNet.NetManager.FileRemain}（{StringUtils.FormatByteSize(ModNet.NetManager.Speed)}/s）");
-                            if (ModNet.NetManager.FileRemain < 5)
-                            {
-                                foreach (var File in ModNet.NetManager.AllFiles.Values)
-                                {
-                                    if (File.State < ModNet.NetState.Finished)
-                                        Logger.Trace($"- {File.State} {StringUtils.FormatByteSize(File.Speed)}/s {File.LocalPath}");
-                                }
-                            }
+                            if (File.State < ModNet.NetState.Finished)
+                                Logger.Trace($"- {File.State} {StringUtils.FormatByteSize(File.Speed)}/s {File.LocalPath}");
                         }
-                    });
-                Sleeper:
-                    ;
-
-                    // 控制 FPS
-                    Thread.Sleep(1);
+                    }
+                }
+                // 没有动画时撤下挂接，不再占用渲染帧
+                if (AniGroups.Count == 0)
+                {
+                    CompositionTarget.Rendering -= AniOnRendering;
+                    AniRenderingHooked = false;
                 }
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, "动画帧执行失败", LogBehavior.AlertThenCrash);
             }
-        }, "Animation", ThreadPriority.AboveNormal);
         }
 
         /// <summary>
@@ -1119,8 +1138,13 @@ namespace PCL
                             if (Anim.TimeFinished >= Anim.TimeTotal)
                             {
                                 // 如果是去向颜色资源的动画，设置引用
-                                if (Conversions.ToBoolean(Anim.TypeMain == AniType.Color && !Operators.ConditionalCompareObjectEqual(Anim.Obj.AsDyn()[2], "", false)))
-                                    Anim.Obj.AsDyn()[0].SetResourceReference(Anim.Obj.AsDyn()[1], Anim.Obj.AsDyn()[2]);
+                                if (Anim.TypeMain == AniType.Color && Anim.Obj is object[] ColorPair && !string.IsNullOrEmpty(ColorPair[2] as string))
+                                {
+                                    if (ColorPair[0] is FrameworkElement ColorTarget)
+                                        ColorTarget.SetResourceReference((DependencyProperty)ColorPair[1], ColorPair[2]);
+                                    else
+                                        ((dynamic)ColorPair[0]).SetResourceReference((DependencyProperty)ColorPair[1], ColorPair[2]);
+                                }
                                 // 删除
                                 Entry.Data.RemoveAt(ii);
                                 goto NextAni;
@@ -1197,19 +1221,17 @@ namespace PCL
                                             }
                                             else
                                             {
-                                                switch (((dynamic)Ani.Obj).HorizontalAlignment)
+                                                var Element = (FrameworkElement)Ani.Obj;
+                                                var Margin = Element.Margin;
+                                                switch (Element.HorizontalAlignment)
                                                 {
-                                                    case var @case when Operators.ConditionalCompareObjectEqual(@case, HorizontalAlignment.Left, false):
-                                                    case var case1 when Operators.ConditionalCompareObjectEqual(case1, HorizontalAlignment.Stretch, false):
-                                                        {
-                                                            ((dynamic)Ani.Obj).Margin = new Thickness(Conversions.ToDouble(Operators.AddObject(((dynamic)Ani.Obj).Margin.Left, Delta)), Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Top), Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Right), Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Bottom));
-                                                            break;
-                                                        }
-                                                    case var case2 when Operators.ConditionalCompareObjectEqual(case2, HorizontalAlignment.Right, false):
-                                                        {
-                                                            ((dynamic)Ani.Obj).Margin = new Thickness(Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Left), Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Top), Conversions.ToDouble(Operators.SubtractObject(((dynamic)Ani.Obj).Margin.Right, Delta)), Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Bottom));
-                                                            break;
-                                                        }
+                                                    case HorizontalAlignment.Left:
+                                                    case HorizontalAlignment.Stretch:
+                                                        Element.Margin = new Thickness(Margin.Left + Delta, Margin.Top, Margin.Right, Margin.Bottom);
+                                                        break;
+                                                    case HorizontalAlignment.Right:
+                                                        Element.Margin = new Thickness(Margin.Left, Margin.Top, Margin.Right - Delta, Margin.Bottom);
+                                                        break;
                                                 }
                                             }
 
@@ -1223,18 +1245,16 @@ namespace PCL
                                             }
                                             else
                                             {
-                                                switch (((dynamic)Ani.Obj).VerticalAlignment)
+                                                var Element = (FrameworkElement)Ani.Obj;
+                                                var Margin = Element.Margin;
+                                                switch (Element.VerticalAlignment)
                                                 {
-                                                    case var case3 when Operators.ConditionalCompareObjectEqual(case3, VerticalAlignment.Top, false):
-                                                        {
-                                                            ((dynamic)Ani.Obj).Margin = new Thickness(Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Left), Conversions.ToDouble(Operators.AddObject(((dynamic)Ani.Obj).Margin.Top, Delta)), Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Right), Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Bottom));
-                                                            break;
-                                                        }
-                                                    case var case4 when Operators.ConditionalCompareObjectEqual(case4, VerticalAlignment.Bottom, false):
-                                                        {
-                                                            ((dynamic)Ani.Obj).Margin = new Thickness(Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Left), Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Top), Conversions.ToDouble(((dynamic)Ani.Obj).Margin.Right), Conversions.ToDouble(Operators.SubtractObject(((dynamic)Ani.Obj).Margin.Bottom, Delta)));
-                                                            break;
-                                                        }
+                                                    case VerticalAlignment.Top:
+                                                        Element.Margin = new Thickness(Margin.Left, Margin.Top + Delta, Margin.Right, Margin.Bottom);
+                                                        break;
+                                                    case VerticalAlignment.Bottom:
+                                                        Element.Margin = new Thickness(Margin.Left, Margin.Top, Margin.Right, Margin.Bottom - Delta);
+                                                        break;
                                                 }
                                             }
 
@@ -1279,7 +1299,10 @@ namespace PCL
                                         }
                                     case AniTypeSub.StrokeThickness:
                                         {
-                                            ((dynamic)Ani.Obj).StrokeThickness = Math.Max(Operators.AddObject(((dynamic)Ani.Obj).StrokeThickness, Delta), 0);
+                                            if (Ani.Obj is System.Windows.Shapes.Shape Shape)
+                                                Shape.StrokeThickness = Math.Max(Shape.StrokeThickness + Delta, 0d);
+                                            else
+                                                ((dynamic)Ani.Obj).StrokeThickness = Math.Max(Conversions.ToDouble(((dynamic)Ani.Obj).StrokeThickness) + Delta, 0d);
                                             break;
                                         }
                                     case AniTypeSub.BorderThickness:
@@ -1289,21 +1312,26 @@ namespace PCL
                                         }
                                     case AniTypeSub.TranslateX:
                                         {
-                                            if (((dynamic)Ani.Obj).RenderTransform == null || !(((dynamic)Ani.Obj).RenderTransform is TranslateTransform))
-                                                ((dynamic)Ani.Obj).RenderTransform = new TranslateTransform(0d, 0d);
-                                            ((TranslateTransform)((dynamic)Ani.Obj).RenderTransform).X += Delta;
+                                            var Element = (UIElement)Ani.Obj;
+                                            if (Element.RenderTransform is not TranslateTransform)
+                                                Element.RenderTransform = new TranslateTransform(0d, 0d);
+                                            ((TranslateTransform)Element.RenderTransform).X += Delta;
                                             break;
                                         }
                                     case AniTypeSub.TranslateY:
                                         {
-                                            if (((dynamic)Ani.Obj).RenderTransform == null || !(((dynamic)Ani.Obj).RenderTransform is TranslateTransform))
-                                                ((dynamic)Ani.Obj).RenderTransform = new TranslateTransform(0d, 0d);
-                                            ((TranslateTransform)((dynamic)Ani.Obj).RenderTransform).Y += Delta;
+                                            var Element = (UIElement)Ani.Obj;
+                                            if (Element.RenderTransform is not TranslateTransform)
+                                                Element.RenderTransform = new TranslateTransform(0d, 0d);
+                                            ((TranslateTransform)Element.RenderTransform).Y += Delta;
                                             break;
                                         }
                                     case AniTypeSub.Double:
                                         {
-                                            Ani.Obj.AsDyn()[0].SetValue(Ani.Obj.AsDyn()[1], Operators.AddObject(Ani.Obj.AsDyn()[0].GetValue(Ani.Obj.AsDyn()[1]), Delta));
+                                            var Pair = (object[])Ani.Obj;
+                                            var Target = (DependencyObject)Pair[0];
+                                            var Property = (DependencyProperty)Pair[1];
+                                            Target.SetValue(Property, Conversions.ToDouble(Target.GetValue(Property)) + Delta);
                                             break;
                                         }
                                     case AniTypeSub.DoubleParam:
@@ -1313,7 +1341,10 @@ namespace PCL
                                         }
                                     case AniTypeSub.GridLengthWidth:
                                         {
-                                            ((dynamic)Ani.Obj).Width = new GridLength(Conversions.ToDouble(Math.Max(Operators.AddObject(((dynamic)Ani.Obj).Width.Value, Delta), 0)), GridUnitType.Star);
+                                            if (Ani.Obj is ColumnDefinition Column)
+                                                Column.Width = new GridLength(Math.Max(Column.Width.Value + Delta, 0d), GridUnitType.Star);
+                                            else
+                                                ((dynamic)Ani.Obj).Width = new GridLength(Math.Max(Conversions.ToDouble(((dynamic)Ani.Obj).Width.Value) + Delta, 0d), GridUnitType.Star);
                                             break;
                                         }
                                 }
@@ -1326,8 +1357,8 @@ namespace PCL
                         {
                             // 利用 Last 记录了余下的小数值
                             var Delta = ModBase.MyColor.Lerp(new ModBase.MyColor(0d, 0d, 0d, 0d), (ModBase.MyColor)Ani.Value, Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, Ani.TimePercent)) + (ModBase.MyColor)Ani.ValueLast;
-                            FrameworkElement Obj = (FrameworkElement)Ani.Obj.AsDyn()[0];
-                            DependencyProperty Prop = (DependencyProperty)Ani.Obj.AsDyn()[1];
+                            FrameworkElement Obj = (FrameworkElement)((object[])Ani.Obj)[0];
+                            DependencyProperty Prop = (DependencyProperty)((object[])Ani.Obj)[1];
                             var NewColor = new ModBase.MyColor(Obj.GetValue(Prop)) + Delta;
                             Obj.SetValue(Prop, Prop.PropertyType.Name == "Color" ? (global::System.Windows.Media.Color)NewColor : (global::System.Windows.Media.SolidColorBrush)NewColor);
                             Ani.ValueLast = NewColor - new ModBase.MyColor(Obj.GetValue(Prop));

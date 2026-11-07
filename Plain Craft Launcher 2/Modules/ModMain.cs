@@ -1275,12 +1275,27 @@ namespace PCL
                 }
             }
         }
+        // 主时钟：原为一条每 49ms 同步调度一次 UI 线程的专用线程，现改为 UI 线程上的 DispatcherTimer
+        private static DispatcherTimer TimerMainTimer;
+        private static DispatcherTimer TimerFoolTimer;
         public static void TimerMainStart()
         {
-            ModBase.RunInNewThread(() => { try { while (true) { ModBase.RunInUiWait(TimerMain); Thread.Sleep((int)Math.Round(50d * 0.98d)); } } catch (Exception ex) { Logger.Error(ex, "程序主时钟出错"); } }, "Timer Main");
+            var UiDispatcher = System.Windows.Application.Current.Dispatcher;
+            TimerMainTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(49), DispatcherPriority.Normal, (_, __) =>
+            {
+                try { TimerMain(); }
+                catch (Exception ex) { Logger.Error(ex, "程序主时钟出错"); }
+            }, UiDispatcher);
+            TimerMainTimer.Start();
             if (!IsAprilEnabled)
                 return;
-            ModBase.RunInNewThread(() => { try { int LastTime = VbCompat.Computer.Clock.TickCount; while (true) { if (LastTime != VbCompat.Computer.Clock.TickCount) { LastTime = VbCompat.Computer.Clock.TickCount; ModBase.RunInUiWait(TimerFool); } Thread.Sleep(1); } } catch (Exception ex) { Logger.Error(ex, "愚人节主时钟出错"); } }, "Timer Main Fool");
+            // 愚人节时钟：原为每 1ms 轮询系统时钟变化（约 15.6ms 一次），等效为约 16ms 的定时器
+            TimerFoolTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Normal, (_, __) =>
+            {
+                try { TimerFool(); }
+                catch (Exception ex) { Logger.Error(ex, "愚人节主时钟出错"); }
+            }, UiDispatcher);
+            TimerFoolTimer.Start();
         }
 
     }
