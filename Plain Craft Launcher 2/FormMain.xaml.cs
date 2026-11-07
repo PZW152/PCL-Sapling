@@ -748,7 +748,7 @@ namespace PCL
         private void FormDragMove(object sender, MouseButtonEventArgs e)
         {
             // 原 VB 為 On Error Resume Next：出錯即跳過該語句
-            try { if (Conversions.ToBoolean(((dynamic)sender).IsMouseDirectlyOver)) this.DragMove(); } catch { }
+            try { if (((UIElement)sender).IsMouseDirectlyOver) this.DragMove(); } catch { }
         }
 
         // 改变大小
@@ -992,22 +992,35 @@ namespace PCL
             {
                 if (e.Key == Key.Enter)
                 {
-                    ((dynamic)this.PanMsg.Children[0]).Btn1_Click();
+                    switch (this.PanMsg.Children[0])
+                    {
+                        case MyMsgText Text: Text.Btn1_Click(); break;
+                        case MyMsgInput Input: Input.Btn1_Click(); break;
+                        case MyMsgSelect Select: Select.Btn1_Click(); break;
+                        case MyMsgLogin Login: Login.Btn1_Click(); break;
+                    }
                 }
                 else if (e.Key == Key.Escape)
                 {
-                    object Msg = this.PanMsg.Children[0];
-                    if (!(Msg is MyMsgInput) && !(Msg is MyMsgSelect) && Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(((dynamic)Msg).Btn3.Visibility, Visibility.Visible, false)))
+                    switch (this.PanMsg.Children[0])
                     {
-                        ((dynamic)Msg).Btn3_Click();
-                    }
-                    else if (Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(((dynamic)Msg).Btn2.Visibility, Visibility.Visible, false)))
-                    {
-                        ((dynamic)Msg).Btn2_Click();
-                    }
-                    else
-                    {
-                        ((dynamic)Msg).Btn1_Click();
+                        case MyMsgText Text:
+                            if (Text.Btn3.Visibility == Visibility.Visible) Text.Btn3_Click();
+                            else if (Text.Btn2.Visibility == Visibility.Visible) Text.Btn2_Click();
+                            else Text.Btn1_Click();
+                            break;
+                        case MyMsgInput Input:
+                            if (Input.Btn2.Visibility == Visibility.Visible) Input.Btn2_Click();
+                            else Input.Btn1_Click();
+                            break;
+                        case MyMsgSelect Select:
+                            if (Select.Btn2.Visibility == Visibility.Visible) Select.Btn2_Click();
+                            else Select.Btn1_Click();
+                            break;
+                        case MyMsgLogin Login:
+                            if (Login.Btn3.Visibility == Visibility.Visible) Login.Btn3_Click();
+                            else Login.Btn1_Click();
+                            break;
                     }
                 }
                 return;
@@ -1490,11 +1503,11 @@ namespace PCL
                     }
                 case PageType.ResourceDetail:
                     {
-                        return ((ResourceProject)Stack.Additional.AsDyn()[0]).TranslatedName;
+                        return ((ResourceProject)Stack.Additional.Args()[0]).TranslatedName;
                     }
                 case PageType.HelpDetail:
                     {
-                        return ((ModMain.HelpEntry)Stack.Additional.AsDyn()[0]).Title;
+                        return ((ModMain.HelpEntry)Stack.Additional.Args()[0]).Title;
                     }
 
                 default:
@@ -1601,7 +1614,7 @@ namespace PCL
                 }
                 else if (other is int)
                 {
-                    if (Conversions.ToBoolean(Operators.ConditionalCompareObjectNotEqual(Page, other, false)))
+                    if (Operators.ConditionalCompareObjectNotEqual(Page, other, false))
                         return false;
                     return Additional is null;
                 }
@@ -1835,7 +1848,7 @@ namespace PCL
                         }
                     case PageType.HelpDetail: // 帮助详情
                         {
-                            PageChangeAnim(new MyPageLeft(), (FrameworkElement)Stack.Additional.AsDyn()[1]);
+                            PageChangeAnim(new MyPageLeft(), (FrameworkElement)Stack.Additional.Args()[1]);
                             break;
                         }
                 }
@@ -1986,7 +1999,7 @@ namespace PCL
                 return;
             if (Mouse.LeftButton == MouseButtonState.Pressed)
             {
-                ((dynamic)ModMain.DragControl).DragDoing();
+                ((MySlider)ModMain.DragControl).DragDoing();
             }
             else
             {
@@ -2002,7 +2015,7 @@ namespace PCL
                         return;
                     var Control = ModMain.DragControl;
                     ModMain.DragControl = null;
-                    ((dynamic)Control).DragStop(); // 控件会在该事件中判断 DragControl，所以得放在后面
+                    ((MySlider)Control).DragStop(); // 控件会在该事件中判断 DragControl，所以得放在后面
                 });
         }
 

@@ -440,7 +440,7 @@ namespace PCL
                         {
                         if (Control.Parent is null)
                                 return;
-                        ((dynamic)Control.Parent).Children.Remove(Control);
+                        ((System.Windows.Controls.Panel)Control.Parent).Children.Remove(Control);
                         }
                     else
                         {
@@ -457,7 +457,7 @@ namespace PCL
                 {
                     if (Control.Parent is null)
                         return;
-                    ((dynamic)Control.Parent).Children.Remove(Control);
+                    ((System.Windows.Controls.Panel)Control.Parent).Children.Remove(Control);
                 }
                 else
                 {

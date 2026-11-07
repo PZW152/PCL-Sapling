@@ -191,7 +191,7 @@ namespace PCL
             BtnInfo.Click += (_, __) => ModDownloadLib.McDownloadMenuLog(_, (RoutedEventArgs)(object)__);
             var BtnServer = new MyIconButton() { LogoScale = 1d, Logo = ModBase.Logo.IconButtonServer, ToolTip = "下载服务端" };
             BtnServer.Click += (_, __) => ModDownloadLib.McDownloadMenuSaveServer(_, (RoutedEventArgs)(object)__);
-            ((dynamic)sender).Buttons = new[] { BtnServer, BtnInfo };
+            ((MyListItem)sender).Buttons = new[] { BtnServer, BtnInfo };
         }
         private static void McDownloadMenuBuild(object sender, EventArgs e)
         {
@@ -201,22 +201,22 @@ namespace PCL
             BtnInfo.Click += (_, __) => ModDownloadLib.McDownloadMenuLog(_, (RoutedEventArgs)(object)__);
             var BtnServer = new MyIconButton() { LogoScale = 1d, Logo = ModBase.Logo.IconButtonServer, ToolTip = "下载服务端" };
             BtnServer.Click += (_, __) => ModDownloadLib.McDownloadMenuSaveServer(_, (RoutedEventArgs)(object)__);
-            ((dynamic)sender).Buttons = new[] { BtnSave, BtnInfo, BtnServer };
+            ((MyListItem)sender).Buttons = new[] { BtnSave, BtnInfo, BtnServer };
         }
         private static void McDownloadMenuLog(object sender, RoutedEventArgs e)
         {
             JToken Version;
-            if (((dynamic)sender).Tag is not null)
+            if (sender.Fe().Tag is not null)
             {
-                Version = (JToken)((dynamic)sender).Tag;
+                Version = (JToken)sender.Fe().Tag;
             }
-            else if (((dynamic)sender).Parent.Tag is not null)
+            else if (sender.ParentFe().Tag is not null)
             {
-                Version = (JToken)((dynamic)sender).Parent.Tag;
+                Version = (JToken)sender.ParentFe().Tag;
             }
             else
             {
-                Version = (JToken)((dynamic)sender).Parent.Parent.Tag;
+                Version = (JToken)sender.ParentFe().ParentFe().Tag;
             }
             McUpdateLogShow(Version);
         }
@@ -227,18 +227,18 @@ namespace PCL
             {
                 Version = (MyListItem)sender;
             }
-            else if (((dynamic)sender).Parent is MyListItem)
+            else if (sender.ParentFe() is MyListItem)
             {
-                Version = (MyListItem)((dynamic)sender).Parent;
+                Version = (MyListItem)sender.ParentFe();
             }
             else
             {
-                Version = (MyListItem)((dynamic)sender).Parent.Parent;
+                Version = (MyListItem)sender.ParentFe().Parent;
             }
             try
             {
                 string Id = Version.Title;
-                string JsonUrl = Version.Tag.AsDyn()["url"].ToString();
+                string JsonUrl = ((JToken)Version.Tag)["url"].ToString();
                 string VersionFolder = Dialogs.SelectFolder("选择目标文件夹", false).FirstOrDefault();
                 if (VersionFolder is null)
                     return;
@@ -317,18 +317,18 @@ pause";
             {
                 Version = (MyListItem)sender;
             }
-            else if (((dynamic)sender).Parent is MyListItem)
+            else if (sender.ParentFe() is MyListItem)
             {
-                Version = (MyListItem)((dynamic)sender).Parent;
+                Version = (MyListItem)sender.ParentFe();
             }
             else
             {
-                Version = (MyListItem)((dynamic)sender).Parent.Parent;
+                Version = (MyListItem)sender.ParentFe().Parent;
             }
             try
             {
                 string Id = Version.Title;
-                string JsonUrl = Version.Tag.AsDyn()["url"].ToString();
+                string JsonUrl = ((JToken)Version.Tag)["url"].ToString();
                 string VersionFolder = Dialogs.SelectFolder("选择目标文件夹", false).FirstOrDefault();
                 if (VersionFolder is null)
                     return;
@@ -927,7 +927,7 @@ pause";
         {
             var BtnInfo = new MyIconButton() { LogoScale = 1.05d, Logo = ModBase.Logo.IconButtonInfo, ToolTip = "更新日志" };
             BtnInfo.Click += (_, __) => ModDownloadLib.OptiFineLog_Click(_, (RoutedEventArgs)(object)__);
-            ((dynamic)sender).Buttons = new[] { BtnInfo };
+            ((MyListItem)sender).Buttons = new[] { BtnInfo };
         }
         private static void OptiFineContMenuBuild(object sender, EventArgs e)
         {
@@ -935,39 +935,39 @@ pause";
             BtnSave.Click += (_, __) => ModDownloadLib.OptiFineSave_Click(_, (RoutedEventArgs)(object)__);
             var BtnInfo = new MyIconButton() { LogoScale = 1.05d, Logo = ModBase.Logo.IconButtonInfo, ToolTip = "更新日志" };
             BtnInfo.Click += (_, __) => ModDownloadLib.OptiFineLog_Click(_, (RoutedEventArgs)(object)__);
-            ((dynamic)sender).Buttons = new[] { BtnSave, BtnInfo };
+            ((MyListItem)sender).Buttons = new[] { BtnSave, BtnInfo };
         }
         private static void OptiFineLog_Click(object sender, RoutedEventArgs e)
         {
             ModDownload.DlOptiFineListEntry Version;
-            if (((dynamic)sender).Tag is not null)
+            if (sender.Fe().Tag is not null)
             {
-                Version = (ModDownload.DlOptiFineListEntry)((dynamic)sender).Tag;
+                Version = (ModDownload.DlOptiFineListEntry)sender.Fe().Tag;
             }
-            else if (((dynamic)sender).Parent.Tag is not null)
+            else if (sender.ParentFe().Tag is not null)
             {
-                Version = (ModDownload.DlOptiFineListEntry)((dynamic)sender).Parent.Tag;
+                Version = (ModDownload.DlOptiFineListEntry)sender.ParentFe().Tag;
             }
             else
             {
-                Version = (ModDownload.DlOptiFineListEntry)((dynamic)sender).Parent.Parent.Tag;
+                Version = (ModDownload.DlOptiFineListEntry)sender.ParentFe().ParentFe().Tag;
             }
             ModBase.OpenWebsite("https://optifine.net/changelog?f=" + Version.FileName);
         }
         public static void OptiFineSave_Click(object sender, RoutedEventArgs e)
         {
             ModDownload.DlOptiFineListEntry Version;
-            if (((dynamic)sender).Tag is not null)
+            if (sender.Fe().Tag is not null)
             {
-                Version = (ModDownload.DlOptiFineListEntry)((dynamic)sender).Tag;
+                Version = (ModDownload.DlOptiFineListEntry)sender.Fe().Tag;
             }
-            else if (((dynamic)sender).Parent.Tag is not null)
+            else if (sender.ParentFe().Tag is not null)
             {
-                Version = (ModDownload.DlOptiFineListEntry)((dynamic)sender).Parent.Tag;
+                Version = (ModDownload.DlOptiFineListEntry)sender.ParentFe().Tag;
             }
             else
             {
-                Version = (ModDownload.DlOptiFineListEntry)((dynamic)sender).Parent.Parent.Tag;
+                Version = (ModDownload.DlOptiFineListEntry)sender.ParentFe().ParentFe().Tag;
             }
             McDownloadOptiFineSave(Version);
         }
@@ -1109,7 +1109,7 @@ pause";
         }
         private static void LiteLoaderSaveContMenuBuild(MyListItem sender, EventArgs e)
         {
-            if (Conversions.ToBoolean(((dynamic)sender.Tag).IsLegacy))
+            if (((ModDownload.DlLiteLoaderListEntry)sender.Tag).IsLegacy)
             {
                 sender.Buttons = Array.Empty<MyIconButton>();
             }
@@ -1124,7 +1124,7 @@ pause";
         {
             var BtnSave = new MyIconButton() { Logo = ModBase.Logo.IconButtonSave, ToolTip = "保存安装器", Tag = sender };
             BtnSave.Click += (_, __) => ModDownloadLib.LiteLoaderSave_Click(_, (RoutedEventArgs)(object)__);
-            if (Conversions.ToBoolean(((dynamic)sender.Tag).IsLegacy))
+            if (((ModDownload.DlLiteLoaderListEntry)sender.Tag).IsLegacy)
             {
                 sender.Buttons = new[] { BtnSave };
             }
@@ -1138,13 +1138,13 @@ pause";
         private static void LiteLoaderAll_Click(object sender, RoutedEventArgs e)
         {
             ModDownload.DlLiteLoaderListEntry Version;
-            if (((dynamic)sender).Tag is ModDownload.DlLiteLoaderListEntry)
+            if (sender.Fe().Tag is ModDownload.DlLiteLoaderListEntry)
             {
-                Version = (ModDownload.DlLiteLoaderListEntry)((dynamic)sender).Tag;
+                Version = (ModDownload.DlLiteLoaderListEntry)sender.Fe().Tag;
             }
             else
             {
-                Version = (ModDownload.DlLiteLoaderListEntry)((dynamic)sender).Tag.Tag;
+                Version = (ModDownload.DlLiteLoaderListEntry)sender.Fe().Tag.Fe().Tag;
             }
             ModBase.OpenWebsite("https://jenkins.liteloader.com/view/" + Version.Inherit);
         }
@@ -1152,13 +1152,13 @@ pause";
         {
             // ListItem 与小按钮都会调用这个方法
             ModDownload.DlLiteLoaderListEntry Version;
-            if (((dynamic)sender).Tag is ModDownload.DlLiteLoaderListEntry)
+            if (sender.Fe().Tag is ModDownload.DlLiteLoaderListEntry)
             {
-                Version = (ModDownload.DlLiteLoaderListEntry)((dynamic)sender).Tag;
+                Version = (ModDownload.DlLiteLoaderListEntry)sender.Fe().Tag;
             }
             else
             {
-                Version = (ModDownload.DlLiteLoaderListEntry)((dynamic)sender).Tag.Tag;
+                Version = (ModDownload.DlLiteLoaderListEntry)sender.Fe().Tag.Fe().Tag;
             }
             McDownloadLiteLoaderSave(Version);
         }
@@ -1895,34 +1895,34 @@ pause";
         private static void ForgeLog_Click(object sender, RoutedEventArgs e)
         {
             ModDownload.DlForgeVersionEntry Version;
-            if (((dynamic)sender).Tag is not null)
+            if (sender.Fe().Tag is not null)
             {
-                Version = (ModDownload.DlForgeVersionEntry)((dynamic)sender).Tag;
+                Version = (ModDownload.DlForgeVersionEntry)sender.Fe().Tag;
             }
-            else if (((dynamic)sender).Parent.Tag is not null)
+            else if (sender.ParentFe().Tag is not null)
             {
-                Version = (ModDownload.DlForgeVersionEntry)((dynamic)sender).Parent.Tag;
+                Version = (ModDownload.DlForgeVersionEntry)sender.ParentFe().Tag;
             }
             else
             {
-                Version = (ModDownload.DlForgeVersionEntry)((dynamic)sender).Parent.Parent.Tag;
+                Version = (ModDownload.DlForgeVersionEntry)sender.ParentFe().ParentFe().Tag;
             }
             ModBase.OpenWebsite($"https://files.minecraftforge.net/maven/net/minecraftforge/forge/{Version.Inherit}-{Version.VersionName}/forge-{Version.Inherit}-{Version.VersionName}-changelog.txt");
         }
         public static void ForgeSave_Click(object sender, RoutedEventArgs e)
         {
             ModDownload.DlForgeVersionEntry Version;
-            if (((dynamic)sender).Tag is not null)
+            if (sender.Fe().Tag is not null)
             {
-                Version = (ModDownload.DlForgeVersionEntry)((dynamic)sender).Tag;
+                Version = (ModDownload.DlForgeVersionEntry)sender.Fe().Tag;
             }
-            else if (((dynamic)sender).Parent.Tag is not null)
+            else if (sender.ParentFe().Tag is not null)
             {
-                Version = (ModDownload.DlForgeVersionEntry)((dynamic)sender).Parent.Tag;
+                Version = (ModDownload.DlForgeVersionEntry)sender.ParentFe().Tag;
             }
             else
             {
-                Version = (ModDownload.DlForgeVersionEntry)((dynamic)sender).Parent.Parent.Tag;
+                Version = (ModDownload.DlForgeVersionEntry)sender.ParentFe().ParentFe().Tag;
             }
             McDownloadForgelikeSave(Version);
         }
@@ -2093,34 +2093,34 @@ pause";
         private static void NeoForgeLog_Click(object sender, RoutedEventArgs e)
         {
             ModDownload.DlNeoForgeListEntry Info;
-            if (((dynamic)sender).Tag is not null)
+            if (sender.Fe().Tag is not null)
             {
-                Info = (ModDownload.DlNeoForgeListEntry)((dynamic)sender).Tag;
+                Info = (ModDownload.DlNeoForgeListEntry)sender.Fe().Tag;
             }
-            else if (((dynamic)sender).Parent.Tag is not null)
+            else if (sender.ParentFe().Tag is not null)
             {
-                Info = (ModDownload.DlNeoForgeListEntry)((dynamic)sender).Parent.Tag;
+                Info = (ModDownload.DlNeoForgeListEntry)sender.ParentFe().Tag;
             }
             else
             {
-                Info = (ModDownload.DlNeoForgeListEntry)((dynamic)sender).Parent.Parent.Tag;
+                Info = (ModDownload.DlNeoForgeListEntry)sender.ParentFe().ParentFe().Tag;
             }
             ModBase.OpenWebsite(Info.UrlBase + "-changelog.txt");
         }
         public static void NeoForgeSave_Click(object sender, RoutedEventArgs e)
         {
             ModDownload.DlNeoForgeListEntry Info;
-            if (((dynamic)sender).Tag is not null)
+            if (sender.Fe().Tag is not null)
             {
-                Info = (ModDownload.DlNeoForgeListEntry)((dynamic)sender).Tag;
+                Info = (ModDownload.DlNeoForgeListEntry)sender.Fe().Tag;
             }
-            else if (((dynamic)sender).Parent.Tag is not null)
+            else if (sender.ParentFe().Tag is not null)
             {
-                Info = (ModDownload.DlNeoForgeListEntry)((dynamic)sender).Parent.Tag;
+                Info = (ModDownload.DlNeoForgeListEntry)sender.ParentFe().Tag;
             }
             else
             {
-                Info = (ModDownload.DlNeoForgeListEntry)((dynamic)sender).Parent.Parent.Tag;
+                Info = (ModDownload.DlNeoForgeListEntry)sender.ParentFe().ParentFe().Tag;
             }
             McDownloadForgelikeSave(Info);
         }
@@ -2532,11 +2532,11 @@ pause";
                     string LastArgument = SplitArguments.Last();
                     if (LastArgument.StartsWithF("-") && !LastArgument.Contains(" "))
                     {
-                        SplitArguments[SplitArguments.Count - 1] = Conversions.ToString(Operators.ConcatenateObject(LastArgument + " ", Argument));
+                        SplitArguments[SplitArguments.Count - 1] = ((LastArgument + " ")+Argument);
                         continue;
                     }
                 }
-                SplitArguments.Add(Conversions.ToString(Argument));
+                SplitArguments.Add(Argument);
             }
             if (SplitArguments.Any())
                 MergedJson["minecraftArguments"] = SplitArguments.Distinct().Join(" ");
@@ -2781,12 +2781,13 @@ pause";
             McInstallFailedClearFolder(Loader);
             ModLoader.LoaderFolderRun(ModMinecraft.McInstanceListLoader, ModMinecraft.McFolderSelected, ModLoader.LoaderFolderRunType.ForceRun, MaxDepth: 1, ExtraPath: @"versions\");
         }
-        public static void McInstallFailedClearFolder(object Loader)
+        public static void McInstallFailedClearFolder(ModLoader.LoaderBase Loader)
         {
-            if (Conversions.ToBoolean(Operators.ConditionalCompareObjectNotEqual(((dynamic)Loader).State, ModBase.LoadState.Failed, false)) && Conversions.ToBoolean(Operators.ConditionalCompareObjectNotEqual(((dynamic)Loader).State, ModBase.LoadState.Canceled, false)))
+            string Folder = Conversions.ToString(((ModLoader.ILoaderCombo)Loader).InputBoxed);
+            if (Loader.State != ModBase.LoadState.Failed && Loader.State != ModBase.LoadState.Canceled)
                 return;
             // 删除版本文件夹
-            ModBase.RunInThread(() => { try { Thread.Sleep(1000); if (DirectoryUtils.Exists(Conversions.ToString(Operators.ConcatenateObject(((dynamic)Loader).Input, @"saves\"))) || DirectoryUtils.Exists(Conversions.ToString(Operators.ConcatenateObject(((dynamic)Loader).Input, @"versions\")))) { Logger.Warn($"由于版本已被独立启动，不清理版本文件夹：{(object)((dynamic)Loader).Input}"); } else { Logger.Warn($"由于下载失败或取消，清理版本文件夹：{(object)((dynamic)Loader).Input}"); DirectoryUtils.Delete(Conversions.ToString(((dynamic)Loader).Input)); } } catch (Exception ex) { Logger.Warn(ex, "下载失败或取消后清理版本文件夹失败"); } }); // 防止存在尚未完全释放的文件，导致清理失败（例如整合包安装）
+            ModBase.RunInThread(() => { try { Thread.Sleep(1000); if (DirectoryUtils.Exists(Folder + @"saves\") || DirectoryUtils.Exists(Folder + @"versions\")) { Logger.Warn($"由于版本已被独立启动，不清理版本文件夹：{Folder}"); } else { Logger.Warn($"由于下载失败或取消，清理版本文件夹：{Folder}"); DirectoryUtils.Delete(Folder); } } catch (Exception ex) { Logger.Warn(ex, "下载失败或取消后清理版本文件夹失败"); } }); // 防止存在尚未完全释放的文件，导致清理失败（例如整合包安装）
         }
 
         #endregion

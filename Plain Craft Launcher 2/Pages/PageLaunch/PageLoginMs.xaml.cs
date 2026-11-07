@@ -12,7 +12,7 @@ using Newtonsoft.Json.Linq;
 
 namespace PCL
 {
-    public partial class PageLoginMs
+    public partial class PageLoginMs : ILoginPage
     {
         public PageLoginMs()
         {

@@ -125,7 +125,7 @@ namespace PCL
                 {
                     foreach (MyComboBoxItem Item in this.ComboSearchLoader.Items)
                     {
-                        if (Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(Item.Content, Name, false)))
+                        if (Operators.ConditionalCompareObjectEqual(Item.Content, Name, false))
                             return Item;
                     }
                     return (MyComboBoxItem)this.ComboSearchLoader.Items[0];
@@ -174,9 +174,9 @@ namespace PCL
             string GameVersion = this.TextSearchVersion.Text == "全部 (也可自行输入)" ? (string)null : this.TextSearchVersion.Text.Contains(".") || this.TextSearchVersion.Text.Contains("w") ? this.TextSearchVersion.Text : (string)null;
             Request.SearchText = this.TextSearchName.Text;
             Request.GameVersion = GameVersion;
-            Request.Tag = Conversions.ToString(((dynamic)this.ComboSearchTag.SelectedItem).Tag);
-            Request.ModLoaders = (ModLoaders)Math.Round(PageType == ResourceTypes.Mod ? ModBase.Val(((dynamic)this.ComboSearchLoader.SelectedItem).Tag) : (double)ModLoaders.None);
-            Request.Sources = (ResourcePlatforms)Math.Round(ModBase.Val(((dynamic)this.ComboSearchSource.SelectedItem).Tag));
+            Request.Tag = Conversions.ToString(this.ComboSearchTag.SelectedItem.Fe().Tag);
+            Request.ModLoaders = (ModLoaders)Math.Round(PageType == ResourceTypes.Mod ? ModBase.Val(this.ComboSearchLoader.SelectedItem.Fe().Tag) : (double)ModLoaders.None);
+            Request.Sources = (ResourcePlatforms)Math.Round(ModBase.Val(this.ComboSearchSource.SelectedItem.Fe().Tag));
             return Request;
         }
 

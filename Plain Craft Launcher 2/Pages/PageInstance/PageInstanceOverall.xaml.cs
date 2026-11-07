@@ -68,7 +68,7 @@ namespace PCL
             {
                 foreach (MyComboBoxItem Selection in this.ComboDisplayLogo.Items)
                 {
-                    if (Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(Selection.Tag, Logo, false)) || Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(Selection.Tag, @"PCL\Logo.png", false)) && Logo.EndsWithF(@"PCL\Logo.png"))
+                    if (Operators.ConditionalCompareObjectEqual(Selection.Tag, Logo, false) || Operators.ConditionalCompareObjectEqual(Selection.Tag, @"PCL\Logo.png", false) && Logo.EndsWithF(@"PCL\Logo.png"))
                     {
                         this.ComboDisplayLogo.SelectedItem = Selection;
                         break;
@@ -210,9 +210,9 @@ namespace PCL
             // 进行更改
             try
             {
-                string NewLogo = Conversions.ToString(((dynamic)this.ComboDisplayLogo.SelectedItem).Tag);
+                string NewLogo = Conversions.ToString(this.ComboDisplayLogo.SelectedItem.Fe().Tag);
                 ModBase.WriteIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "Logo", NewLogo);
-                ModBase.WriteIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "LogoCustom", Conversions.ToString(!string.IsNullOrEmpty(NewLogo)));
+                ModBase.WriteIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "LogoCustom", (!string.IsNullOrEmpty(NewLogo)).ToString());
                 // 刷新显示
                 ModBase.WriteIni(ModMinecraft.McFolderSelected + "PCL.ini", "InstanceCache", ""); // 要求刷新缓存
                 PageInstanceLeft.Instance = new ModMinecraft.McInstance(PageInstanceLeft.Instance.Name).Load();
@@ -230,7 +230,7 @@ namespace PCL
         {
             try
             {
-                ModBase.WriteIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "IsStar", Conversions.ToString(!PageInstanceLeft.Instance.IsStar));
+                ModBase.WriteIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "IsStar", (!PageInstanceLeft.Instance.IsStar).ToString());
                 PageInstanceLeft.Instance = new ModMinecraft.McInstance(PageInstanceLeft.Instance.Name).Load();
                 Reload();
                 ModMinecraft.McInstanceListForceRefresh = true;

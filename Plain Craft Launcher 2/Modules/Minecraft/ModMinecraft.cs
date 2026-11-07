@@ -575,7 +575,7 @@ namespace PCL
                                 try
                                 {
                                     InstanceNameInheritFrom = _JsonObject["inheritsFrom"] is null ? "" : _JsonObject["inheritsFrom"].ToString();
-                                    if (Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(InstanceNameInheritFrom, Name, false)))
+                                    if (Operators.ConditionalCompareObjectEqual(InstanceNameInheritFrom, Name, false))
                                     {
                                         Logger.Warn($"自引用的继承版本：{Name}");
                                         InstanceNameInheritFrom = "";
@@ -585,11 +585,11 @@ namespace PCL
                                 Recheck:
                                     ;
 
-                                    if (Conversions.ToBoolean(Operators.ConditionalCompareObjectNotEqual(InstanceNameInheritFrom, "", false)))
+                                    if (Operators.ConditionalCompareObjectNotEqual(InstanceNameInheritFrom, "", false))
                                     {
                                         var InheritInstance = new McInstance(Conversions.ToString(InstanceNameInheritFrom));
                                         // 继续循环
-                                        if (Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(InheritInstance.InheritName, InstanceNameInheritFrom, false)))
+                                        if (Operators.ConditionalCompareObjectEqual(InheritInstance.InheritName, InstanceNameInheritFrom, false))
                                             throw new Exception(Conversions.ToString(Operators.ConcatenateObject("版本依赖项出现嵌套：", InstanceNameInheritFrom)));
                                         InstanceNameInheritFrom = InheritInstance.InheritName;
                                         // 合并 Libraries 项：子版本放在前面，父版本放在后面（5978#：如果多个 jar 包中含有相同的类，Java 8 和之前的版本按照 -cp 指定的顺序选择第一个）
@@ -861,7 +861,7 @@ namespace PCL
 
                     // 确定版本图标
                     Logo = ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "Logo", "");
-                    if (string.IsNullOrEmpty(Logo) || !Conversions.ToBoolean(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "LogoCustom", Conversions.ToString(false))))
+                    if (string.IsNullOrEmpty(Logo) || !Conversions.ToBoolean(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "LogoCustom", false.ToString())))
                     {
                         switch (State)
                         {
@@ -921,7 +921,7 @@ namespace PCL
                     // 确定版本描述
                     RefreshInfo();
                     // 确定版本收藏状态
-                    IsStar = Conversions.ToBoolean(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "IsStar", Conversions.ToString(false)));
+                    IsStar = Conversions.ToBoolean(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "IsStar", false.ToString()));
                     // 确定版本显示种类
                     DisplayType = (McInstanceCardType)Conversions.ToInteger(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "DisplayType", ((int)McInstanceCardType.Auto).ToString()));
                     // 写入缓存
@@ -936,7 +936,7 @@ namespace PCL
                         ModBase.WriteIni(PathVersion + @"PCL\Setup.ini", "ReleaseTime", ReleaseTime.ToString("yyyy'-'MM'-'dd HH':'mm"));
                         ModBase.WriteIni(PathVersion + @"PCL\Setup.ini", "VersionFabric", Version.ModLoaders.HasFlagF(ModLoaders.Fabric) ? Version.ModLoaderVersions[ModLoaders.Fabric] : null);
                         ModBase.WriteIni(PathVersion + @"PCL\Setup.ini", "VersionOptiFine", Version.OptiFineAsMod ? null : Version.OptiFine);
-                        ModBase.WriteIni(PathVersion + @"PCL\Setup.ini", "VersionLiteLoader", Conversions.ToString(Version.ModLoaders.HasFlagF(ModLoaders.LiteLoader)));
+                        ModBase.WriteIni(PathVersion + @"PCL\Setup.ini", "VersionLiteLoader", Version.ModLoaders.HasFlagF(ModLoaders.LiteLoader).ToString());
                         ModBase.WriteIni(PathVersion + @"PCL\Setup.ini", "VersionForge", Version.ModLoaders.HasFlagF(ModLoaders.Forge) ? Version.ModLoaderVersions[ModLoaders.Forge] : null);
                         ModBase.WriteIni(PathVersion + @"PCL\Setup.ini", "VersionNeoForge", Version.ModLoaders.HasFlagF(ModLoaders.NeoForge) ? Version.ModLoaderVersions[ModLoaders.NeoForge] : null);
                         ModBase.WriteIni(PathVersion + @"PCL\Setup.ini", "VersionVanillaName", Version.VanillaName);
@@ -1439,7 +1439,7 @@ namespace PCL
                                 Instance.Info = ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "Info", Instance.Info);
                             Instance.Logo = ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "Logo", Instance.Logo);
                             Instance.State = (McInstance.McInstanceState)Conversions.ToInteger(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "State", ((int)Instance.State).ToString()));
-                            Instance.IsStar = Conversions.ToBoolean(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "IsStar", Conversions.ToString(false)));
+                            Instance.IsStar = Conversions.ToBoolean(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "IsStar", false.ToString()));
                             Instance.DisplayType = (McInstanceCardType)Conversions.ToInteger(ModBase.ReadIni(Folder + @"PCL\Setup.ini", "DisplayType", ((int)McInstanceCardType.Auto).ToString()));
                             var Manifest = Instance.State == McInstance.McInstanceState.Error ? null : Configs.McInstallManifest.Get(Instance.Config);
                             // 检查 manifest 是否有过期文件，并进行更新
@@ -1477,7 +1477,7 @@ namespace PCL
                                         if (CachedVersion is not null)
                                             Version.ModLoaderVersions[Loader] = CachedVersion;
                                     }
-                                    if (Conversions.ToBoolean(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "VersionLiteLoader", Conversions.ToString(false))))
+                                    if (Conversions.ToBoolean(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "VersionLiteLoader", false.ToString())))
                                         Version.ModLoaderVersions[ModLoaders.LiteLoader] = "未知版本";
                                 }
                                 Version.ReleaseTime = Conversions.ToDate(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "ReleaseTime", Conversions.ToString(new DateTime(1970, 1, 1, 15, 0, 0))));
@@ -1962,11 +1962,11 @@ namespace PCL
         {
             if (!(Uuid.Length == 32))
                 return "Steve";
-            int a = int.Parse(Conversions.ToString(Uuid[7]), System.Globalization.NumberStyles.AllowHexSpecifier);
-            int b = int.Parse(Conversions.ToString(Uuid[15]), System.Globalization.NumberStyles.AllowHexSpecifier);
-            int c = int.Parse(Conversions.ToString(Uuid[23]), System.Globalization.NumberStyles.AllowHexSpecifier);
-            int d = int.Parse(Conversions.ToString(Uuid[31]), System.Globalization.NumberStyles.AllowHexSpecifier);
-            return Conversions.ToBoolean((a ^ b ^ c ^ d) % 2) ? "Alex" : "Steve";
+            int a = int.Parse(Uuid[7].ToString(), System.Globalization.NumberStyles.AllowHexSpecifier);
+            int b = int.Parse(Uuid[15].ToString(), System.Globalization.NumberStyles.AllowHexSpecifier);
+            int c = int.Parse(Uuid[23].ToString(), System.Globalization.NumberStyles.AllowHexSpecifier);
+            int d = int.Parse(Uuid[31].ToString(), System.Globalization.NumberStyles.AllowHexSpecifier);
+            return (((a ^ b ^ c ^ d) % 2)!=0) ? "Alex" : "Steve";
             // Math.floorMod(uuid.hashCode(), 18)
 
             // Public Function hashCode(ByVal str As String) As Integer

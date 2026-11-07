@@ -298,7 +298,7 @@ namespace PCL
             try
             {
 
-                ModMinecraft.McFolder Target = (ModMinecraft.McFolder)((MyListItem)((System.Windows.Controls.Primitives.Popup)((ContextMenu)((dynamic)sender).Parent).Parent).PlacementTarget).Tag;
+                ModMinecraft.McFolder Target = (ModMinecraft.McFolder)((MyListItem)((System.Windows.Controls.Primitives.Popup)((ContextMenu)sender.ParentFe()).Parent).PlacementTarget).Tag;
                 // 若为 “移除”，则提醒是否删除 PCL 的配置文件
                 if (Target.Type == ModMinecraft.McFolder.Types.Custom)
                 {
@@ -345,7 +345,7 @@ namespace PCL
                 ModMain.Hint("请在其他任务完成后，再删除游戏文件夹！", ModMain.HintType.Red);
                 return;
             }
-            ModMinecraft.McFolder Target = (ModMinecraft.McFolder)((MyListItem)((System.Windows.Controls.Primitives.Popup)((ContextMenu)((dynamic)sender).Parent).Parent).PlacementTarget).Tag;
+            ModMinecraft.McFolder Target = (ModMinecraft.McFolder)((MyListItem)((System.Windows.Controls.Primitives.Popup)((ContextMenu)sender.ParentFe()).Parent).PlacementTarget).Tag;
             string DeleteText = (Target.Type == ModMinecraft.McFolder.Types.Vanilla || Target.Type == ModMinecraft.McFolder.Types.RenamedVanilla) && (Target.Location ?? "") == (Paths.Base + @".minecraft\" ?? "") && ModMinecraft.McFolderList.IsSingle() ? "清空" : "删除";
             if (ModMain.MyMsgBox("你确定要" + DeleteText + "这个文件夹吗？" + Constants.vbCrLf + "目标文件夹：" + Target.Location + Constants.vbCrLf + Constants.vbCrLf + "该文件夹中的游戏存档、游戏版本，以及 MC 之外的其他文件，都会永久丢失，不可恢复！", "警告", "取消", "确认", "取消") != 2)
                 return;
@@ -378,11 +378,11 @@ namespace PCL
 
         public void Open_Click(object sender, RoutedEventArgs e)
         {
-            ModBase.OpenExplorer(((MyListItem)((System.Windows.Controls.Primitives.Popup)((ContextMenu)((dynamic)sender).Parent).Parent).PlacementTarget).Info);
+            ModBase.OpenExplorer(((MyListItem)((System.Windows.Controls.Primitives.Popup)((ContextMenu)sender.ParentFe()).Parent).PlacementTarget).Info);
         }
         public void Refresh_Click(object sender, RoutedEventArgs e)
         {
-            ModMinecraft.McFolder Data = (ModMinecraft.McFolder)((MyListItem)((System.Windows.Controls.Primitives.Popup)((ContextMenu)((dynamic)sender).Parent).Parent).PlacementTarget).Tag;
+            ModMinecraft.McFolder Data = (ModMinecraft.McFolder)((MyListItem)((System.Windows.Controls.Primitives.Popup)((ContextMenu)sender.ParentFe()).Parent).PlacementTarget).Tag;
             RefreshCurrent(Data.Location);
         }
         public void RefreshCurrent()
@@ -399,7 +399,7 @@ namespace PCL
         }
         public void Rename_Click(object sender, RoutedEventArgs e)
         {
-            ModMinecraft.McFolder Folder = (ModMinecraft.McFolder)((MyListItem)((System.Windows.Controls.Primitives.Popup)((ContextMenu)((dynamic)sender).Parent).Parent).PlacementTarget).Tag;
+            ModMinecraft.McFolder Folder = (ModMinecraft.McFolder)((MyListItem)((System.Windows.Controls.Primitives.Popup)((ContextMenu)sender.ParentFe()).Parent).PlacementTarget).Tag;
             try
             {
                 // 获取输入

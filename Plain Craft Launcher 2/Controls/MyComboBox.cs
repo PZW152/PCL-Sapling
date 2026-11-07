@@ -126,7 +126,7 @@ namespace PCL
             int Time;
             if (IsEnabled)
             {
-                if (Conversions.ToBoolean(IsMouseDown || IsDropDownOpen || IsEditable && ((dynamic)Template.FindName("PART_EditableTextBox", this)).IsFocused))
+                if ((IsMouseDown || IsDropDownOpen || IsEditable && ((UIElement)Template.FindName("PART_EditableTextBox", this)).IsFocused))
                 {
                     ForeColorName = "ColorBrush3";
                     BackColorName = "ColorBrush7";

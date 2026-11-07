@@ -165,7 +165,7 @@ namespace PCL
 
         public void Refresh_Click(object sender, EventArgs e) // 由边栏按钮匿名调用
         {
-            Refresh((FormMain.PageSubType)ModBase.Val(((dynamic)sender).Tag));
+            Refresh((FormMain.PageSubType)ModBase.Val(sender.Fe().Tag));
         }
         public void Refresh()
         {

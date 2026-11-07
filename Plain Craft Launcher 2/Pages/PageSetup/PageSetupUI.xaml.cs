@@ -649,7 +649,7 @@ namespace PCL
         // 警告提示
         private void HiddenHint(object sender, bool user)
         {
-            if (Conversions.ToBoolean(ModAnimation.AniControlEnabled == 0 && ((dynamic)sender).Checked))
+            if (ModAnimation.AniControlEnabled == 0 && ((MyCheckBox)sender).Checked)
                 ModMain.Hint("按 F12 即可暂时关闭功能隐藏设置。千万别忘了，要不然设置就改不回来了……");
         }
 

@@ -570,7 +570,7 @@ namespace PCL
             }
             // 尝试加载
             Loader.WaitForExit(Data.Input, McLoginLoader, Data.IsForceRestarting);
-            Data.Output = (McLoginResult)((dynamic)Loader).Output;
+            Data.Output = (McLoginResult)((ModLoader.ILoaderTask)Loader).OutputBoxed;
             ModBase.RunInUi(() => ModMain.FrmLaunchLeft.RefreshPage(true, false)); // 刷新自动填充列表
             McLaunchLog("登录加载已结束");
         }
@@ -724,7 +724,7 @@ namespace PCL
             }
             else
             {
-                return ((string OAuthAccessToken, string OAuthRefreshToken))(Converter.Result.AsDyn()[0], Converter.Result.AsDyn()[1]);
+                return ((string OAuthAccessToken, string OAuthRefreshToken))(((string[])Converter.Result)[0], ((string[])Converter.Result)[1]);
             }
         }
         // 微软登录步骤 1，刷新登录：从 OAuth Code 或 OAuth RefreshToken 获取 {OAuth AccessToken, OAuth RefreshToken}

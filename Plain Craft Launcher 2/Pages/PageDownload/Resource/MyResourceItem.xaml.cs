@@ -188,8 +188,8 @@ namespace PCL
             {
                 // 从详情页进入（查看前置）
                 TargetType = ResourceTypes.Any; // 允许任意类别
-                TargetInstance = Conversions.ToString(ModMain.FrmMain.PageCurrent.Additional.AsDyn()[2]);
-                TargetLoader = (ModLoaders)Conversions.ToInteger(ModMain.FrmMain.PageCurrent.Additional.AsDyn()[3]);
+                TargetInstance = Conversions.ToString(ModMain.FrmMain.PageCurrent.Additional.Args()[2]);
+                TargetLoader = (ModLoaders)Conversions.ToInteger(ModMain.FrmMain.PageCurrent.Additional.Args()[3]);
             }
             ModMain.FrmMain.PageChange(new FormMain.PageStackData()
             {

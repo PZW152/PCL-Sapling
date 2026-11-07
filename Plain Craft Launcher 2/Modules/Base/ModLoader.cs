@@ -323,7 +323,7 @@ namespace PCL
                 while (State == ModBase.LoadState.Loading)
                 {
                     if (LoaderToSyncProgress is not null)
-                        ((dynamic)LoaderToSyncProgress).Progress = Progress;
+                        ((LoaderBase)LoaderToSyncProgress).Progress = Progress;
                     Thread.Sleep(10);
                     Timeout -= 10;
                     if (Timeout < 0)
@@ -366,6 +366,7 @@ namespace PCL
         {
             bool ShouldStartBoxed(object Input, bool IsForceRestart = false, bool IgnoreReloadTimeout = false);
             object OutputBoxed { get; }
+            object StartGetInputBoxed(object Input, Delegate InputDelegate);
         }
         public class LoaderTask<TIn, TOut> : LoaderBase, ILoaderTask
         {
@@ -428,6 +429,7 @@ namespace PCL
                 return ShouldStart(ref Value, IsForceRestart, IgnoreReloadTimeout);
             }
             public object OutputBoxed => Output;
+            public object StartGetInputBoxed(object Input, Delegate InputDelegate) => StartGetInput(Input is null ? default : (TIn)Input, InputDelegate is null ? null : () => (TIn)InputDelegate.DynamicInvoke());
             public bool ShouldStart(ref TIn Input, bool IsForceRestart = false, bool IgnoreReloadTimeout = false)
             {
                 // 获取输入
@@ -625,7 +627,16 @@ namespace PCL
         /// <summary>
     /// 支持多个加载器连续运作的复合加载器。
     /// </summary>
-        public class LoaderCombo<InputType> : LoaderBase
+        /// <summary>
+        /// LoaderCombo 的非泛型视图，用于在不知道输入类型时访问子加载器与输入。
+        /// </summary>
+        public interface ILoaderCombo
+        {
+            List<LoaderBase> SubLoaders { get; }
+            object InputBoxed { get; }
+            List<LoaderBase> GetLoaderList(bool RequireShow = true);
+        }
+        public class LoaderCombo<InputType> : LoaderBase, ILoaderCombo
         {
 
             public override double Progress
@@ -666,6 +677,8 @@ namespace PCL
 
             public List<LoaderBase> Loaders = new List<LoaderBase>();
             public InputType Input;
+            List<LoaderBase> ILoaderCombo.SubLoaders => Loaders;
+            object ILoaderCombo.InputBoxed => Input;
             public LoaderCombo(string Name, IEnumerable<LoaderBase> Loaders)
             {
                 this.Loaders.Clear();
@@ -881,9 +894,9 @@ namespace PCL
         /// </summary>
             public static void GetLoaderList(object Loader, ref List<LoaderBase> List, bool RequireShow = true)
             {
-                foreach (var SubLoader in (IEnumerable)((dynamic)Loader).Loaders)
+                foreach (var SubLoader in ((ILoaderCombo)Loader).SubLoaders)
                 {
-                    if (Conversions.ToBoolean(((dynamic)SubLoader).Show || !RequireShow))
+                    if (SubLoader.Show || !RequireShow)
                         List.Add((LoaderBase)SubLoader);
                     if (GeneralUtils.IsGenericInstanceOf(SubLoader, typeof(LoaderCombo<>)))
                         GetLoaderList(SubLoader, ref List);

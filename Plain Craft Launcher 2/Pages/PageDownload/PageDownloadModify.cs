@@ -394,7 +394,7 @@ namespace PCL
             // 还原原版信息
             OriginalName = Task.Input.Name;
             CustomLogo = null;
-            if (Conversions.ToBoolean(ModBase.ReadIni(Task.Input.PathVersion + @"PCL\Setup.ini", "LogoCustom", Conversions.ToString(false))))
+            if (Conversions.ToBoolean(ModBase.ReadIni(Task.Input.PathVersion + @"PCL\Setup.ini", "LogoCustom", false.ToString())))
             {
                 CustomLogo = Task.Input.Logo.EndsWithF(@"PCL\Logo.png") ? Task.Input.PathVersion + @"PCL\Logo.png" : Task.Input.Logo;
             }

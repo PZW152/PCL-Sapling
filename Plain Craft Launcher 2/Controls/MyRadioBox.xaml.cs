@@ -93,12 +93,12 @@ namespace PCL
                     return;
                 var RadioboxList = new List<MyRadioBox>();
                 int CheckedCount = 0;
-                foreach (var Control in (IEnumerable)((dynamic)this.Parent).Children) // 收集控件列表与选中个数
+                foreach (var Control in (IEnumerable)((System.Windows.Controls.Panel)this.Parent).Children) // 收集控件列表与选中个数
                 {
                     if (Control is MyRadioBox)
                     {
                         RadioboxList.Add((MyRadioBox)Control);
-                        if (Conversions.ToBoolean(((dynamic)Control).Checked))
+                        if (((MyRadioBox)Control).Checked)
                             CheckedCount += 1;
                     }
                 }

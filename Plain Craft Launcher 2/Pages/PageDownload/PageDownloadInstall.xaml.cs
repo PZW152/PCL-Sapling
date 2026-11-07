@@ -474,7 +474,7 @@ namespace PCL
         // 信息栏动画
         private void SetPanelVisibility(Grid Panel, bool IsVisible)
         {
-            if (Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(Panel.Tag, IsVisible.ToString(), false)))
+            if (Operators.ConditionalCompareObjectEqual(Panel.Tag, IsVisible.ToString(), false))
                 return;
             Panel.Tag = IsVisible.ToString();
             if (IsVisible)
@@ -1161,7 +1161,7 @@ namespace PCL
         // 选择与清除
         public void Fabric_Selected(MyListItem sender, EventArgs e)
         {
-            SelectedFabric = sender.Tag.AsDyn()["version"].ToString();
+            SelectedFabric = ((JToken)sender.Tag)["version"].ToString();
             FabricApi_Loaded();
             OptiFabric_Loaded();
             this.CardFabric.IsSwapped = true;

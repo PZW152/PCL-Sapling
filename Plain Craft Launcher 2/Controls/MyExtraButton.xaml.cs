@@ -128,7 +128,7 @@ namespace PCL
         {
             if (IsLeftMouseHeld)
             {
-                Logger.Info($"按下附加按钮{(Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(this.ToolTip, "", false)) ? "" : Operators.ConcatenateObject("：", this.ToolTip))}");
+                Logger.Info($"按下附加按钮{(Operators.ConditionalCompareObjectEqual(this.ToolTip, "", false) ? "" : Operators.ConcatenateObject("：", this.ToolTip))}");
                 Click?.Invoke(sender, e);
                 e.Handled = true;
                 Button_LeftMouseUp();
@@ -138,7 +138,7 @@ namespace PCL
         {
             if (IsRightMouseHeld)
             {
-                Logger.Info($"右键按下附加按钮{(Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(this.ToolTip, "", false)) ? "" : Operators.ConcatenateObject("：", this.ToolTip))}");
+                Logger.Info($"右键按下附加按钮{(Operators.ConditionalCompareObjectEqual(this.ToolTip, "", false) ? "" : Operators.ConcatenateObject("：", this.ToolTip))}");
                 RightClick?.Invoke(sender, e);
                 e.Handled = true;
                 Button_RightMouseUp();

@@ -1,17 +1,21 @@
+﻿using System.Windows;
 using System.Xml.Linq;
 
 namespace PCL
 {
     /// <summary>
     /// 從 VB 轉換到 C# 時保留語義用的小工具。
-    /// VB 的 Option Strict Off 允許在 Object 上直接調用成員、做下標訪問（晚期綁定），C# 中對應的是 dynamic。
+    /// 原本的晚期綁定（dynamic）已全部改為強類型代碼，專案不再引用 Microsoft.CSharp。
     /// </summary>
     public static class VbCompat
     {
-        /// <summary>
-        /// 把對象轉為 dynamic，用於 VB 晚期綁定的下標訪問或委託調用，例如 VB 的 <c>Control.Tag(0)</c>。
-        /// </summary>
-        public static dynamic AsDyn(this object Value) => Value;
+        // 以下為強類型替代：取代原本對 sender / Parent / Tag 的晚期綁定，讓錯誤在編譯期就能發現。
+        /// <summary>把事件的 sender 等對象視為 FrameworkElement。</summary>
+        public static FrameworkElement Fe(this object Value) => (FrameworkElement)Value;
+        /// <summary>取得控件的父控件（FrameworkElement）。</summary>
+        public static FrameworkElement ParentFe(this object Value) => (FrameworkElement)((FrameworkElement)Value).Parent;
+        /// <summary>頁面附加參數、提示控件 Tag 等以 object[] 存放的參數列表。</summary>
+        public static object[] Args(this object Value) => (object[])Value;
 
         /// <summary>
         /// 對應 VB 的 My.Computer（記憶體、螢幕、剪貼簿、鍵盤狀態等）。

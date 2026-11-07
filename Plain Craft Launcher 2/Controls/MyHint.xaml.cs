@@ -201,7 +201,7 @@ namespace PCL
                 {
                 if (RemoveFromChildren)
                     {
-                    ((dynamic)Control.Parent).Children.Remove(Control);
+                    ((System.Windows.Controls.Panel)Control.Parent).Children.Remove(Control);
                     }
                 else
                     {

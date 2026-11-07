@@ -171,7 +171,7 @@ namespace PCL
         // 强制刷新
         public void Refresh(object sender, EventArgs e) // 由边栏按钮匿名调用
         {
-            switch (ModBase.Val(((dynamic)sender).Tag))
+            switch (ModBase.Val(sender.Fe().Tag))
             {
                 case (double)FormMain.PageSubType.OtherHelp:
                     {

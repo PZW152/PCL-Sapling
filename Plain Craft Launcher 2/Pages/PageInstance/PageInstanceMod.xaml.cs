@@ -955,7 +955,7 @@ namespace PCL
             try
             {
 
-                var ModEntry = ((MyLocalModItem)(sender is MyIconButton ? ((dynamic)sender).Tag : sender)).Entry;
+                var ModEntry = ((MyLocalModItem)(sender is MyIconButton ? sender.Fe().Tag : sender)).Entry;
                 // 加载失败信息
                 if (ModEntry.Project is not null)
                 {
@@ -993,7 +993,7 @@ namespace PCL
                             // 上一个字母为小写，这一个字母为大写
                             ModSearchName += "+";
                         }
-                        ModSearchName += Conversions.ToString(ModOriginalName[i]);
+                        ModSearchName += ModOriginalName[i].ToString();
                     }
                     ModSearchName = ModSearchName.Replace("++", "+").Replace("pti+Fine", "ptiFine");
                     // 百科搜索链接

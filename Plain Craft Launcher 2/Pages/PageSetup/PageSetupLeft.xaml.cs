@@ -211,7 +211,7 @@ namespace PCL
 
         public void Reset(object sender, EventArgs e)
         {
-            switch (ModBase.Val(((dynamic)sender).Tag))
+            switch (ModBase.Val(sender.Fe().Tag))
             {
                 case (double)FormMain.PageSubType.SetupLaunch:
                     {

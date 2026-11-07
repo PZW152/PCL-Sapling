@@ -248,7 +248,7 @@ namespace PCL
         {
             foreach (var Element in this.PanOptions.Children)
             {
-                if (!IncludeHidden && Conversions.ToBoolean(Operators.ConditionalCompareObjectNotEqual(((dynamic)Element).Visibility, Visibility.Visible, false)))
+                if (!IncludeHidden && ((UIElement)Element).Visibility != Visibility.Visible)
                     continue;
                 if (Element is MyCheckBox)
                 {
@@ -258,7 +258,7 @@ namespace PCL
                 {
                     foreach (var SubElement in ((StackPanel)Element).Children)
                     {
-                        if (!IncludeHidden && Conversions.ToBoolean(Operators.ConditionalCompareObjectNotEqual(((dynamic)SubElement).Visibility, Visibility.Visible, false)))
+                        if (!IncludeHidden && ((UIElement)SubElement).Visibility != Visibility.Visible)
                             continue;
                         if (SubElement is MyCheckBox)
                             yield return (MyCheckBox)SubElement;
@@ -492,12 +492,12 @@ namespace PCL
                 }
                 this.TextExportName.Text = Ini.GetOrDefault("Name", "");
                 this.TextExportVersion.Text = Ini.GetOrDefault("Version", "");
-                this.CheckOptionsJava.Checked = Conversions.ToBoolean(Ini.GetOrDefault("IncludeJava", Conversions.ToString(true)));
-                this.CheckOptionsPcl.Checked = Conversions.ToBoolean(Ini.GetOrDefault("IncludeLauncher", Conversions.ToString(true)));
-                this.CheckOptionsPclCustom.Checked = Conversions.ToBoolean(Ini.GetOrDefault("IncludeLauncherCustom", Conversions.ToString(true)));
-                this.CheckAdvancedInclude.Checked = Conversions.ToBoolean(Ini.GetOrDefault("DontCheckHostedAssets", Conversions.ToString(false)));
+                this.CheckOptionsJava.Checked = Conversions.ToBoolean(Ini.GetOrDefault("IncludeJava", true.ToString()));
+                this.CheckOptionsPcl.Checked = Conversions.ToBoolean(Ini.GetOrDefault("IncludeLauncher", true.ToString()));
+                this.CheckOptionsPclCustom.Checked = Conversions.ToBoolean(Ini.GetOrDefault("IncludeLauncherCustom", true.ToString()));
+                this.CheckAdvancedInclude.Checked = Conversions.ToBoolean(Ini.GetOrDefault("DontCheckHostedAssets", false.ToString()));
                 if (!this.CheckAdvancedInclude.Checked)
-                    this.CheckAdvancedModrinth.Checked = Conversions.ToBoolean(Ini.GetOrDefault("ModrinthUploadMode", Conversions.ToString(false))); // #7979，加个特判
+                    this.CheckAdvancedModrinth.Checked = Conversions.ToBoolean(Ini.GetOrDefault("ModrinthUploadMode", false.ToString())); // #7979，加个特判
                 ConfigPackPath = Ini.GetOrDefault("PackPath", null);
                 // 导出内容段
                 RulesOverrides = Segments[1].SplitLines(true).ToList();
@@ -707,7 +707,7 @@ namespace PCL
             // 复制 PCL 版本设置
             if (DirectoryUtils.Exists(TargetInstance.PathVersion + @"PCL\"))
                 DirectoryUtils.Copy(TargetInstance.PathVersion + @"PCL\", OverridesFolder + @"PCL\");
-            ModBase.WriteIni(OverridesFolder + @"PCL\Setup.ini", "IsStar", Conversions.ToString(false));
+            ModBase.WriteIni(OverridesFolder + @"PCL\Setup.ini", "IsStar", false.ToString());
             // 复制 PCL 本体（正式版）
             if (ModBase.BuildType == ModBase.BuildTypes.Release && IncludePCL)
                 FileUtils.Copy(ModBase.PathExe, CacheFolder + "Plain Craft Launcher.exe");

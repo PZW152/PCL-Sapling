@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 
 namespace PCL
 {
-    public partial class PageLoginMsSkin
+    public partial class PageLoginMsSkin : ILoginPage
     {
 
         public PageLoginMsSkin()

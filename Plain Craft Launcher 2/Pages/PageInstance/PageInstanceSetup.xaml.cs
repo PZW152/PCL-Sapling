@@ -648,7 +648,7 @@ namespace PCL
                 _ComboArgumentIndieV2_SelectionChanged_IsReverting = false;
             }
             // 实际应用设置
-            Settings.Set("VersionArgumentIndieV2", Operators.ConditionalCompareObjectEqual(((dynamic)sender).SelectedIndex, 0, false), Instance: PageInstanceLeft.Instance);
+            Settings.Set("VersionArgumentIndieV2", ((System.Windows.Controls.Primitives.Selector)sender).SelectedIndex == 0, Instance: PageInstanceLeft.Instance);
         }
 
         // 启动前执行命令

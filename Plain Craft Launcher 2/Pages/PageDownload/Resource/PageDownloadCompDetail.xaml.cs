@@ -48,12 +48,12 @@ namespace PCL
         }
         public void LoadPageArguments()
         {
-            Project = (ResourceProject)ModMain.FrmMain.PageCurrent.Additional.AsDyn()[0];
-            TargetVersion = Conversions.ToString(ModMain.FrmMain.PageCurrent.Additional.AsDyn()[2]);
-            TargetLoaders = (ModLoaders)Conversions.ToInteger(ModMain.FrmMain.PageCurrent.Additional.AsDyn()[3]);
+            Project = (ResourceProject)ModMain.FrmMain.PageCurrent.Additional.Args()[0];
+            TargetVersion = Conversions.ToString(ModMain.FrmMain.PageCurrent.Additional.Args()[2]);
+            TargetLoaders = (ModLoaders)Conversions.ToInteger(ModMain.FrmMain.PageCurrent.Additional.Args()[3]);
             if (TargetLoaders != ModLoaders.None && !TargetLoaders.Flags().IsSingle())
                 TargetLoaders = TargetLoaders.Flags().First(); // 强制取第一个
-            TargetResourceType = (ResourceTypes)Conversions.ToInteger(ModMain.FrmMain.PageCurrent.Additional.AsDyn()[4]);
+            TargetResourceType = (ResourceTypes)Conversions.ToInteger(ModMain.FrmMain.PageCurrent.Additional.Args()[4]);
         }
 
         #region 加载器
@@ -302,7 +302,7 @@ namespace PCL
                     NewCard.SetContentBuilder((_) => this.InitializeStackResourceVersions((StackPanel)(object)_));
                     this.PanResults.Children.Add(NewCard);
                     // 确定卡片是否默认展开
-                    if ((Pair.Key ?? "") == (TargetCardName ?? "") || ModMain.FrmMain.PageCurrent.Additional is not null && ((List<string>)ModMain.FrmMain.PageCurrent.Additional.AsDyn()[1]).Contains(NewCard.Title)) // #2761
+                    if ((Pair.Key ?? "") == (TargetCardName ?? "") || ModMain.FrmMain.PageCurrent.Additional is not null && ((List<string>)ModMain.FrmMain.PageCurrent.Additional.Args()[1]).Contains(NewCard.Title)) // #2761
                     {
                         NewCard.BuildContent();
                     }
@@ -419,7 +419,7 @@ namespace PCL
         public void Init()
         {
             ModAnimation.AniControlEnabled += 1;
-            Project = (ResourceProject)ModMain.FrmMain.PageCurrent.Additional.AsDyn()[0];
+            Project = (ResourceProject)ModMain.FrmMain.PageCurrent.Additional.Args()[0];
             this.PanBack.ScrollToHome();
 
             // 重启加载器
@@ -514,7 +514,7 @@ namespace PCL
         public static Dictionary<ResourceTypes, string> CachedFolder = new Dictionary<ResourceTypes, string>(); // 仅在本次缓存的下载文件夹
         public void Save_Click(object sender, EventArgs e)
         {
-            ResourceVersion File = (ResourceVersion)(sender is MyListItem ? sender : ((dynamic)sender).Parent).Tag;
+            ResourceVersion File = (ResourceVersion)(sender is MyListItem ? sender.Fe() : sender.ParentFe()).Tag;
             ModBase.RunInNewThread(() =>
         {
             try
@@ -782,7 +782,7 @@ namespace PCL
         private void HintAlternative_Click()
         {
             TargetResourceType = TargetResourceType == ResourceTypes.Mod ? ResourceTypes.DataPack : ResourceTypes.Mod;
-            ModMain.FrmMain.PageCurrent.Additional.AsDyn()[4] = TargetResourceType; // 加载器会从这里重新拿数据
+            ModMain.FrmMain.PageCurrent.Additional.Args()[4] = TargetResourceType; // 加载器会从这里重新拿数据
             this.PageLoaderRestart(IsForceRestart: true);
         }
 

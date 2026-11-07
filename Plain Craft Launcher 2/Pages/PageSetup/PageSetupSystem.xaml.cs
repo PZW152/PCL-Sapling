@@ -65,7 +65,7 @@ namespace PCL
         {
             this.SliderDownloadThread.GetHintText = new Func<object, object>(v => Operators.AddObject(v, 1));
             this.SliderDownloadSpeed.GetHintText = new Func<object, object>(v => { switch (v) { case var @case when Operators.ConditionalCompareObjectLessEqual(@case, 14, false): { return Operators.ConcatenateObject(Operators.MultiplyObject(Operators.AddObject(v, 1), 0.1d), " M/s"); } case var case1 when Operators.ConditionalCompareObjectLessEqual(case1, 31, false): { return Operators.ConcatenateObject(Operators.MultiplyObject(Operators.SubtractObject(v, 11), 0.5d), " M/s"); } case var case2 when Operators.ConditionalCompareObjectLessEqual(case2, 41, false): { return Operators.ConcatenateObject(Operators.SubtractObject(v, 21), " M/s"); } default: { return "无限制"; } } });
-            this.SliderDebugAnim.GetHintText = new Func<object, object>(v => Conversions.ToBoolean(Operators.ConditionalCompareObjectGreater(v, 29, false)) ? "关闭" : Operators.ConcatenateObject(Operators.AddObject(Operators.DivideObject(v, 10), 0.1d), "x"));
+            this.SliderDebugAnim.GetHintText = new Func<object, object>(v => Operators.ConditionalCompareObjectGreater(v, 29, false) ? "关闭" : Operators.ConcatenateObject(Operators.AddObject(Operators.DivideObject(v, 10), 0.1d), "x"));
         }
         private void SliderDownloadThread_PreviewChange(object sender, ModBase.RouteEventArgs e)
         {

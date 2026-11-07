@@ -5,7 +5,12 @@ using MeloongCore;
 
 namespace PCL
 {
-    public class MyVirtualizingElement<T> : FrameworkElement where T : FrameworkElement
+    /// <summary>MyVirtualizingElement&lt;T&gt; 的非泛型视图。</summary>
+    public interface IMyVirtualizingElement
+    {
+        FrameworkElement InitElement();
+    }
+    public class MyVirtualizingElement<T> : FrameworkElement, IMyVirtualizingElement where T : FrameworkElement
     {
 
         private Func<T> Initializer;
@@ -18,6 +23,7 @@ namespace PCL
         /// <summary>
     /// 实例化此控件。
     /// </summary>
+        FrameworkElement IMyVirtualizingElement.InitElement() => Init();
         public T Init()
         {
             var Element = Initializer();
@@ -77,7 +83,7 @@ namespace PCL
         {
             if (GeneralUtils.IsGenericInstanceOf(Element, typeof(MyVirtualizingElement<>)))
             {
-                return (FrameworkElement)((dynamic)Element).Init();
+                return ((IMyVirtualizingElement)Element).InitElement();
             }
             else if (Element is MyVirtualizingElement)
             {

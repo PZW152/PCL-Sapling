@@ -79,7 +79,7 @@ namespace PCL
                     Border DoubleStack = null;
                     foreach (Border stack in FrmMain.PanHint.Children)
                     {
-                        if (Conversions.ToBoolean(stack.Tag.AsDyn()[0] && (((TextBlock)stack.Child).Text ?? "") == (CurrentHint.Text ?? "")))
+                        if (((bool)stack.Tag.Args()[0] && (((TextBlock)stack.Child).Text ?? "") == (CurrentHint.Text ?? "")))
                             DoubleStack = stack;
                     }
                     // 获取渐变颜色
@@ -110,9 +110,9 @@ namespace PCL
                     if (!(DoubleStack == null))
                     {
                         // 有重复提示，且该提示的进入动画已播放
-                        if (!ModAnimation.AniIsRun(Conversions.ToString(Operators.ConcatenateObject("Hint Show ", DoubleStack.Tag.AsDyn()[1]))))
+                        if (!ModAnimation.AniIsRun(Conversions.ToString(Operators.ConcatenateObject("Hint Show ", DoubleStack.Tag.Args()[1]))))
                         {
-                            ModAnimation.AniStop(Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", DoubleStack.Tag.AsDyn()[1])));
+                            ModAnimation.AniStop(Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", DoubleStack.Tag.Args()[1])));
                             double Delay = (800 + CurrentHint.Text.Length.Clamp(5, 23) * 180) * ModAnimation.AniSpeed;
                             ModAnimation.AniStart(new[] {
                             ModAnimation.AaX(DoubleStack, -12 - DoubleStack.Margin.Left, 50, Ease: new ModAnimation.AniEaseOutFluent()),
@@ -128,10 +128,10 @@ namespace PCL
                                      }, 0.7d, 250),
                             ModAnimation.AaX(DoubleStack, -50, 200, (int)Math.Round(Delay), new ModAnimation.AniEaseInFluent()),
                             ModAnimation.AaOpacity(DoubleStack, -1, 150, (int)Math.Round(Delay)),
-                            ModAnimation.AaCode(() => DoubleStack.Tag.AsDyn()[0] = false, (int)Math.Round(Delay)),
+                            ModAnimation.AaCode(() => DoubleStack.Tag.Args()[0] = false, (int)Math.Round(Delay)),
                             ModAnimation.AaHeight(DoubleStack, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true),
                             ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(DoubleStack), After: true)
-                      }, Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", DoubleStack.Tag.AsDyn()[1])));
+                      }, Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", DoubleStack.Tag.Args()[1])));
                         }
                     }
                     else
@@ -167,10 +167,10 @@ namespace PCL
                                      Gradient.GradientStops[1].Color = TargetColor1 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
                                  }, 0.7d, 250, 100)
                     });
-                        ModAnimation.AniStart(Animations, Conversions.ToString(Operators.ConcatenateObject("Hint Show ", NewHintControl.Tag.AsDyn()[1])));
+                        ModAnimation.AniStart(Animations, Conversions.ToString(Operators.ConcatenateObject("Hint Show ", NewHintControl.Tag.Args()[1])));
                         // 结束动画
                         double Delay = (800 + CurrentHint.Text.Length.Clamp(5, 23) * 180) * ModAnimation.AniSpeed;
-                        ModAnimation.AniStart(new[] { ModAnimation.AaX(NewHintControl, -50, 200, (int)Math.Round(Delay), new ModAnimation.AniEaseInFluent()), ModAnimation.AaOpacity(NewHintControl, -1, 150, (int)Math.Round(Delay)), ModAnimation.AaCode(() => NewHintControl.Tag.AsDyn()[0] = false, (int)Math.Round(Delay)), ModAnimation.AaHeight(NewHintControl, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true), ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(NewHintControl), After: true) }, Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", NewHintControl.Tag.AsDyn()[1])));
+                        ModAnimation.AniStart(new[] { ModAnimation.AaX(NewHintControl, -50, 200, (int)Math.Round(Delay), new ModAnimation.AniEaseInFluent()), ModAnimation.AaOpacity(NewHintControl, -1, 150, (int)Math.Round(Delay)), ModAnimation.AaCode(() => NewHintControl.Tag.Args()[0] = false, (int)Math.Round(Delay)), ModAnimation.AaHeight(NewHintControl, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true), ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(NewHintControl), After: true) }, Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", NewHintControl.Tag.Args()[1])));
                     }
                 // 结束处理
                 EndHint:
@@ -190,7 +190,7 @@ namespace PCL
             foreach (Border Control in FrmMain.PanHint.Children)
             {
                 Control.IsHitTestVisible = false;
-                ModAnimation.AniStart(new[] { ModAnimation.AaX(Control, -50, 200, Ease: new ModAnimation.AniEaseInFluent()), ModAnimation.AaOpacity(Control, -1, 150, Ease: new ModAnimation.AniEaseInFluent()), ModAnimation.AaCode(() => Control.Tag.AsDyn()[0] = false), ModAnimation.AaHeight(Control, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true), ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(Control), After: true) }, Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", Control.Tag.AsDyn()[1])));
+                ModAnimation.AniStart(new[] { ModAnimation.AaX(Control, -50, 200, Ease: new ModAnimation.AniEaseInFluent()), ModAnimation.AaOpacity(Control, -1, 150, Ease: new ModAnimation.AniEaseInFluent()), ModAnimation.AaCode(() => Control.Tag.Args()[0] = false), ModAnimation.AaHeight(Control, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true), ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(Control), After: true) }, Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", Control.Tag.Args()[1])));
             }
         }
 
@@ -663,7 +663,7 @@ namespace PCL
                 CustomEventService.SetEventType(Item, CustomEvent.EventType.None); // 清空自定义事件属性，它们会被下面的点击事件处理
                 CustomEventService.SetEventData(Item, (string)null);
                 // 项目的点击事件
-                Item.Click += (sender, e) => PageOtherHelp.OnItemClick((HelpEntry)((dynamic)sender).Tag);
+                Item.Click += (sender, e) => PageOtherHelp.OnItemClick((HelpEntry)sender.Fe().Tag);
                 return Item;
             }
 

@@ -14,6 +14,13 @@ using Newtonsoft.Json.Linq;
 
 namespace PCL
 {
+    /// <summary>
+    /// 登录页面（离线、正版、正版皮肤）的共同接口。
+    /// </summary>
+    public interface ILoginPage
+    {
+        void Reload(bool KeepInput);
+    }
 
     public partial class PageLaunchLeft
     {
@@ -221,7 +228,7 @@ namespace PCL
     /// </summary>
         public void PageChangeToLogin()
         {
-            ((dynamic)PageGet(PageCurrent)).Reload(KeepInput: false);
+            ((ILoginPage)PageGet(PageCurrent)).Reload(KeepInput: false);
             this.PanInput.IsHitTestVisible = false;
             this.PanLaunching.IsHitTestVisible = false;
             this.LoadLaunching.State.LoadingState = MyLoading.MyLoadingState.Stop;
@@ -294,8 +301,8 @@ namespace PCL
                 #region 切换页面
                 ModAnimation.AniStop("FrmLogin PageChange");
                 // 清除页面关联性
-                if (!(PageNew == null) && !(((dynamic)PageNew).Parent == null))
-                    ((dynamic)PageNew).SetValue(ContentPresenter.ContentProperty, (object)null);
+                if (!(PageNew == null) && ((FrameworkElement)PageNew).Parent is not null)
+                    ((FrameworkElement)PageNew).SetValue(ContentPresenter.ContentProperty, (object)null);
                 if (Anim)
                 {
                     // 动画
@@ -420,7 +427,7 @@ namespace PCL
             // 刷新页面
             if (PageCurrent == Type)
                 return;
-            ((dynamic)PageChange(Type, Anim)).Reload(KeepInput);
+            ((ILoginPage)PageChange(Type, Anim)).Reload(KeepInput);
             MyRadioButton Control = (MyRadioButton)this.FindName("RadioLoginType" + ((int)Settings.Get<ModLaunch.McLoginType>("LoginType")).ToString());
             if (Control is not null)
                 Control.Checked = true;

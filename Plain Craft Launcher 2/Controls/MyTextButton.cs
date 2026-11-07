@@ -46,7 +46,7 @@ namespace PCL
         }
         public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyTextButton), new PropertyMetadata("", ModBase.DpCallback<MyTextButton>((sender, e) =>
 {
-if (Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(e.OldValue, e.NewValue, false)))
+if (Operators.ConditionalCompareObjectEqual(e.OldValue, e.NewValue, false))
     return;
 ModAnimation.AniStart(new[] { ModAnimation.AaOpacity(sender, -sender.Opacity, 50), ModAnimation.AaCode(() => sender.Content = e.NewValue, After: true), ModAnimation.AaOpacity(sender, 1d, 170) }, "MyTextButton Text " + sender.Uuid);
 })));

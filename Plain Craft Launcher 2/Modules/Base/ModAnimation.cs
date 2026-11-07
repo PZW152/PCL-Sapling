@@ -547,7 +547,8 @@ namespace PCL
             }
             else
             {
-                ChangeRect = new ModBase.MyRect(Conversions.ToDouble(Operators.MultiplyObject(Operators.MultiplyObject(-0.5d, ((dynamic)Obj).ActualWidth), Value)), Conversions.ToDouble(Operators.MultiplyObject(Operators.MultiplyObject(-0.5d, ((dynamic)Obj).ActualHeight), Value)), Conversions.ToDouble(Operators.MultiplyObject(((dynamic)Obj).ActualWidth, Value)), Conversions.ToDouble(Operators.MultiplyObject(((dynamic)Obj).ActualHeight, Value)));
+                var Element = (FrameworkElement)Obj;
+                ChangeRect = new ModBase.MyRect(-0.5d * Element.ActualWidth * Value, -0.5d * Element.ActualHeight * Value, Element.ActualWidth * Value, Element.ActualHeight * Value);
             }
             return new AniData() { TypeMain = AniType.Scale, TimeTotal = Time, Ease = Ease ?? new AniEaseLinear(), Obj = Obj, Value = ChangeRect, IsAfter = After, TimeFinished = -Delay };
         }
@@ -565,10 +566,11 @@ namespace PCL
     /// <param name="After">是否等到以前的动画完成后才继续本动画。</param>
     /// <returns></returns>
     /// <remarks></remarks>
+        private static string GetAnimatedText(object Obj) => Obj is TextBlock Block ? Block.Text : (((ContentControl)Obj).Content?.ToString() ?? "");
         public static AniData AaTextAppear(object Obj, bool Hide = false, bool TimePerText = true, int Time = 70, int Delay = 0, AniEase Ease = null, bool After = false)
         {
             // Are we cool yet？
-            return new AniData() { TypeMain = AniType.TextAppear, Ease = Ease ?? new AniEaseLinear(), TimeTotal = TimePerText ? Time * (Obj is TextBlock ? ((dynamic)Obj).Text : ((dynamic)Obj).Context.ToString()).ToString().Length : Time, Obj = Obj, Value = new[] { Obj is TextBlock ? ((dynamic)Obj).Text : ((dynamic)Obj).Context.ToString(), Hide }, IsAfter = After, TimeFinished = -Delay };
+            return new AniData() { TypeMain = AniType.TextAppear, Ease = Ease ?? new AniEaseLinear(), TimeTotal = TimePerText ? Time * GetAnimatedText(Obj).Length : Time, Obj = Obj, Value = new object[] { GetAnimatedText(Obj), Hide }, IsAfter = After, TimeFinished = -Delay };
         }
 
         // Code
@@ -690,7 +692,7 @@ namespace PCL
             int AniDelay = 0;
             foreach (var Item in Stack.Children)
             {
-                ((dynamic)Item).Opacity = 0;
+                ((UIElement)Item).Opacity = 0;
                 Result.Add(AaOpacity(Item, 1d, Time, AniDelay));
                 AniDelay += Delay;
             }
@@ -1143,7 +1145,7 @@ namespace PCL
                                     if (ColorPair[0] is FrameworkElement ColorTarget)
                                         ColorTarget.SetResourceReference((DependencyProperty)ColorPair[1], ColorPair[2]);
                                     else
-                                        ((dynamic)ColorPair[0]).SetResourceReference((DependencyProperty)ColorPair[1], ColorPair[2]);
+                                        ((FrameworkContentElement)ColorPair[0]).SetResourceReference((DependencyProperty)ColorPair[1], ColorPair[2]);
                                 }
                                 // 删除
                                 Entry.Data.RemoveAt(ii);
@@ -1289,25 +1291,26 @@ namespace PCL
                                         }
                                     case AniTypeSub.Value:
                                         {
-                                            ((dynamic)Ani.Obj).Value += Delta;
+                                            ((System.Windows.Controls.Primitives.RangeBase)Ani.Obj).Value += Delta;
                                             break;
                                         }
                                     case AniTypeSub.Radius:
                                         {
-                                            ((dynamic)Ani.Obj).Radius += Delta;
+                                            ((System.Windows.Media.Effects.BlurEffect)Ani.Obj).Radius += Delta;
                                             break;
                                         }
                                     case AniTypeSub.StrokeThickness:
                                         {
-                                            if (Ani.Obj is System.Windows.Shapes.Shape Shape)
-                                                Shape.StrokeThickness = Math.Max(Shape.StrokeThickness + Delta, 0d);
-                                            else
-                                                ((dynamic)Ani.Obj).StrokeThickness = Math.Max(Conversions.ToDouble(((dynamic)Ani.Obj).StrokeThickness) + Delta, 0d);
+                                            var Shape = (System.Windows.Shapes.Shape)Ani.Obj;
+                                            Shape.StrokeThickness = Math.Max(Shape.StrokeThickness + Delta, 0d);
                                             break;
                                         }
                                     case AniTypeSub.BorderThickness:
                                         {
-                                            ((dynamic)Ani.Obj).BorderThickness = new Thickness(((Thickness)((dynamic)Ani.Obj).BorderThickness).Bottom + Delta);
+                                            if (Ani.Obj is Border BorderObj)
+                                                BorderObj.BorderThickness = new Thickness(BorderObj.BorderThickness.Bottom + Delta);
+                                            else
+                                                ((Control)Ani.Obj).BorderThickness = new Thickness(((Control)Ani.Obj).BorderThickness.Bottom + Delta);
                                             break;
                                         }
                                     case AniTypeSub.TranslateX:
@@ -1341,10 +1344,8 @@ namespace PCL
                                         }
                                     case AniTypeSub.GridLengthWidth:
                                         {
-                                            if (Ani.Obj is ColumnDefinition Column)
-                                                Column.Width = new GridLength(Math.Max(Column.Width.Value + Delta, 0d), GridUnitType.Star);
-                                            else
-                                                ((dynamic)Ani.Obj).Width = new GridLength(Math.Max(Conversions.ToDouble(((dynamic)Ani.Obj).Width.Value) + Delta, 0d), GridUnitType.Star);
+                                            var Column = (ColumnDefinition)Ani.Obj;
+                                            Column.Width = new GridLength(Math.Max(Column.Width.Value + Delta, 0d), GridUnitType.Star);
                                             break;
                                         }
                                 }
@@ -1369,16 +1370,17 @@ namespace PCL
                         {
                             FrameworkElement Obj = (FrameworkElement)Ani.Obj;
                             double Delta = Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, Ani.TimePercent);
-                            Obj.Margin = new Thickness(Obj.Margin.Left + MathUtils.Lerp(0d, Conversions.ToDouble(((dynamic)Ani.Value).Left), Delta), Obj.Margin.Top + MathUtils.Lerp(0d, Conversions.ToDouble(((dynamic)Ani.Value).Top), Delta), Obj.Margin.Right + MathUtils.Lerp(0d, Conversions.ToDouble(((dynamic)Ani.Value).Left), Delta), Obj.Margin.Bottom + MathUtils.Lerp(0d, Conversions.ToDouble(((dynamic)Ani.Value).Top), Delta));
-                            Obj.Width = Math.Max(Obj.Width + MathUtils.Lerp(0d, Conversions.ToDouble(((dynamic)Ani.Value).Width), Delta), 0d);
-                            Obj.Height = Math.Max(Obj.Height + MathUtils.Lerp(0d, Conversions.ToDouble(((dynamic)Ani.Value).Height), Delta), 0d);
+                            var Rect = (ModBase.MyRect)Ani.Value;
+                            Obj.Margin = new Thickness(Obj.Margin.Left + MathUtils.Lerp(0d, Rect.Left, Delta), Obj.Margin.Top + MathUtils.Lerp(0d, Rect.Top, Delta), Obj.Margin.Right + MathUtils.Lerp(0d, Rect.Left, Delta), Obj.Margin.Bottom + MathUtils.Lerp(0d, Rect.Top, Delta));
+                            Obj.Width = Math.Max(Obj.Width + MathUtils.Lerp(0d, Rect.Width, Delta), 0d);
+                            Obj.Height = Math.Max(Obj.Height + MathUtils.Lerp(0d, Rect.Height, Delta), 0d);
                             break;
                         }
 
                     case AniType.TextAppear:
                         {
-                            string Text = Conversions.ToString(Ani.Value.AsDyn()[0]);
-                            int TextCount = (int)Math.Round((double)(Conversions.ToBoolean(Ani.Value.AsDyn()[1]) ? Text.Length : 0) + Math.Round((double)(Text.Length * (Conversions.ToBoolean(Ani.Value.AsDyn()[1]) ? -1 : 1)) * Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, 0d)));
+                            string Text = Conversions.ToString(Ani.Value.Args()[0]);
+                            int TextCount = (int)Math.Round((double)(Conversions.ToBoolean(Ani.Value.Args()[1]) ? Text.Length : 0) + Math.Round((double)(Text.Length * (Conversions.ToBoolean(Ani.Value.Args()[1]) ? -1 : 1)) * Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, 0d)));
                             string NewText = Text.Substring(0, TextCount);
                             // 添加乱码
                             if (TextCount < Text.Length)
@@ -1396,11 +1398,11 @@ namespace PCL
                             // 设置文本
                             if (Ani.Obj is TextBlock)
                             {
-                                ((dynamic)Ani.Obj).Text = NewText;
+                                ((TextBlock)Ani.Obj).Text = NewText;
                             }
                             else
                             {
-                                ((dynamic)Ani.Obj).Context = NewText;
+                                ((ContentControl)Ani.Obj).Content = NewText;
                             }
 
                             break;

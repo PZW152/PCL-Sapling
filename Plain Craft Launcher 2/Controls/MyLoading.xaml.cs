@@ -109,7 +109,7 @@ namespace PCL
 
         private void RefreshText()
         {
-            ModBase.RunInUi(() => { if (InnerState == MyLoadingState.Error) { if (TextErrorInherit && State.IsLoader) { Exception Ex = (Exception)((dynamic)State).Error; if (Ex is null) { this.LabText.Text = "未知错误"; } else { this.LabText.Text = Ex.GetDisplay(false); } } else { this.LabText.Text = TextError; } } else if (ShowProgress && State.IsLoader) { this.LabText.Text = Conversions.ToString(Operators.ConcatenateObject(Operators.ConcatenateObject(Text + " - ", Math.Floor(Operators.MultiplyObject(((dynamic)State).Progress, 100))), "%")); } else { this.LabText.Text = Text; } });
+            ModBase.RunInUi(() => { if (InnerState == MyLoadingState.Error) { if (TextErrorInherit && State.IsLoader) { Exception Ex = ((ModLoader.LoaderBase)State).Error; if (Ex is null) { this.LabText.Text = "未知错误"; } else { this.LabText.Text = Ex.GetDisplay(false); } } else { this.LabText.Text = TextError; } } else if (ShowProgress && State.IsLoader) { this.LabText.Text = Conversions.ToString(Operators.ConcatenateObject(Operators.ConcatenateObject(Text + " - ", Math.Floor(((ModLoader.LoaderBase)State).Progress * 100)), "%")); } else { this.LabText.Text = Text; } });
         }
 
         #endregion

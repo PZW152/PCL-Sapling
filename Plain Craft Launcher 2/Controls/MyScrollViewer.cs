@@ -27,7 +27,7 @@ namespace PCL
             if (e.Delta == 0 || ActualHeight == 0d || ScrollableHeight == 0d)
                 return;
             var SourceType = e.Source.GetType();
-            if (((dynamic)Content).TemplatedParent is null && (typeof(ComboBox).IsAssignableFrom(SourceType) && ((ComboBox)e.Source).IsDropDownOpen || typeof(TextBox).IsAssignableFrom(SourceType) && ((TextBox)e.Source).AcceptsReturn || typeof(ComboBoxItem).IsAssignableFrom(SourceType) || e.Source is Visual && PresentationSource.FromVisual((Visual)e.Source)?.RootVisual?.GetType().FullName == "System.Windows.Controls.Primitives.PopupRoot"))
+            if (((FrameworkElement)Content).TemplatedParent is null && (typeof(ComboBox).IsAssignableFrom(SourceType) && ((ComboBox)e.Source).IsDropDownOpen || typeof(TextBox).IsAssignableFrom(SourceType) && ((TextBox)e.Source).AcceptsReturn || typeof(ComboBoxItem).IsAssignableFrom(SourceType) || e.Source is Visual && PresentationSource.FromVisual((Visual)e.Source)?.RootVisual?.GetType().FullName == "System.Windows.Controls.Primitives.PopupRoot"))
             {
                 // 如果当前是在对有滚动条的下拉框或文本框执行，则不接管操作
                 return;
@@ -47,7 +47,7 @@ ScrollToVerticalOffset(RealOffset);
         private void MyScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
             RealOffset = VerticalOffset;
-            if (ModMain.FrmMain is not null && (Conversions.ToBoolean(e.VerticalChange) || Conversions.ToBoolean(e.ViewportHeightChange)))
+            if (ModMain.FrmMain is not null && ((e.VerticalChange!=0) || (e.ViewportHeightChange!=0)))
                 ModMain.FrmMain.BtnExtraBack.ShowRefresh();
         }
         private void MyScrollViewer_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)

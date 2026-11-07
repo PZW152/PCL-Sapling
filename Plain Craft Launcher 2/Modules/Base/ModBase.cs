@@ -399,12 +399,23 @@ namespace PCL
                     G = Color.G;
                     B = Color.B;
                 }
+                else if (obj is Color Value)
+                {
+                    A = Value.A;
+                    R = Value.R;
+                    G = Value.G;
+                    B = Value.B;
+                }
+                else if (obj is MyColor Other)
+                {
+                    A = Other.A;
+                    R = Other.R;
+                    G = Other.G;
+                    B = Other.B;
+                }
                 else
                 {
-                    A = Conversions.ToDouble(((dynamic)obj).A);
-                    R = Conversions.ToDouble(((dynamic)obj).R);
-                    G = Conversions.ToDouble(((dynamic)obj).G);
-                    B = Conversions.ToDouble(((dynamic)obj).B);
+                    throw new InvalidCastException("无法转换为颜色：" + obj.GetType().Name);
                 }
             }
 
@@ -745,7 +756,7 @@ namespace PCL
                 return 0d;
             try
             {
-                return Str is string && Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(Str, "&", false)) ? 0d : Conversion.Val(Str);
+                return Str is string && Operators.ConditionalCompareObjectEqual(Str, "&", false) ? 0d : Conversion.Val(Str);
             }
             catch
             {
@@ -1328,7 +1339,7 @@ namespace PCL
                         {
                             if (Reader.Type is not null && BlackListType.IsAssignableFrom(Reader.Type.UnderlyingType))
                                 throw new UnauthorizedAccessException($"基于安全考虑，不允许使用 {BlackListType.Name} 类型。");
-                            if (Reader.Value is not null && Conversions.ToBoolean(Operators.ConditionalCompareObjectEqual(Reader.Value, BlackListType.Name, false)))
+                            if (Reader.Value is not null && Operators.ConditionalCompareObjectEqual(Reader.Value, BlackListType.Name, false))
                                 throw new UnauthorizedAccessException($"基于安全考虑，不允许使用 {BlackListType.Name} 值。");
                         }
                         foreach (var BlackListMember in new[] { "Code", "FactoryMethod", "Static" })

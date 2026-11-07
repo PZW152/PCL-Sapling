@@ -354,7 +354,7 @@ namespace PCL
                     {
                         PathLogo.MouseLeave += (sender, e) => IsLogoDown = false;
                         PathLogo.MouseLeftButtonDown += (sender, e) => IsLogoDown = true;
-                        PathLogo.MouseLeftButtonUp += (sender, e) => { if (IsLogoDown) { IsLogoDown = false; LogoClick?.Invoke(((dynamic)sender).Tag, e); } };
+                        PathLogo.MouseLeftButtonUp += (sender, e) => { if (IsLogoDown) { IsLogoDown = false; LogoClick?.Invoke(sender.Fe().Tag, e); } };
                     }
                 }
                 // 改变行距
@@ -546,13 +546,13 @@ namespace PCL
                     var RadioboxList = new List<MyListItem>();
                     int CheckedCount = 0;
                     // 收集控件列表与选中个数
-                    foreach (var RawControl in (IEnumerable)((dynamic)this.Parent).Children)
+                    foreach (var RawControl in (IEnumerable)((System.Windows.Controls.Panel)this.Parent).Children)
                     {
                         var Control = MyVirtualizingElement.TryInit((FrameworkElement)RawControl);
                         if (Control is MyListItem && ((MyListItem)Control).Type == CheckType.RadioBox)
                         {
                             RadioboxList.Add((MyListItem)Control);
-                            if (Conversions.ToBoolean(((dynamic)Control).Checked))
+                            if (((MyListItem)Control).Checked)
                                 CheckedCount += 1;
                         }
                     }

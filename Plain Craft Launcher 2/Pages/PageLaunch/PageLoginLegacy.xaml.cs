@@ -8,7 +8,7 @@ using MeloongCore.Extensions;
 namespace PCL
 {
 
-    public partial class PageLoginLegacy
+    public partial class PageLoginLegacy : ILoginPage
     {
 
         public PageLoginLegacy()

@@ -163,7 +163,7 @@ namespace PCL
                 // 上下两个重载只有这里不一样
                 object Input = null;
                 if (PageLoaderInputInvoke is not null)
-                    Input = this.PageLoaderInputInvoke.AsDyn()();
+                    Input = ((Delegate)this.PageLoaderInputInvoke).DynamicInvoke();
                 PageLoader.Start(Input);
             }
             if (PageLoader.State == ModBase.LoadState.Finished && FinishedInvoke is not null)
@@ -181,12 +181,12 @@ namespace PCL
                 return;
             if (GeneralUtils.IsGenericInstanceOf(PageLoader, typeof(ModLoader.LoaderTask<,>)) || PageLoader is ModLoader.LoaderWorker)
             {
-                PageLoader.Start(((dynamic)PageLoader).StartGetInput(Input, PageLoaderInputInvoke), IsForceRestart: IsForceRestart);
+                PageLoader.Start(PageLoader is ModLoader.ILoaderTask Task ? Task.StartGetInputBoxed(Input, (Delegate)PageLoaderInputInvoke) : Input, IsForceRestart: IsForceRestart);
             }
             else
             {
                 if (Input is null && PageLoaderInputInvoke is not null)
-                    Input = this.PageLoaderInputInvoke.AsDyn()();
+                    Input = ((Delegate)this.PageLoaderInputInvoke).DynamicInvoke();
                 PageLoader.Start(Input, IsForceRestart: IsForceRestart);
             }
         }

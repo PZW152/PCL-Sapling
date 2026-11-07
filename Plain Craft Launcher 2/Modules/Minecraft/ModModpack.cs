@@ -259,14 +259,14 @@ namespace PCL
             if (FileUtils.Exists(OverridesIni))
             {
                 ModBase.WriteIni(OverridesIni, "VersionArgumentIndie", 1.ToString()); // 开启版本隔离
-                ModBase.WriteIni(OverridesIni, "VersionArgumentIndieV2", Conversions.ToString(true));
-                ModBase.WriteIni(OverridesIni, "IsStar", Conversions.ToString(false));
+                ModBase.WriteIni(OverridesIni, "VersionArgumentIndieV2", true.ToString());
+                ModBase.WriteIni(OverridesIni, "IsStar", false.ToString());
                 FileUtils.Copy(OverridesIni, VersionIni); // 覆写已有的 ini
             }
             else
             {
                 ModBase.WriteIni(VersionIni, "VersionArgumentIndie", 1.ToString()); // 开启版本隔离
-                ModBase.WriteIni(VersionIni, "VersionArgumentIndieV2", Conversions.ToString(true));
+                ModBase.WriteIni(VersionIni, "VersionArgumentIndieV2", true.ToString());
             }
             ModBase.IniClearCache(VersionIni); // 重置缓存，避免被安装过程中写入的 ini 覆盖
         }
@@ -854,7 +854,7 @@ namespace PCL
                     }
                     FileUtils.Write(MmcSetupFile, Lines.Join(Constants.vbCrLf));
                     // 读取文件
-                    if (Conversions.ToBoolean(ModBase.ReadIni(MmcSetupFile, "OverrideCommands", Conversions.ToString(false))))
+                    if (Conversions.ToBoolean(ModBase.ReadIni(MmcSetupFile, "OverrideCommands", false.ToString())))
                     {
                         string PreLaunchCommand = ModBase.ReadIni(MmcSetupFile, "PreLaunchCommand");
                         if (!string.IsNullOrEmpty(PreLaunchCommand))
@@ -864,7 +864,7 @@ namespace PCL
                             Logger.Info($"迁移 MultiMC 版本独立设置：启动前执行命令：{PreLaunchCommand}");
                         }
                     }
-                    if (Conversions.ToBoolean(ModBase.ReadIni(MmcSetupFile, "JoinServerOnLaunch", Conversions.ToString(false))))
+                    if (Conversions.ToBoolean(ModBase.ReadIni(MmcSetupFile, "JoinServerOnLaunch", false.ToString())))
                     {
                         string ServerAddress = ModBase.ReadIni(MmcSetupFile, "JoinServerOnLaunchAddress").Replace(@"\""", "\"");
                         ModBase.WriteIni(SetupFile, "VersionServerEnter", ServerAddress);
@@ -873,7 +873,7 @@ namespace PCL
                     string Logo = ModBase.ReadIni(MmcSetupFile, "iconKey", "");
                     if (!string.IsNullOrEmpty(Logo) && FileUtils.Exists($"{InstallTemp}{ArchiveBaseFolder}{Logo}.png"))
                     {
-                        ModBase.WriteIni(SetupFile, "LogoCustom", Conversions.ToString(true));
+                        ModBase.WriteIni(SetupFile, "LogoCustom", true.ToString());
                         ModBase.WriteIni(SetupFile, "Logo", @"PCL\Logo.png");
                         FileUtils.Copy($"{InstallTemp}{ArchiveBaseFolder}{Logo}.png", VersionFolder + @"PCL\Logo.png");
                         Logger.Info($"迁移 MultiMC 版本独立设置：版本图标（{Logo}.png）");
@@ -882,7 +882,7 @@ namespace PCL
                     string JvmArgs = ModBase.ReadIni(MmcSetupFile, "JvmArgs", "");
                     if (!string.IsNullOrEmpty(JvmArgs))
                     {
-                        if (Conversions.ToBoolean(ModBase.ReadIni(MmcSetupFile, "OverrideJavaArgs", Conversions.ToString(false))))
+                        if (Conversions.ToBoolean(ModBase.ReadIni(MmcSetupFile, "OverrideJavaArgs", false.ToString())))
                         {
                             ModBase.WriteIni(SetupFile, "VersionAdvanceJvm", JvmArgs);
                             Logger.Info($"迁移 MultiMC 版本独立设置：JVM 参数（覆盖）：{JvmArgs}");

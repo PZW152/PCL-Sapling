@@ -110,7 +110,7 @@ namespace PCL
             try
             {
                 // 获取实际加载器列表
-                List<ModLoader.LoaderBase> LoaderList = (List<ModLoader.LoaderBase>)((dynamic)Loader).GetLoaderList();
+                List<ModLoader.LoaderBase> LoaderList = ((ModLoader.ILoaderCombo)Loader).GetLoaderList();
                 if (RightCards.ContainsKey(Loader.Name))
                 {
                     // 已有此卡片
@@ -174,7 +174,7 @@ namespace PCL
                                                 {
                                                     case ModBase.LoadState.Waiting:
                                                         {
-                                                            if (Conversions.ToBoolean(Operators.ConditionalCompareObjectNotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Waiting", false)))
+                                                            if (Operators.ConditionalCompareObjectNotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Waiting", false))
                                                             {
                                                                 Card.Children.RemoveAt(Row * 2);
                                                                 Card.Children.Insert(Row * 2, (UIElement)ModBase.GetObjectFromXML("<Path xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" xmlns:local=\"clr-namespace:PCL;assembly=Plain Craft Launcher 2\" Stretch=\"Uniform\" Tag=\"Waiting\" Data=\"F1 M5,0 a5,5 360 1 0 0,0.0001 m15,0 a5,5 360 1 0 0,0.0001 m15,0 a5,5 360 1 0 0,0.0001 Z\" Width=\"18\" HorizontalAlignment=\"Center\" Grid.Column=\"0\" Grid.Row=\"" + Row + "\" Fill=\"{DynamicResource ColorBrush3}\" Margin=\"0,7,0,0\" VerticalAlignment=\"Top\" Height=\"6\"/>"));
@@ -184,7 +184,7 @@ namespace PCL
                                                         }
                                                     case ModBase.LoadState.Loading:
                                                         {
-                                                            if (Conversions.ToBoolean(Operators.ConditionalCompareObjectNotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Loading", false)))
+                                                            if (Operators.ConditionalCompareObjectNotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Loading", false))
                                                             {
                                                                 Card.Children.RemoveAt(Row * 2);
                                                                 Card.Children.Insert(Row * 2, (UIElement)ModBase.GetObjectFromXML("<TextBlock xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" xmlns:local=\"clr-namespace:PCL;assembly=Plain Craft Launcher 2\" Text=\"" + Math.Floor(SubTask.Progress * 100d) + "%\" Tag=\"Loading\" HorizontalAlignment=\"Center\" Grid.Column=\"0\" Grid.Row=\"" + Row + "\" Foreground=\"{DynamicResource ColorBrush3}\"/>"));
@@ -198,7 +198,7 @@ namespace PCL
                                                         }
                                                     case ModBase.LoadState.Finished:
                                                         {
-                                                            if (Conversions.ToBoolean(Operators.ConditionalCompareObjectNotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Finished", false)))
+                                                            if (Operators.ConditionalCompareObjectNotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Finished", false))
                                                             {
                                                                 Card.Children.RemoveAt(Row * 2);
                                                                 Card.Children.Insert(Row * 2, (UIElement)ModBase.GetObjectFromXML("<Path xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" xmlns:local=\"clr-namespace:PCL;assembly=Plain Craft Launcher 2\" Stretch=\"Uniform\" Tag=\"Finished\" Data=\"F1 M 23.7501,33.25L 34.8334,44.3333L 52.2499,22.1668L 56.9999,26.9168L 34.8334,53.8333L 19.0001,38L 23.7501,33.25 Z\" Height=\"16\" Width=\"15\" HorizontalAlignment=\"Center\" Grid.Column=\"0\" Grid.Row=\"" + Row + "\" Fill=\"{DynamicResource ColorBrush3}\" Margin=\"0,3,0,0\" VerticalAlignment=\"Top\"/>"));
@@ -322,15 +322,15 @@ namespace PCL
         }
         public void TaskRemove(object Loader)
         {
-            if (RightCards.ContainsKey(Conversions.ToString(((dynamic)Loader).Name)))
+            if (RightCards.ContainsKey(((ModLoader.LoaderBase)Loader).Name))
             {
                 ModBase.RunInUiWait(() =>
         {
             // 移除已有的卡片
-            Grid Card = RightCards[Conversions.ToString(((dynamic)Loader).Name)];
+            Grid Card = RightCards[((ModLoader.LoaderBase)Loader).Name];
             ModMain.FrmSpeedRight.PanMain.Children.Remove(Card);
-            RightCards.Remove(Conversions.ToString(((dynamic)Loader).Name));
-            Logger.Info($"移除任务管理卡片：{(object)((dynamic)Loader).Name}");
+            RightCards.Remove(((ModLoader.LoaderBase)Loader).Name);
+            Logger.Info($"移除任务管理卡片：{((ModLoader.LoaderBase)Loader).Name}");
         });
             }
         }

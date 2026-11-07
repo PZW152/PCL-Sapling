@@ -223,7 +223,7 @@ namespace PCL
             }
             BtnStar.Click += (_, __) =>
         {
-            ModBase.WriteIni(Instance.PathVersion + @"PCL\Setup.ini", "IsStar", Conversions.ToString(!Instance.IsStar));
+            ModBase.WriteIni(Instance.PathVersion + @"PCL\Setup.ini", "IsStar", (!Instance.IsStar).ToString());
             ModMinecraft.McInstanceListForceRefresh = true;
             ModLoader.LoaderFolderRun(ModMinecraft.McInstanceListLoader, ModMinecraft.McFolderSelected, ModLoader.LoaderFolderRunType.ForceRun, MaxDepth: 1, ExtraPath: @"versions\");
         };
