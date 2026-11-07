@@ -1,0 +1,142 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- PCL 主程序：C# + WPF，運行於 Windows 自帶的 .NET Framework 4.8。
+       輸出單個 exe：依賴庫內嵌於資源，啟動時由 Application.xaml.cs 的 AssemblyResolve 從記憶體加載。 -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>PCL</RootNamespace>
+    <AssemblyName>Plain Craft Launcher 2</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Configurations>Debug;Release;Snapshot</Configurations>
+    <Platforms>AnyCPU</Platforms>
+    <Prefer32Bit>false</Prefer32Bit>
+    <Deterministic>true</Deterministic>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <ApplicationIcon>Images\icon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <OutDir>bin\</OutDir>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <!-- 不讓 SDK 按配置名自動添加 DEBUG/RELEASE 等符號，版本類型完全由下方配置決定 -->
+    <DisableImplicitConfigurationDefines>true</DisableImplicitConfigurationDefines>
+    <NoWarn>$(NoWarn);CS0162;CS0168;CS0169;CS0219;CS0414;CS0649;CS1998;CS4014;CS8981</NoWarn>
+  </PropertyGroup>
+
+  <!-- 與原 VB 項目一致：Debug 與 Snapshot 都編譯為快照版，Release 為正式版 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DefineConstants>SNAPSHOT</DefineConstants>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Snapshot'">
+    <DefineConstants>SNAPSHOT</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DefineConstants>RELEASE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ApplicationDefinition Include="Application.xaml" />
+    <Page Include="**\*.xaml" Exclude="Application.xaml;Resources\Custom.xaml;Controls\MySliderDot.xaml;bin\**;obj\**" />
+    <None Include="Resources\Custom.xaml;Controls\MySliderDot.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\icon.ico" />
+    <Resource Include="Resources\Font.ttf" />
+    <Resource Include="Images\Heads\LTCat.jpg" />
+    <Resource Include="Images\Blocks\Anvil.png" />
+    <Resource Include="Images\Blocks\CobbleStone.png" />
+    <Resource Include="Images\Blocks\CommandBlock.png" />
+    <Resource Include="Images\Blocks\Grass.png" />
+    <Resource Include="Images\Blocks\RedstoneBlock.png" />
+    <Resource Include="Images\Blocks\GrassPath.png" />
+    <Resource Include="Images\Blocks\Egg.png" />
+    <Resource Include="Images\Heads\Hao_Tian.jpg" />
+    <Resource Include="Images\Skins\Steve.png" />
+    <Resource Include="Images\Skins\Alex.png" />
+    <Resource Include="Images\Themes\5.png" />
+    <Resource Include="Images\Themes\6.png" />
+    <Resource Include="Images\Themes\7.png" />
+    <Resource Include="Images\Themes\8.png" />
+    <Resource Include="Images\Themes\9.png" />
+    <Resource Include="Images\Themes\10.png" />
+    <Resource Include="Images\Heads\Patrick.png" />
+    <Resource Include="Images\Themes\11.png" />
+    <Resource Include="Images\Themes\12.png" />
+    <Resource Include="Images\Blocks\GoldBlock.png" />
+    <Resource Include="Images\Themes\13.png" />
+    <Resource Include="Images\Themes\42.png" />
+    <Resource Include="Images\Blocks\RedstoneLampOff.png" />
+    <Resource Include="Images\Blocks\RedstoneLampOn.png" />
+    <Resource Include="Images\Blocks\Fabric.png" />
+    <Resource Include="Images\Heads\Logo.png" />
+    <Resource Include="Images\ReleaseTypes\Alpha.png" />
+    <Resource Include="Images\ReleaseTypes\Beta.png" />
+    <Resource Include="Images\ReleaseTypes\Release.png" />
+    <Resource Include="Images\Icons\NoIcon.png" />
+    <Resource Include="Images\Heads\PCL2.png" />
+    <Resource Include="Images\Heads\00ll00.png" />
+    <Resource Include="Images\Heads\bangbang93.png" />
+    <Resource Include="Images\Heads\wiki.png" />
+    <Resource Include="Images\Blocks\OptiFabric.png" />
+    <Resource Include="Images\Skins\Ari.png" />
+    <Resource Include="Images\Skins\Efe.png" />
+    <Resource Include="Images\Skins\Kai.png" />
+    <Resource Include="Images\Skins\Makena.png" />
+    <Resource Include="Images\Skins\Noor.png" />
+    <Resource Include="Images\Skins\Sunny.png" />
+    <Resource Include="Images\Skins\Zuri.png" />
+    <Resource Include="Images\Icons\Disabled.png" />
+    <Resource Include="Images\Heads\MCBBS.png" />
+    <Resource Include="Images\Blocks\NeoForge.png" />
+    <Resource Include="Images\Heads\z0z0r4.png" />
+    <Resource Include="Images\Heads\ChongQing.png" />
+    <Resource Include="Images\Heads\HerobrineXia.png" />
+  </ItemGroup>
+
+  <!-- 依賴庫與資源文件內嵌進 exe -->
+  <ItemGroup>
+    <EmbeddedResource Update="My Project\Resources.resx" LogicalName="PCL.Resources.resources" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="CacheCow.Client"><HintPath>Resources\CacheCow.Client.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="CacheCow.Client.FileStore"><HintPath>Resources\CacheCow.Client.FileStore.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="CacheCow.Common"><HintPath>Resources\CacheCow.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Imazen.WebP"><HintPath>Resources\Imazen.WebP.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>Resources\Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Ookii.Dialogs.Wpf"><HintPath>Resources\Ookii.Dialogs.Wpf.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.Net.Http.Formatting"><HintPath>Resources\System.Net.Http.Formatting.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="ThrottleDebounce"><HintPath>Resources\ThrottleDebounce.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MeloongCore\Shared\MeloongCore.csproj" Private="false" />
+    <ProjectReference Include="..\MeloongCore\Wpf\MeloongCore.Wpf.csproj" Private="false" />
+    <ProjectReference Include="..\PCLCS\PCLCS.csproj" Private="false" />
+  </ItemGroup>
+
+</Project>

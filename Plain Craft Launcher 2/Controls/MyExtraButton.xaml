@@ -1,12 +1,12 @@
 <Grid
             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-            xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" x:Name="PanBack" mc:Ignorable="d" x:Class="MyExtraButton"
+            xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" x:Name="PanBack" mc:Ignorable="d" x:Class="PCL.MyExtraButton"
             Width="40" RenderTransformOrigin="0.5,0.5" Height="0">
     <Grid.RenderTransform>
         <ScaleTransform ScaleX="0" ScaleY="0" />
     </Grid.RenderTransform>
-    <Border x:Name="PanClick" CornerRadius="1000" BorderThickness="0.001" Background="{StaticResource ColorBrushSemiTransparent}"/>
+    <Border x:Name="PanClick" MouseEnter="__On_PanClick_MouseEnter" MouseLeave="__On_PanClick_MouseLeave" MouseRightButtonDown="__On_PanClick_MouseRightButtonDown" MouseLeftButtonDown="__On_PanClick_MouseLeftButtonDown" MouseRightButtonUp="__On_PanClick_MouseRightButtonUp" MouseLeftButtonUp="__On_PanClick_MouseLeftButtonUp" CornerRadius="1000" BorderThickness="0.001" Background="{StaticResource ColorBrushSemiTransparent}"/>
     <Grid x:Name="PanScale" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5" Margin="0,10,0,0">
         <Grid.RenderTransform>
             <ScaleTransform />
