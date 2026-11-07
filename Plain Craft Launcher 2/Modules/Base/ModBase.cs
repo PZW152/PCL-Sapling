@@ -37,7 +37,7 @@ namespace PCL
 
         // 下列版本信息由更新器自动修改
         public const string VersionBaseName = "2.99.0.1"; // 显示用版本名
-        public const string CommitHash = ""; // Commit Hash，由 GitHub Workflow 自动替换
+        public const string CommitHash = BuildSecrets.CommitHash; // 編譯時由 PCL_COMMIT_HASH 環境變量注入
 #if RELEASE
         public const int VersionCode = 415; // 正式版
 #else

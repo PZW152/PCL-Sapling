@@ -21,9 +21,10 @@ namespace PCL
         // 在开源版的注册表与常规版的注册表隔离，以防数据冲突
         public const string RegFolder = "PCLDebug";
         // 用于微软登录的 ClientId
-        public static string OAuthClientId = Environment.GetEnvironmentVariable("PCL_MS_CLIENT_ID") ?? "";
+        public static string OAuthClientId = NonEmpty(Environment.GetEnvironmentVariable("PCL_MS_CLIENT_ID")) ?? BuildSecrets.MsClientId; // 運行時環境變量優先，否則用編譯時注入的值
         // CurseForge API Key
-        public static string CurseForgeAPIKey = Environment.GetEnvironmentVariable("PCL_CURSEFORGE_API_KEY") ?? "";
+        public static string CurseForgeAPIKey = NonEmpty(Environment.GetEnvironmentVariable("PCL_CURSEFORGE_API_KEY")) ?? BuildSecrets.CurseForgeApiKey;
+        private static string NonEmpty(string Value) => string.IsNullOrEmpty(Value) ? null : Value;
 
         #region 网络鉴权
 
