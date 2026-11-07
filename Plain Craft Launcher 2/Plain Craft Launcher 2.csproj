@@ -140,6 +140,8 @@
     <ProjectReference Include="..\PCLCS\PCLCS.csproj" Private="false" />
   </ItemGroup>
 
+  <Import Project="..\BuildSecrets.local.props" Condition="Exists('..\BuildSecrets.local.props')" />
+
   <!-- 編譯時注入密鑰與提交號：從環境變量 PCL_MS_CLIENT_ID / PCL_CURSEFORGE_API_KEY / PCL_COMMIT_HASH 生成 BuildSecrets 類，不寫入源碼倉庫 -->
   <Target Name="GenerateBuildSecrets" BeforeTargets="CoreCompile;XamlPreCompile" Condition="'$(DesignTimeBuild)' != 'true'">
     <PropertyGroup>
@@ -147,6 +149,9 @@
       <_MsClientId>$([System.Environment]::GetEnvironmentVariable('PCL_MS_CLIENT_ID'))</_MsClientId>
       <_CurseForgeKey>$([System.Environment]::GetEnvironmentVariable('PCL_CURSEFORGE_API_KEY'))</_CurseForgeKey>
       <_CommitHash>$([System.Environment]::GetEnvironmentVariable('PCL_COMMIT_HASH'))</_CommitHash>
+      <!-- 環境變量未設置時，回退到倉庫根目錄的 BuildSecrets.local.props（已被 .gitignore 忽略） -->
+      <_MsClientId Condition="'$(_MsClientId)' == ''">$(LocalMsClientId)</_MsClientId>
+      <_CurseForgeKey Condition="'$(_CurseForgeKey)' == ''">$(LocalCurseForgeApiKey)</_CurseForgeKey>
     </PropertyGroup>
     <WriteLinesToFile File="$(BuildSecretsFile)" Overwrite="true" WriteOnlyWhenDifferent="true"
       Lines="namespace PCL { internal static class BuildSecrets { public const string MsClientId = &quot;$(_MsClientId)&quot;%3B public const string CurseForgeApiKey = &quot;$(_CurseForgeKey)&quot;%3B public const string CommitHash = &quot;$(_CommitHash)&quot;%3B } }" />

@@ -561,10 +561,16 @@ namespace PCL
             {
                 Logger.Warn(ex, "清理自动更新文件失败");
             }
-            // 开源版本提示
-            if (ModSecret.VersionBranchMain == "OpenSource")
+            // 开源版本提示：只在缺少编译时注入的密钥时提示一次，并只列出确实不可用的功能
+            var MissingFeatures = new List<string>();
+            if (string.IsNullOrEmpty(ModSecret.CurseForgeAPIKey))
+                MissingFeatures.Add("- CurseForge 搜索与下载：编译时未设置 PCL_CURSEFORGE_API_KEY");
+            if (string.IsNullOrEmpty(ModSecret.OAuthClientId))
+                MissingFeatures.Add("- 正版登录：编译时未设置 PCL_MS_CLIENT_ID");
+            if (MissingFeatures.Any() && !Settings.Get<bool>("HintOpenSourceKeys"))
             {
-                ModMain.MyMsgBox($"该版本中无法使用以下特性：{Constants.vbCrLf}- CurseForge API 调用：需要自行申请 API Key，然后添加到 ModSecret.vb 的开头{Constants.vbCrLf}- 正版登录：需要自行向微软申请 Client ID，然后添加到 ModSecret.vb 的开头{Constants.vbCrLf}- 更新与联网通知：避免滥用隐患{Constants.vbCrLf}- 百宝箱：开发早期往里面塞了些开发工具，整理起来太麻烦了……", "开源版本说明");
+                Settings.Set("HintOpenSourceKeys", true);
+                ModMain.MyMsgBox("该版本中无法使用以下功能：" + Constants.vbCrLf + MissingFeatures.Join(Constants.vbCrLf), "开源版本说明");
             }
         }, "初始化", ThreadPriority.Lowest);
 

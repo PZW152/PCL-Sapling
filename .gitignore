@@ -342,3 +342,6 @@ ASALocalRun/
 healthchecksdb
 
 MaskFiles/
+
+# 本地編譯密鑰（Azure Client ID、CurseForge API Key），不提交
+BuildSecrets.local.props
