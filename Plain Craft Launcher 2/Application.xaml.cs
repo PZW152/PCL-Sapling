@@ -306,7 +306,7 @@ namespace PCL
                 Logger.Error(ex, $"你的 .NET Framework 版本过低或损坏，请下载并重新安装 .NET Framework 4.8！{Constants.vbCrLf}若安装失败，可以先卸载高版本的 .NET Framework 然后再试。", LogBehavior.AlertThenCrash);
             }
         }
-        private string[] _Prefixes = new[] { "Newtonsoft.Json", "Ookii.Dialogs.Wpf", "Imazen.WebP", "CacheCow.Common", "CacheCow.Client.FileStore", "CacheCow.Client", "ThrottleDebounce", "System.Net.Http.Formatting", "Microsoft.Win32.Registry", "PCLCS", "MeloongCore.Wpf", "MeloongCore" };
+        private string[] _Prefixes = new[] { "Newtonsoft.Json", "Ookii.Dialogs.Wpf", "Imazen.WebP", "ThrottleDebounce", "Microsoft.Win32.Registry", "PCLCS", "MeloongCore.Wpf", "MeloongCore" };
         private ConcurrentDictionary<string, Lazy<Assembly>> _LoadedAssemblies = new ConcurrentDictionary<string, Lazy<Assembly>>(StringComparer.Ordinal); // 缓存
 
         // 动态 DLL 加载
@@ -355,11 +355,11 @@ namespace PCL
                     {
                         // 微软
                         JObject MsJson = (JObject)Settings.Get<string>("LoginMsJson").DeserializeJson();
-                        MsJson.Remove(Conversions.ToString(((dynamic)sender).Tag));
+                        MsJson.Remove(Conversions.ToString(sender.Fe().Tag));
                         Settings.Set("LoginMsJson", MsJson.ToString(Formatting.None));
-                        if (object.ReferenceEquals(ModMain.FrmLoginMs.ComboAccounts.SelectedItem, ((dynamic)sender).Parent))
+                        if (object.ReferenceEquals(ModMain.FrmLoginMs.ComboAccounts.SelectedItem, sender.ParentFe()))
                             ModMain.FrmLoginMs.ComboAccounts.SelectedIndex = 0;
-                        ModMain.FrmLoginMs.ComboAccounts.Items.Remove(((dynamic)sender).Parent);
+                        ModMain.FrmLoginMs.ComboAccounts.Items.Remove(sender.ParentFe());
                         break;
                     }
                 case ModLaunch.McLoginType.Legacy:
@@ -367,7 +367,7 @@ namespace PCL
                         // 离线
                         var Names = new List<string>();
                         Names.AddRange(Settings.Get<string>("LoginLegacyName").ToString().Split("¨"));
-                        Names.Remove(Conversions.ToString(((dynamic)sender).Tag));
+                        Names.Remove(Conversions.ToString(sender.Fe().Tag));
                         Settings.Set("LoginLegacyName", Names.Join('¨'));
                         ModMain.FrmLoginLegacy.ComboName.ItemsSource = Names;
                         ModMain.FrmLoginLegacy.ComboName.Text = Names.Any() ? Names[0] : "";

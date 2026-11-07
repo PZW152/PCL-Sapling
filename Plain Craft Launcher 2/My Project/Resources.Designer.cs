@@ -70,42 +70,6 @@ namespace PCL.My.Resources
         /// <summary>
         /// 查找 System.Byte[] 类型的本地化资源。
         /// </summary>
-        internal static byte[] CacheCow_Client
-        {
-            get
-            {
-                var obj = ResourceManager.GetObject("CacheCow.Client", resourceCulture);
-                return (byte[])obj;
-            }
-        }
-
-        /// <summary>
-        /// 查找 System.Byte[] 类型的本地化资源。
-        /// </summary>
-        internal static byte[] CacheCow_Client_FileStore
-        {
-            get
-            {
-                var obj = ResourceManager.GetObject("CacheCow.Client.FileStore", resourceCulture);
-                return (byte[])obj;
-            }
-        }
-
-        /// <summary>
-        /// 查找 System.Byte[] 类型的本地化资源。
-        /// </summary>
-        internal static byte[] CacheCow_Common
-        {
-            get
-            {
-                var obj = ResourceManager.GetObject("CacheCow.Common", resourceCulture);
-                return (byte[])obj;
-            }
-        }
-
-        /// <summary>
-        /// 查找 System.Byte[] 类型的本地化资源。
-        /// </summary>
         internal static byte[] ThrottleDebounce
         {
             get
@@ -231,18 +195,6 @@ namespace PCL.My.Resources
             get
             {
                 var obj = ResourceManager.GetObject("PCLCS", resourceCulture);
-                return (byte[])obj;
-            }
-        }
-
-        /// <summary>
-        /// 查找 System.Byte[] 类型的本地化资源。
-        /// </summary>
-        internal static byte[] System_Net_Http_Formatting
-        {
-            get
-            {
-                var obj = ResourceManager.GetObject("System.Net.Http.Formatting", resourceCulture);
                 return (byte[])obj;
             }
         }

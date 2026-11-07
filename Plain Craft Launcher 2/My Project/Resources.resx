@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -118,15 +118,6 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="CacheCow.Client" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\CacheCow.Client.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="CacheCow.Client.FileStore" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\CacheCow.Client.FileStore.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="CacheCow.Common" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\CacheCow.Common.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="ThrottleDebounce" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ThrottleDebounce.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -162,9 +153,6 @@
   </data>
   <data name="PCLCS" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\..\PCLCS\bin\PCLCS.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="System.Net.Http.Formatting" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\System.Net.Http.Formatting.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="Transformer" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\transformer.jar;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- PCL 主程序：C# + WPF，運行於 Windows 自帶的 .NET Framework 4.8。
        輸出單個 exe：依賴庫內嵌於資源，啟動時由 Application.xaml.cs 的 AssemblyResolve 從記憶體加載。 -->
@@ -101,7 +101,6 @@
 
   <ItemGroup>
     <Reference Include="Microsoft.VisualBasic" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.IO.Compression" />
@@ -114,13 +113,9 @@
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="CacheCow.Client"><HintPath>Resources\CacheCow.Client.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="CacheCow.Client.FileStore"><HintPath>Resources\CacheCow.Client.FileStore.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="CacheCow.Common"><HintPath>Resources\CacheCow.Common.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Imazen.WebP"><HintPath>Resources\Imazen.WebP.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Newtonsoft.Json"><HintPath>Resources\Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Ookii.Dialogs.Wpf"><HintPath>Resources\Ookii.Dialogs.Wpf.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="System.Net.Http.Formatting"><HintPath>Resources\System.Net.Http.Formatting.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="ThrottleDebounce"><HintPath>Resources\ThrottleDebounce.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 

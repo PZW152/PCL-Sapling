@@ -15,7 +15,6 @@ using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
 using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.CompilerServices;
-using ThrottleDebounce;
 
 namespace PCL
 {
@@ -303,19 +302,6 @@ namespace PCL
             HttpResponseMessage Response = null;
             try
             {
-                // 构建 RequestClient
-                Directory.CreateDirectory(ModBase.PathTemp + @"Cache\Http\");
-                lock (RequestClientLock)
-                {
-                    if (RequestClient is null) // 延迟初始化，以避免在程序启动前加载 CacheCow 导致 DLL 加载失败
-                    {
-                        RequestClient = CacheCow.Client.ClientExtensions.CreateClient(new CacheCow.Client.FileCacheStore.FileStore(ModBase.PathTemp + "Cache/Http/"), new HttpClientHandler()
-                        {
-                            AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip,
-                            UseCookies = false // 不设为 False 就不能从 Header 手动传入 Cookies
-                        });
-                    }
-                }
                 // 构建请求
                 Url = ModSecret.SecretCdnSign(Url);
                 Request = new HttpRequestMessage(Method, Url);
@@ -346,22 +332,33 @@ namespace PCL
                     }
                 }
                 ModSecret.SecretHeadersSign(Url, ref Request, SimulateBrowserHeaders);
+                // 磁盘缓存：有效期内直接返回；否则附加条件请求头
+                bool Cacheable = HttpDiskCache.IsCacheable(Request);
+                if (Cacheable)
+                {
+                    var Fresh = HttpDiskCache.TryUseOrPrepare(Request, Url);
+                    if (Fresh is not null)
+                        return Fresh;
+                }
                 // 发送请求
-                // CacheCow 读取缓存时若文件被占用，会调用不存在的 System.Net.Http.Formatting.resources，抛出异常（#8150）
-                Retrier.Attempt(delay: _ => TimeSpan.FromMilliseconds(200d), isRetryAllowed: ex => ex is FileNotFoundException || ex is IOException, action: Attempt =>
-        {
-            CancelToken?.Dispose();
-            CancelToken = new CancellationTokenSource(Timeout);
-            var ClonedRequest = Request.Clone(); // HttpRequestMessage 只能发送一次，重试时需要克隆一个新的
-            try
-            {
-                Response = RequestClient.SendAsync(ClonedRequest, HttpCompletionOption.ResponseHeadersRead, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
-            }
-            finally
-            {
-                ClonedRequest.Dispose();
-            }
-        });
+                CancelToken = new CancellationTokenSource(Timeout);
+                Response = RequestClient.SendAsync(Request, HttpCompletionOption.ResponseHeadersRead, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
+                if (Cacheable && Response.StatusCode == HttpStatusCode.NotModified)
+                {
+                    var Cached = HttpDiskCache.ReadNotModified(Response, Url);
+                    if (Cached is not null)
+                        return Cached;
+                    // 缓存文件已丢失：不带条件请求头重新请求一次
+                    Response.Dispose();
+                    var Retry = Request.Clone();
+                    Retry.Headers.Remove("If-None-Match");
+                    Retry.Headers.Remove("If-Modified-Since");
+                    Request.Dispose();
+                    Request = Retry;
+                    CancelToken.Dispose();
+                    CancelToken = new CancellationTokenSource(Timeout);
+                    Response = RequestClient.SendAsync(Request, HttpCompletionOption.ResponseHeadersRead, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
+                }
                 // 读取响应
                 byte[] ResponseBytes;
                 CancelToken.Dispose();
@@ -379,6 +376,8 @@ namespace PCL
                     string ResponseMessage = ResponseBytes.GetString(Encoding);
                     throw new HttpRequestCodeException($"错误码 {Response.StatusCode} ({(int)Response.StatusCode})，{Method}，{Url}" + (string.IsNullOrEmpty(ResponseMessage) ? "" : Constants.vbCrLf + ResponseMessage), Response.StatusCode, ResponseMessage);
                 }
+                if (Cacheable)
+                    HttpDiskCache.Store(Response, Url, ResponseBytes);
                 return ResponseBytes;
             }
             catch (HttpRequestException ex)
@@ -409,8 +408,12 @@ namespace PCL
                 Response?.Dispose();
             }
         }
-        private static HttpClient RequestClient = null;
-        private static object RequestClientLock = new object();
+        private static readonly HttpClient RequestClient = new HttpClient(new HttpClientHandler()
+        {
+            AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip,
+            UseCookies = false // 不设为 False 就不能从 Header 手动传入 Cookies
+        })
+        { Timeout = System.Threading.Timeout.InfiniteTimeSpan }; // 超时由每次请求的 CancellationToken 控制
 
         #endregion
 
