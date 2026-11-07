@@ -87,7 +87,7 @@ namespace PCL
                     {
                         if (Value is null)
                             Value = "";
-                        Value = DesEncrypt(Value, "PCL" + ModBase.Identify);
+                        Value = SecretProtector.Protect(Value);
                     }
                     catch (Exception ex)
                     {
@@ -191,7 +191,8 @@ namespace PCL
             try
             {
                 string GotValue = null; // 先用 String 储存，避免类型转换
-                string DefaultValue = Conversions.ToString(Entry.Encrypted ? DesEncrypt(Conversions.ToString(Entry.DefaultValue), "PCL" + ModBase.Identify) : Entry.DefaultValue);
+                // 加密項：用一個不可能是密文的標記作為讀取默認值，以判斷“未設置過”
+                string DefaultValue = Conversions.ToString(Entry.Encrypted ? EncryptedUnsetMarker : Entry.DefaultValue);
                 switch (Entry.Source)
                 {
                     case Sources.Normal:
@@ -228,7 +229,14 @@ namespace PCL
                     {
                         try
                         {
-                            GotValue = DesDecrypt(GotValue, "PCL" + ModBase.Identify);
+                            GotValue = SecretProtector.Unprotect(GotValue, s => DesDecrypt(s, "PCL" + ModBase.Identify), out bool IsLegacy);
+                            if (IsLegacy)
+                            {
+                                // 舊版 DES 密文：解密成功後立即以 DPAPI 重新保存
+                                Entry.Set(GotValue, Instance);
+                                Entry.Save(Instance);
+                                Logger.Info($"已將加密設置遷移到 DPAPI：{Key}");
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -367,6 +375,7 @@ namespace PCL
 
         #region DES 加密
 
+        private const string EncryptedUnsetMarker = "\u0001unset"; // 加密項未設置時的讀取默認值
         private static readonly byte[] desInitialVector = Encoding.UTF8.GetBytes("95168702");
 
         /// <summary>
