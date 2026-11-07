@@ -69,7 +69,6 @@ Public Class Application
             '初始化文件结构
             Try
                 DirectoryUtils.Create(Paths.Base & "PCL\Pictures\")
-                DirectoryUtils.Create(Paths.Base & "PCL\Musics\")
                 CheckPermissionWithException(Paths.Base & "PCL\")
             Catch ex As Exception
                 MsgBox($"PCL 没有对当前文件夹的权限（{Paths.Base}PCL\），请尝试：" & vbCrLf &
@@ -113,11 +112,7 @@ RetryCacheCheck:
             End If
             '基础信息
             Logger.Info($"程序版本：{VersionDisplay} ({VersionCode}{If(CommitHash = "", "", $"，#{CommitHash}")})")
-            If BuildType = BuildTypes.Snapshot Then
-                Logger.Info($"识别码：{Identify}{If(ThemeCheckOne(9), "，已解锁反馈主题", "，未解锁反馈主题")}")
-            Else
-                Logger.Info($"识别码：{Identify}")
-            End If
+            Logger.Info($"识别码：{Identify}")
             Logger.Info($"程序路径：{PathExe}")
             Logger.Info($"系统编码：{Encoding.Default.HeaderName} ({Encoding.Default.CodePage}, GBK={IsGBKEncoding})")
             Logger.Info($"管理员权限：{WindowsUtils.HasAdminRole()}")
@@ -216,7 +211,7 @@ RetryCacheCheck:
 
     '动态 DLL 加载
     Private Sub New() '这里必须尽早调用，且不能使用任何库，否则加载 MeloongCore 就会导致崩溃
-        Static Prefixes As String() = {"NAudio", "Newtonsoft.Json", "Ookii.Dialogs.Wpf", "Imazen.WebP", "CacheCow.Common", "CacheCow.Client.FileStore", "CacheCow.Client", "ThrottleDebounce", "System.Net.Http.Formatting", "Microsoft.Win32.Registry", "PCLCS", "MeloongCore.Wpf", "MeloongCore"}
+        Static Prefixes As String() = {"Newtonsoft.Json", "Ookii.Dialogs.Wpf", "Imazen.WebP", "CacheCow.Common", "CacheCow.Client.FileStore", "CacheCow.Client", "ThrottleDebounce", "System.Net.Http.Formatting", "Microsoft.Win32.Registry", "PCLCS", "MeloongCore.Wpf", "MeloongCore"}
         Static LoadedAssemblies As New ConcurrentDictionary(Of String, Lazy(Of Assembly))(StringComparer.Ordinal) '缓存
         AddHandler AppDomain.CurrentDomain.AssemblyResolve,
         Function(sender As Object, Args As ResolveEventArgs) As Assembly
@@ -259,30 +254,6 @@ RetryCacheCheck:
                 Settings.Set("LoginLegacyName", Names.Join("¨"c))
                 FrmLoginLegacy.ComboName.ItemsSource = Names
                 FrmLoginLegacy.ComboName.Text = If(Names.Any, Names(0), "")
-            Case Else
-                '第三方
-                Dim Token As String = Settings.Get(Of McLoginType)("LoginType").ToString()
-                Dim Dict As New Dictionary(Of String, String)
-                Dim Names As New List(Of String)
-                Dim Passs As New List(Of String)
-                If Not Settings.Get(Of String)("Login" & Token & "Email") = "" Then Names.AddRange(Settings.Get(Of String)("Login" & Token & "Email").Split("¨"))
-                If Not Settings.Get(Of String)("Login" & Token & "Pass") = "" Then Passs.AddRange(Settings.Get(Of String)("Login" & Token & "Pass").Split("¨"))
-                For i = 0 To Names.Count - 1
-                    Dict.Add(Names(i), Passs(i))
-                Next
-                Dict.Remove(sender.Tag)
-                Settings.Set("Login" & Token & "Email", Dict.Keys.Join("¨"c))
-                Settings.Set("Login" & Token & "Pass", Dict.Values.Join("¨"c))
-                Select Case Token
-                    Case "Nide"
-                        FrmLoginNide.ComboName.ItemsSource = Dict.Keys
-                        FrmLoginNide.ComboName.Text = If(Dict.Keys.Any, Dict.Keys(0), "")
-                        FrmLoginNide.TextPass.Password = If(Dict.Values.Any, Dict.Values(0), "")
-                    Case "Auth"
-                        FrmLoginAuth.ComboName.ItemsSource = Dict.Keys
-                        FrmLoginAuth.ComboName.Text = If(Dict.Keys.Any, Dict.Keys(0), "")
-                        FrmLoginAuth.TextPass.Password = If(Dict.Values.Any, Dict.Values(0), "")
-                End Select
         End Select
     End Sub
 

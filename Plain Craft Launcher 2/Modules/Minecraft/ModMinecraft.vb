@@ -190,28 +190,6 @@ Public Module ModMinecraft
             If value Is Nothing Then Return
             '重置缓存的下载文件夹
             PageDownloadResourceDetail.CachedFolder.Clear()
-            '统一通行证重判
-            If AniControlEnabled = 0 AndAlso
-               Settings.Get(Of String)("VersionServerNide", Instance:=value) <> Settings.Get(Of String)("CacheNideServer") AndAlso
-               Settings.Get(Of Integer)("VersionServerLogin", Instance:=value) = 3 Then
-                Settings.Set("CacheNideAccess", "")
-                Logger.Info("服务器改变，要求重新登录统一通行证")
-            End If
-            If Settings.Get(Of Integer)("VersionServerLogin", Instance:=value) = 3 Then
-                Settings.Set("CacheNideServer", Settings.Get(Of String)("VersionServerNide", Instance:=value))
-            End If
-            'Authlib-Injector 重判
-            If AniControlEnabled = 0 AndAlso
-               Settings.Get(Of String)("VersionServerAuthServer", Instance:=value) <> Settings.Get(Of String)("CacheAuthServerServer") AndAlso
-               Settings.Get(Of Integer)("VersionServerLogin", Instance:=value) = 4 Then
-                Settings.Set("CacheAuthAccess", "")
-                Logger.Info("服务器改变，要求重新登录 Authlib-Injector")
-            End If
-            If Settings.Get(Of Integer)("VersionServerLogin", Instance:=value) = 4 Then
-                Settings.Set("CacheAuthServerServer", Settings.Get(Of String)("VersionServerAuthServer", Instance:=value))
-                Settings.Set("CacheAuthServerName", Settings.Get(Of String)("VersionServerAuthName", Instance:=value))
-                Settings.Set("CacheAuthServerRegister", Settings.Get(Of String)("VersionServerAuthRegister", Instance:=value))
-            End If
         End Set
     End Property
 
@@ -734,8 +712,6 @@ ExitDataLoad:
                 If State = McInstanceState.Fool Then
                     Info = GetMcFoolName(Version.VanillaName)
                 ElseIf State <> McInstanceState.Error Then
-                    If Settings.Get(Of Integer)("VersionServerLogin", Instance:=Me) = 3 Then Info += ", 统一通行证验证"
-                    If Settings.Get(Of Integer)("VersionServerLogin", Instance:=Me) = 4 Then Info += ", Authlib 验证"
                 End If
             End If
         End Sub
@@ -1404,7 +1380,7 @@ OnLoaded:
     ''' </summary>
     Public Function McSkinGetAddress(UUID As String, Type As String) As String
         If UUID = "" Then Throw New Exception("UUID 为空。")
-        If UUID.StartsWithF("00000") AndAlso Type <> "Auth" Then Throw New Exception("离线 UUID 无正版皮肤文件：" & UUID)
+        If UUID.StartsWithF("00000") Then Throw New Exception("离线 UUID 无正版皮肤文件：" & UUID)
         '尝试读取缓存
         Dim CacheSkinAddress As String = ReadIni(PathTemp & "Cache\Skin\Index" & Type & ".ini", UUID)
         If Not CacheSkinAddress = "" Then Return CacheSkinAddress
@@ -1413,10 +1389,6 @@ OnLoaded:
         Select Case Type
             Case "Mojang", "Ms"
                 Url = "https://sessionserver.mojang.com/session/minecraft/profile/"
-            Case "Nide"
-                Url = "https://auth.mc-user.com:233/" & If(McInstanceSelected Is Nothing, Settings.Get(Of String)("CacheNideServer"), Settings.Get(Of String)("VersionServerNide", Instance:=McInstanceSelected)) & "/sessionserver/session/minecraft/profile/"
-            Case "Auth"
-                Url = If(McInstanceSelected Is Nothing, Settings.Get(Of String)("CacheAuthServerServer"), Settings.Get(Of String)("VersionServerAuthServer", Instance:=McInstanceSelected)) & "/sessionserver/session/minecraft/profile/"
             Case Else
                 Throw New ArgumentException("皮肤地址种类无效：" & If(Type, "null"))
         End Select
@@ -1779,49 +1751,6 @@ OnLoaded:
 
         'Library 文件
         Result.AddRange(McLibNetFilesFromTokens(McLibListGet(Instance, False)))
-
-        '统一通行证文件
-        If Settings.Get(Of Integer)("VersionServerLogin", Instance:=Instance) = 3 Then
-            Dim TargetFile As String = PathPure.Value & "nide8auth.jar"
-            Try
-                '测试链接：https://auth.mc-user.com:233/00000000000000000000000000000000/
-                Logger.Info("开始获取统一通行证下载信息")
-                Dim DownloadInfo As JObject = NetRequestByClientRetry("https://auth.mc-user.com:233/" & Settings.Get(Of String)("VersionServerNide", Instance:=Instance), RequireJson:=True).DeserializeJson()
-                Result.Add(New NetFile(
-                    Urls:={"https://login.mc-user.com:233/index/jar"},
-                    LocalPath:=TargetFile,
-                    Checker:=New FileChecker With {.Hash = DownloadInfo("jarHash").ToString}))
-            Catch ex As Exception
-                If FileUtils.Exists(TargetFile) Then
-                    Logger.Warn(ex, "获取统一通行证下载信息失败")
-                Else
-                    Throw New Exception("获取统一通行证下载信息失败", ex)
-                End If
-            End Try
-        End If
-
-        'Authlib-Injector 文件
-        If Settings.Get(Of Integer)("VersionServerLogin", Instance:=Instance) = 4 Then
-            Dim TargetFile = PathPure.Value & "authlib-injector.jar"
-            Try
-                Logger.Info("开始获取 Authlib-Injector 下载信息")
-                Dim DownloadInfo As JObject = NetRequestByClientRetry(
-                        "https://authlib-injector.yushi.moe/artifact/latest.json",
-                        BackupUrl:="https://bmclapi2.bangbang93.com/mirrors/authlib-injector/artifact/latest.json", RequireJson:=True).DeserializeJson()
-                Dim DownloadAddress As String = DownloadInfo("download_url").ToString.
-                        Replace("bmclapi2.bangbang93.com/mirrors/authlib-injector", "authlib-injector.yushi.moe")
-                Result.Add(New NetFile({
-                    DownloadAddress,
-                    DownloadAddress.Replace("authlib-injector.yushi.moe", "bmclapi2.bangbang93.com/mirrors/authlib-injector")
-                }, TargetFile, New FileChecker With {.Hash = DownloadInfo("checksums")("sha256").ToString}))
-            Catch ex As Exception
-                If FileUtils.Exists(TargetFile) Then
-                    Logger.Warn(ex, "获取 Authlib-Injector 下载信息失败")
-                Else
-                    Throw New Exception("获取 Authlib-Injector 下载信息失败", ex)
-                End If
-            End Try
-        End If
 
         '跳过校验
         If ShouldIgnoreFileCheck(Instance) Then

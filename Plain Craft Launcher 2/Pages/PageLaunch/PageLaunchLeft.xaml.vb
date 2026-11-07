@@ -127,10 +127,6 @@ Public Class PageLaunchLeft
                 LabLaunchingMethod.Text = "离线登录"
             Case McLoginType.Ms
                 LabLaunchingMethod.Text = "正版登录"
-            Case McLoginType.Nide
-                LabLaunchingMethod.Text = "统一通行证"
-            Case McLoginType.Auth
-                LabLaunchingMethod.Text = "Authlib-Injector"
         End Select
         '初始化页面
         LabLaunchingName.Text = McInstanceSelected.Name
@@ -194,10 +190,6 @@ Public Class PageLaunchLeft
     Private Enum PageType
         None
         Legacy
-        Nide
-        NideSkin
-        Auth
-        AuthSkin
         Ms
         MsSkin
     End Enum
@@ -211,18 +203,6 @@ Public Class PageLaunchLeft
             Case PageType.Legacy
                 If IsNothing(FrmLoginLegacy) Then FrmLoginLegacy = New PageLoginLegacy
                 Return FrmLoginLegacy
-            Case PageType.Nide
-                If IsNothing(FrmLoginNide) Then FrmLoginNide = New PageLoginNide
-                Return FrmLoginNide
-            Case PageType.NideSkin
-                If IsNothing(FrmLoginNideSkin) Then FrmLoginNideSkin = New PageLoginNideSkin
-                Return FrmLoginNideSkin
-            Case PageType.Auth
-                If IsNothing(FrmLoginAuth) Then FrmLoginAuth = New PageLoginAuth
-                Return FrmLoginAuth
-            Case PageType.AuthSkin
-                If IsNothing(FrmLoginAuthSkin) Then FrmLoginAuthSkin = New PageLoginAuthSkin
-                Return FrmLoginAuthSkin
             Case PageType.Ms
                 If IsNothing(FrmLoginMs) Then FrmLoginMs = New PageLoginMs
                 Return FrmLoginMs
@@ -300,7 +280,7 @@ Public Class PageLaunchLeft
             LoginPageType = Settings.Get(Of Integer)("LoginPageType")
         End If
         Select Case LoginPageType
-            Case 0 '正版或离线
+            Case 0, 3, 4 '正版或离线（3、4 是已删除的统一通行证与 Authlib 登录，按 0 处理）
 UnknownType:
                 If RadioLoginType5.Checked Then
                     If Settings.Get(Of String)("CacheMsV2Access") = "" Then
@@ -337,29 +317,6 @@ UnknownType:
                 PanTypeOne.Visibility = Visibility.Visible
                 PathTypeOne.Data = (New GeometryConverter).ConvertFromString(Logo.IconButtonOffline)
                 LabTypeOne.Text = "离线登录"
-            Case 3 '统一通行证
-                If Settings.Get(Of String)("CacheNideAccess") = "" Then
-                    Type = PageType.Nide
-                Else
-                    Type = PageType.NideSkin
-                End If
-                Settings.Set("LoginType", McLoginType.Nide)
-                PanType.Visibility = Visibility.Collapsed
-                PanTypeOne.Visibility = Visibility.Visible
-                PathTypeOne.Data = (New GeometryConverter).ConvertFromString(Logo.IconButtonCard)
-                LabTypeOne.Text = "统一通行证登录"
-            Case 4 'Authlib-Injector
-                If Settings.Get(Of String)("CacheAuthAccess") = "" Then
-                    Type = PageType.Auth
-                Else
-                    Type = PageType.AuthSkin
-                End If
-                Settings.Set("LoginType", McLoginType.Auth)
-                PanType.Visibility = Visibility.Collapsed
-                PanTypeOne.Visibility = Visibility.Visible
-                PathTypeOne.Data = (New GeometryConverter).ConvertFromString(Logo.IconButtonCard)
-                LabTypeOne.Text = If(McInstanceSelected Is Nothing, Settings.Get(Of String)("CacheAuthServerName"), Settings.Get(Of String)("VersionServerAuthName", Instance:=McInstanceSelected))
-                If LabTypeOne.Text = "" Then LabTypeOne.Text = "第三方登录"
             Case Else
                 Logger.Error($"未知的登录页面：{LoginPageType}", LogBehavior.Toast)
                 GoTo UnknownType
@@ -500,105 +457,9 @@ UseDefault:
         End If
     End Sub
 
-    '统一通行证皮肤
-    Public Shared SkinNide As New LoaderTask(Of (String, String), String)("Loader Skin Nide", AddressOf SkinNideLoad, AddressOf SkinNideInput, ThreadPriority.AboveNormal)
-    Private Shared Function SkinNideInput() As (String, String)
-        '获取名称
-        Return (Settings.Get(Of String)("CacheNideName"), Settings.Get(Of String)("CacheNideUuid"))
-    End Function
-    Private Shared Sub SkinNideLoad(Data As LoaderTask(Of (String, String), String))
-        '清空已有皮肤
-        '如果在输入时清空皮肤，若输入内容一样则不会执行 Load 方法，导致皮肤不被加载
-        RunInUi(Sub() If FrmLoginNideSkin IsNot Nothing AndAlso FrmLoginNideSkin.Skin IsNot Nothing Then FrmLoginNideSkin.Skin.Clear())
-        '获取 Url
-        Dim UserName As String = Data.Input.Item1
-        Dim Uuid As String = Data.Input.Item2
-        If UserName = "" Then
-            Data.Output = PathImage & "Skins/" & McSkinSex(McLoginLegacyUuid(UserName)) & ".png"
-            Logger.Info("获取统一通行证皮肤失败，ID 为空")
-            GoTo Finish
-        End If
-        Try
-            Dim Result As String = McSkinGetAddress(Uuid, "Nide")
-            If Data.IsCanceled Then Throw New OperationCanceledException("当前任务已取消：" & UserName)
-            Result = McSkinDownload(Result)
-            If Data.IsCanceled Then Throw New OperationCanceledException("当前任务已取消：" & UserName)
-            Data.Output = Result
-        Catch ex As Exception
-            If ex.IsCanceled Then
-                Data.Output = ""
-                Return
-            ElseIf ex.GetDisplay(False).Contains("(429)") Then
-                Data.Output = PathImage & "Skins/Steve.png"
-                Logger.Error($"获取统一通行证皮肤失败（{UserName}）：获取皮肤太过频繁，请 5 分钟后再试！", LogBehavior.Toast)
-            ElseIf ex.GetDisplay(False).Contains("未设置自定义皮肤") Then
-                Data.Output = PathImage & "Skins/Steve.png"
-                Logger.Info("用户未设置自定义皮肤，跳过皮肤加载")
-            Else
-                Data.Output = PathImage & "Skins/Steve.png"
-                Logger.Error(ex, $"获取统一通行证皮肤失败（{UserName}）", LogBehavior.Toast)
-            End If
-        End Try
-Finish:
-        '刷新显示
-        If FrmLoginNideSkin IsNot Nothing Then
-            RunInUi(AddressOf FrmLoginNideSkin.Skin.Load)
-        ElseIf Not Data.IsCanceled Then '如果已经中断，Input 也被清空，就不会再次刷新
-            Data.Input = Nothing '清空输入，因为皮肤实际上没有被渲染，如果不清空切换到页面的 Start 会由于输入相同而不渲染
-        End If
-    End Sub
-
-    'Authlib-Injector 皮肤
-    Public Shared SkinAuth As New LoaderTask(Of (String, String), String)("Loader Skin Auth", AddressOf SkinAuthLoad, AddressOf SkinAuthInput, ThreadPriority.AboveNormal)
-    Private Shared Function SkinAuthInput() As (String, String)
-        '获取名称
-        Return (Settings.Get(Of String)("CacheAuthName"), Settings.Get(Of String)("CacheAuthUuid"))
-    End Function
-    Private Shared Sub SkinAuthLoad(Data As LoaderTask(Of (String, String), String))
-        '清空已有皮肤
-        '如果在输入时清空皮肤，若输入内容一样则不会执行 Load 方法，导致皮肤不被加载
-        RunInUi(Sub() If FrmLoginAuthSkin IsNot Nothing AndAlso FrmLoginAuthSkin.Skin IsNot Nothing Then FrmLoginAuthSkin.Skin.Clear())
-        '获取 Url
-        Dim UserName As String = Data.Input.Item1
-        Dim UUID As String = Data.Input.Item2
-        If UserName = "" Then
-            Data.Output = PathImage & "Skins/Steve.png"
-            Logger.Info("获取 Authlib-Injector 皮肤失败，ID 为空")
-            GoTo Finish
-        End If
-        Try
-            Dim Result As String = McSkinGetAddress(UUID, "Auth")
-            If Data.IsCanceled Then Throw New OperationCanceledException("当前任务已取消：" & UserName)
-            Result = McSkinDownload(Result)
-            If Data.IsCanceled Then Throw New OperationCanceledException("当前任务已取消：" & UserName)
-            Data.Output = Result
-        Catch ex As Exception
-            If ex.IsCanceled Then
-                Data.Output = ""
-                Return
-            ElseIf ex.GetDisplay(False).Contains("(429)") Then
-                Data.Output = PathImage & "Skins/Steve.png"
-                Logger.Error($"获取 Authlib-Injector 皮肤失败（{UserName}）：获取皮肤太过频繁，请 5 分钟后再试！", LogBehavior.Toast)
-            ElseIf ex.GetDisplay(False).Contains("未设置自定义皮肤") Then
-                Data.Output = PathImage & "Skins/Steve.png"
-                Logger.Info("用户未设置自定义皮肤，跳过皮肤加载")
-            Else
-                Data.Output = PathImage & "Skins/Steve.png"
-                Logger.Error(ex, $"获取 Authlib-Injector 皮肤失败（{UserName}）", LogBehavior.Toast)
-            End If
-        End Try
-Finish:
-        '刷新显示
-        If FrmLoginAuthSkin IsNot Nothing Then
-            RunInUi(AddressOf FrmLoginAuthSkin.Skin.Load)
-        ElseIf Not Data.IsCanceled Then '如果已经中断，Input 也被清空，就不会再次刷新
-            Data.Input = Nothing '清空输入，因为皮肤实际上没有被渲染，如果不清空切换到页面的 Start 会由于输入相同而不渲染
-        End If
-    End Sub
-
     '全部皮肤加载器
     '需要放在其中元素的后面，否则会因为它提前被加载而莫名其妙变成 Nothing
-    Public Shared SkinLoaders As New List(Of LoaderTask(Of (String, String), String)) From {SkinMs, SkinLegacy, SkinNide, SkinAuth}
+    Public Shared SkinLoaders As New List(Of LoaderTask(Of (String, String), String)) From {SkinMs, SkinLegacy}
 
 #End Region
 
@@ -613,7 +474,6 @@ Finish:
             (FrmMain.PageRight IsNot Nothing AndAlso FrmMain.PageRight.PageState <> MyPageRight.PageStates.ContentStay AndAlso FrmMain.PageRight.PageState <> MyPageRight.PageStates.ContentEnter) Then Return
         '愚人节处理
         If IsAprilEnabled AndAlso Not IsAprilGiveup Then
-            ThemeUnlock(12, False, "隐藏主题 滑稽彩 已解锁！")
             IsAprilGiveup = True
             Settings.Set("AprilYear", Date.Now.Year)
             FrmLaunchLeft.AprilScaleTrans.ScaleX = 1

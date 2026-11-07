@@ -155,8 +155,6 @@ Public Class MySkin
                     If DirectoryUtils.Exists(PathTemp & "Cache\Skin") Then DirectoryUtils.Delete(PathTemp & "Cache\Skin")
                     If DirectoryUtils.Exists(PathTemp & "Cache\Uuid") Then DirectoryUtils.Delete(PathTemp & "Cache\Uuid")
                     IniClearCache(PathTemp & "Cache\Skin\IndexMs.ini")
-                    IniClearCache(PathTemp & "Cache\Skin\IndexNide.ini")
-                    IniClearCache(PathTemp & "Cache\Skin\IndexAuth.ini")
                     IniClearCache(PathTemp & "Cache\Uuid\Mojang.ini")
                     '刷新控件
                     For Each SkinLoader In If(sender IsNot Nothing, {sender}, {PageLaunchLeft.SkinLegacy, PageLaunchLeft.SkinMs})

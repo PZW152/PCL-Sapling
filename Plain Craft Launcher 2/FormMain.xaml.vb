@@ -281,9 +281,7 @@ Public Class FormMain
         '输出更新日志
         RunInNewThread(
         Sub()
-            If MyMsgBox(Content, "PCL 已更新至" & VersionDisplay, "确定", "完整更新日志") = 2 Then
-                OpenWebsite("https://meloong.com/afd/a/LTCat?tab=feed")
-            End If
+            MyMsgBox(Content, "PCL 已更新至" & VersionDisplay, "确定")
         End Sub, "UpdateLog Output")
     End Sub
 
@@ -318,7 +316,6 @@ Public Class FormMain
             End If
         End If
         '刷新主题
-        ThemeCheckAll(False)
         ThemeRefresh(Settings.Get(Of Integer)("UiLauncherTheme"))
         '注册拖拽事件（不能直接加 Handles，否则没用；#6340）
         [AddHandler](DragDrop.DragEnterEvent, New DragEventHandler(AddressOf HandleDrag), handledEventsToo:=True)
@@ -361,7 +358,6 @@ Public Class FormMain
         UpdateBackgroundAndTitleBar()
         PageSetupUI.HiddenRefresh()
         PageSetupUI.BackgroundRefresh(False, True)
-        MusicRefreshPlay(False, True)
         '扩展按钮
         BtnExtraDownload.ShowCheck = AddressOf BtnExtraDownload_ShowCheck
         BtnExtraBack.ShowCheck = AddressOf BtnExtraBack_ShowCheck
@@ -453,11 +449,9 @@ Public Class FormMain
             Catch ex As Exception
                 Logger.Warn(ex, "清理自动更新文件失败")
             End Try
-            '上报
-            Telemetry("启动")
             '开源版本提示
             If VersionBranchMain = "OpenSource" Then
-                MyMsgBox($"该版本中无法使用以下特性：{vbCrLf}- CurseForge API 调用：需要自行申请 API Key，然后添加到 ModSecret.vb 的开头{vbCrLf}- 正版登录：需要自行向微软申请 Client ID，然后添加到 ModSecret.vb 的开头{vbCrLf}- 更新与联网通知：避免滥用隐患{vbCrLf}- 主题切换：这是需要赞助解锁的纪念性质的功能，别让赞助者太伤心啦……{vbCrLf}- 百宝箱：开发早期往里面塞了些开发工具，整理起来太麻烦了……", "开源版本说明")
+                MyMsgBox($"该版本中无法使用以下特性：{vbCrLf}- CurseForge API 调用：需要自行申请 API Key，然后添加到 ModSecret.vb 的开头{vbCrLf}- 正版登录：需要自行向微软申请 Client ID，然后添加到 ModSecret.vb 的开头{vbCrLf}- 更新与联网通知：避免滥用隐患{vbCrLf}- 百宝箱：开发早期往里面塞了些开发工具，整理起来太麻烦了……", "开源版本说明")
             End If
         End Sub, "初始化", ThreadPriority.Lowest)
 
@@ -466,20 +460,6 @@ Public Class FormMain
     '根据打开次数触发的事件
     Private Sub RunCountSub()
         Settings.Set("SystemCount", Settings.Get(Of Integer)("SystemCount") + 1)
-        If BuildType = BuildTypes.Snapshot Then
-            Select Case Settings.Get(Of Integer)("SystemCount")
-                Case 1
-                    MyMsgBox("欢迎使用 PCL 快照版！" & vbCrLf &
-                             "快照版包含尚未在正式版发布的测试性功能，仅用于赞助者本人尝鲜。所以请不要发给其他人或者用于制作整合包哦！" & vbCrLf &
-                             "如果你并非通过赞助或赞助者本人邀请进群获得的本程序，那么可能是有人在违规传播，记得提醒他一下啦。", "快照版使用说明")
-            End Select
-            If Settings.Get(Of Integer)("SystemCount") >= 99 Then
-                If ThemeUnlock(6, False) Then
-                    MyMsgBox("你已经使用了 99 次 PCL 啦，感谢你长期以来的支持！" & vbCrLf &
-                             "隐藏主题 铁杆粉 已解锁！", "提示")
-                End If
-            End If
-        End If
     End Sub
     '升级与降级事件
     Private Sub UpgradeSub(LastVersionCode As Integer)
@@ -495,29 +475,6 @@ Public Class FormMain
         End If
         '被移除的窗口设置选项
         If Settings.Get(Of Integer)("LaunchArgumentWindowType") = 5 Then Settings.Set("LaunchArgumentWindowType", 1)
-        '修改主题设置项名称
-        If HighestVersionCode <= 207 Then
-            Dim UnlockedTheme As New List(Of String) From {"2"}
-            UnlockedTheme.AddRange(New List(Of String)(Settings.Get(Of String)("UiLauncherThemeHide").ToString.Split("|")))
-            UnlockedTheme.AddRange(New List(Of String)(Settings.Get(Of String)("UiLauncherThemeHide2").ToString.Split("|")))
-            Settings.Set("UiLauncherThemeHide2", UnlockedTheme.Distinct.ToList.Join("|"c))
-        End If
-        '重置欧皇彩
-        If LastVersionCode <= 115 AndAlso Settings.Get(Of String)("UiLauncherThemeHide2").ToString.Split("|").Contains("13") Then
-            Dim UnlockedTheme As New List(Of String)(Settings.Get(Of String)("UiLauncherThemeHide2").ToString.Split("|"))
-            UnlockedTheme.Remove("13")
-            Settings.Set("UiLauncherThemeHide2", UnlockedTheme.Join("|"c))
-            MyMsgBox("由于新版 PCL 修改了欧皇彩的解锁方式，你需要重新解锁欧皇彩。" & vbCrLf &
-                     "多谢各位的理解啦！", "重新解锁提醒")
-        End If
-        '重置滑稽彩
-        If LastVersionCode <= 152 AndAlso Settings.Get(Of String)("UiLauncherThemeHide2").ToString.Split("|").Contains("12") Then
-            Dim UnlockedTheme As New List(Of String)(Settings.Get(Of String)("UiLauncherThemeHide2").ToString.Split("|"))
-            UnlockedTheme.Remove("12")
-            Settings.Set("UiLauncherThemeHide2", UnlockedTheme.Join("|"c))
-            MyMsgBox("由于新版 PCL 修改了滑稽彩的解锁方式，你需要重新解锁滑稽彩。" & vbCrLf &
-                     "多谢各位的理解啦！", "重新解锁提醒")
-        End If
         '移动自定义皮肤
         If LastVersionCode <= 161 AndAlso FileUtils.Exists(Paths.Base & "PCL\CustomSkin.png") AndAlso Not FileUtils.Exists(Paths.AppDataThenName & "CustomSkin.png") Then
             FileUtils.Copy(Paths.Base & "PCL\CustomSkin.png", Paths.AppDataThenName & "CustomSkin.png")
@@ -588,8 +545,6 @@ Public Class FormMain
                 Next
             End Sub, "强行停止下载任务")
         End If
-        '关闭联机？
-        If FrmLinkMain?.TryExit(Not SendWarning, True) Then Return
         '关闭
         RunInUiWait(
         Sub()
@@ -901,23 +856,6 @@ Public Class FormMain
         Catch ex As Exception
             Logger.Error(ex, "切回窗口时出错")
         End Try
-        '读取剪贴板，自动加入联机房间
-        Return 'TODO: 联机复活赛
-        If PageLinkMain.LinkState <> PageLinkMain.LinkStates.Waiting Then Return '已启动联机
-        If PageCurrent = PageType.Link Then Return '已在联机界面
-        Dim Code = ClipboardGetText() : If Code Is Nothing Then Return '剪贴板无文本
-        If Settings.Get(Of String)("LinkLastAutoJoinInviteCode") = Code Then Return
-        If PageLinkMain.ValidateCodeFormat(Code) IsNot Nothing Then Return '不是邀请码
-        Settings.Set("LinkLastAutoJoinInviteCode", Code)
-        RunInThread(
-        Sub()
-            If MyMsgBox("嘿，是否使用复制的邀请码加入房间？", "加入联机房间", "加入", "取消") = 2 Then Return '防止弹窗阻碍主线程，所以必须放在工作线程
-            RunInUi(
-            Sub()
-                PageLinkMain.Join(Code)
-                ClipboardSet(Nothing, False)
-            End Sub)
-        End Sub)
     End Sub
 
     '文件拖放
@@ -935,9 +873,7 @@ Public Class FormMain
             e.Effects = DragDropEffects.None
             If e.Data.GetDataPresent(DataFormats.Text) Then
                 Dim Str As String = e.Data.GetData(DataFormats.Text)
-                If Str.StartsWithF("authlib-injector:yggdrasil-server:") Then
-                    e.Effects = DragDropEffects.Copy
-                ElseIf Str.StartsWithF("file:///") Then
+                If Str.StartsWithF("file:///") Then
                     e.Effects = DragDropEffects.Copy
                 End If
             ElseIf e.Data.GetDataPresent(DataFormats.FileDrop) Then
@@ -961,51 +897,7 @@ Public Class FormMain
                 Try
                     Dim Str As String = e.Data.GetData(DataFormats.Text)
                     Logger.Info($"接受文本拖拽：{Str}")
-                    If Str.StartsWithF("authlib-injector:yggdrasil-server:") Then
-                        'Authlib 拖拽
-                        e.Handled = True
-                        e.Effects = DragDropEffects.Copy
-                        Dim AuthlibServer As String = StringUtils.FormUrlUnescape(Str.Substring("authlib-injector:yggdrasil-server:".Length))
-                        Logger.Info($"Authlib 拖拽：{AuthlibServer}")
-                        If Not String.IsNullOrEmpty(New ValidateHttp().Validate(AuthlibServer)) Then
-                            Hint($"输入的 Authlib 验证服务器不符合网址格式（{AuthlibServer}）！", HintType.Red)
-                            Return
-                        End If
-                        Dim Target = If(PageCurrent = PageType.InstanceSetup, PageInstanceLeft.Instance, McInstanceSelected)
-                        If Target Is Nothing Then
-                            Hint("请先下载游戏，再设置第三方登录！", HintType.Red)
-                            Return
-                        End If
-                        If AuthlibServer = "https://littleskin.cn/api/yggdrasil" Then
-                            'LittleSkin
-                            If MyMsgBox($"是否要在版本 {Target.Name} 中开启 LittleSkin 登录？" & vbCrLf &
-                                        "你可以在 版本设置 → 设置 → 服务器选项 中修改登录方式。", "第三方登录开启确认", "确定", "取消") = 2 Then
-                                Return
-                            End If
-                            Settings.Set("VersionServerLogin", 4, Instance:=Target)
-                            Settings.Set("VersionServerAuthServer", "https://littleskin.cn/api/yggdrasil", Instance:=Target)
-                            Settings.Set("VersionServerAuthRegister", "https://littleskin.cn/auth/register", Instance:=Target)
-                            Settings.Set("VersionServerAuthName", "LittleSkin 登录", Instance:=Target)
-                        Else
-                            '第三方 Authlib 服务器
-                            If MyMsgBox($"是否要在版本 {Target.Name} 中开启第三方登录？" & vbCrLf &
-                                        $"登录服务器：{AuthlibServer}" & vbCrLf & vbCrLf &
-                                        "你可以在 版本设置 → 设置 → 服务器选项 中修改登录方式。", "第三方登录开启确认", "确定", "取消") = 2 Then
-                                Return
-                            End If
-                            Settings.Set("VersionServerLogin", 4, Instance:=Target)
-                            Settings.Set("VersionServerAuthServer", AuthlibServer, Instance:=Target)
-                            Settings.Set("VersionServerAuthRegister", AuthlibServer.Replace("api/yggdrasil", "auth/register"), Instance:=Target)
-                            Settings.Set("VersionServerAuthName", "", Instance:=Target)
-                        End If
-                        If PageCurrent = PageType.InstanceSetup AndAlso PageCurrentSub = PageSubType.InstanceSetup Then
-                            '正在服务器选项页，需要刷新设置项显示
-                            FrmInstanceSetup.Reload()
-                        ElseIf PageCurrent = PageType.Launch Then
-                            '正在主页，需要刷新左边栏
-                            FrmLaunchLeft.RefreshPage(True, False)
-                        End If
-                    ElseIf Str.StartsWithF("file:///") Then
+                    If Str.StartsWithF("file:///") Then
                         '文件拖拽（例如从浏览器下载窗口拖入）
                         Dim FilePath = Net.WebUtility.UrlDecode(Str).Substring("file:///".Length).Replace("/", "\")
                         e.Handled = True
@@ -1198,10 +1090,6 @@ Public Class FormMain
         ''' </summary>
         Download = 1
         ''' <summary>
-        ''' 联机。
-        ''' </summary>
-        Link = 2
-        ''' <summary>
         ''' 设置。
         ''' </summary>
         Setup = 3
@@ -1243,10 +1131,8 @@ Public Class FormMain
         DownloadResourcePack = 5
         DownloadShader = 6
         SetupLaunch = 0
-        SetupLink = 1
         SetupUI = 2
         SetupSystem = 3
-        LinkMain = 0
         OtherHelp = 0
         OtherAbout = 1
         OtherTest = 2
@@ -1399,7 +1285,7 @@ Public Class FormMain
     ''' <summary>
     ''' 通过点击导航栏改变页面。
     ''' </summary>
-    Private Sub BtnTitleSelect_Click(sender As MyRadioButton, raiseByMouse As Boolean) Handles BtnTitleSelect0.Check, BtnTitleSelect1.Check, BtnTitleSelect2.Check, BtnTitleSelect3.Check, BtnTitleSelect4.Check
+    Private Sub BtnTitleSelect_Click(sender As MyRadioButton, raiseByMouse As Boolean) Handles BtnTitleSelect0.Check, BtnTitleSelect1.Check, BtnTitleSelect3.Check, BtnTitleSelect4.Check
         If IsChangingPage Then Return
         PageChangeActual(Val(sender.Tag))
     End Sub
@@ -1478,9 +1364,6 @@ Public Class FormMain
                     If FrmDownloadLeft Is Nothing Then FrmDownloadLeft = New PageDownloadLeft
                     'PageGet 方法会在未设置 SubType 时指定默认值，并建立相关页面的实例
                     PageChangeAnim(FrmDownloadLeft, FrmDownloadLeft.PageGet(SubType))
-                Case PageType.Link '联机
-                    If FrmLinkMain Is Nothing Then FrmLinkMain = New PageLinkMain
-                    PageChangeAnim(New MyPageLeft, FrmLinkMain)
                 Case PageType.Setup '设置
                     If FrmSetupLeft Is Nothing Then FrmSetupLeft = New PageSetupLeft
                     PageChangeAnim(FrmSetupLeft, FrmSetupLeft.PageGet(SubType))
@@ -1656,14 +1539,6 @@ Public Class FormMain
 #End Region
 
 #Region "附加按钮"
-
-    '音乐
-    Private Sub BtnExtraMusic_Click(sender As Object, e As EventArgs) Handles BtnExtraMusic.Click
-        MusicControlPause()
-    End Sub
-    Private Sub BtnExtraMusic_RightClick(sender As Object, e As EventArgs) Handles BtnExtraMusic.RightClick
-        MusicControlNext()
-    End Sub
 
     '任务管理
     Private Sub BtnExtraDownload_Click(sender As Object, e As EventArgs) Handles BtnExtraDownload.Click

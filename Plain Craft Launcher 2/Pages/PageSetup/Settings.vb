@@ -7,7 +7,6 @@ Public Class Settings
         New Setting("WindowHeight", 550),
         New Setting("WindowWidth", 900),
         New Setting("AprilYear", 0, Source:=Sources.Registry, Encrypted:=True),
-        New Setting("Potatoes", "", Source:=Sources.Registry, Encrypted:=True),
         New Setting("HintDownloadThread", False, Source:=Sources.Registry),
         New Setting("HintNotice", 0, Source:=Sources.Registry),
         New Setting("HintDownload", 0, Source:=Sources.Registry),
@@ -37,7 +36,6 @@ Public Class Settings
         New Setting("SystemSystemCache", "", Source:=Sources.Registry),
         New Setting("SystemSystemUpdate", 0),
         New Setting("SystemSystemActivity", 0),
-        New Setting("SystemSystemTelemetry", True, Source:=Sources.Registry),
         New Setting("CacheDrops", "", Source:=Sources.Registry),
         New Setting("CacheConfig", 0, Source:=Sources.Registry),
         New Setting("CacheExportConfig", "", Source:=Sources.Registry),
@@ -55,31 +53,11 @@ Public Class Settings
         New Setting("CacheMsV2Uuid", "", Source:=Sources.Registry, Encrypted:=True),
         New Setting("CacheMsV2Name", "", Source:=Sources.Registry, Encrypted:=True),
         New Setting("CacheMsV2Expires", 0L, Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheNideAccess", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheNideClient", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheNideUuid", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheNideName", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheNideUsername", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheNidePass", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheNideServer", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheAuthAccess", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheAuthClient", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheAuthUuid", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheAuthName", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheAuthUsername", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheAuthPass", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheAuthServerServer", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheAuthServerName", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("CacheAuthServerRegister", "", Source:=Sources.Registry, Encrypted:=True),
         New Setting("CacheDownloadFolder", "", Source:=Sources.Registry),
         New Setting("CacheJavaListVersion", 0, Source:=Sources.Registry),
         New Setting("LoginRemember", True, Source:=Sources.Registry, Encrypted:=True),
         New Setting("LoginLegacyName", "", Source:=Sources.Registry, Encrypted:=True),
         New Setting("LoginMsJson", "{}", Source:=Sources.Registry, Encrypted:=True), '{UserName: OAuthToken, ...}
-        New Setting("LoginNideEmail", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("LoginNidePass", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("LoginAuthEmail", "", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("LoginAuthPass", "", Source:=Sources.Registry, Encrypted:=True),
         New Setting("LoginType", McLoginType.Legacy, Source:=Sources.Registry),
         New Setting("LoginPageType", 0),
         New Setting("LaunchSkinID", "", Source:=Sources.Registry, OnChanged:=Sub() PageLaunchLeft.SkinLegacy.Start()),
@@ -109,10 +87,6 @@ Public Class Settings
         New Setting("LaunchAdvanceGC", 4),
         New Setting("LaunchRamType", 0, OnChanged:=AddressOf PageSetupLaunch.UpdateRamType),
         New Setting("LaunchRamCustom", 15),
-        New Setting("LinkLastAutoJoinInviteCode", "", Source:=Sources.Registry),
-        New Setting("LinkLatencyMode", 0, Source:=Sources.Registry),
-        New Setting("LinkCustomPeer", ""),
-        New Setting("LinkEasyTierVersion", -1, Source:=Sources.Registry),
         New Setting("ToolHelpChinese", True, Source:=Sources.Registry),
         New Setting("ToolDownloadThread", 63, Source:=Sources.Registry),
         New Setting("ToolDownloadSpeed", 42, Source:=Sources.Registry, OnChanged:=AddressOf ModNet.UpdateNetTaskSpeedLimitHigh),
@@ -133,8 +107,6 @@ Public Class Settings
         New Setting("UiLauncherDelta", 90),
         New Setting("UiLauncherLight", 20),
         New Setting("UiLauncherTheme", 0, OnChanged:=AddressOf ThemeRefresh),
-        New Setting("UiLauncherThemeHide", "0|1|2|3|4", Source:=Sources.Registry, Encrypted:=True),
-        New Setting("UiLauncherThemeHide2", "0|1|2|3|4", Source:=Sources.Registry, Encrypted:=True),
         New Setting("UiLauncherLogo", True),
         New Setting("UiLauncherEmail", False),
         New Setting("UiBackgroundColorful", True, OnChanged:=Sub() ThemeRefresh()), '不传入参数
@@ -147,13 +119,7 @@ Public Class Settings
         New Setting("UiLogoType", 1, OnChanged:=AddressOf FormMain.UpdateBackgroundAndTitleBar),
         New Setting("UiLogoText", "", OnChanged:=AddressOf FormMain.UpdateBackgroundAndTitleBar),
         New Setting("UiLogoLeft", False, OnChanged:=AddressOf FormMain.UpdateBackgroundAndTitleBar),
-        New Setting("UiMusicVolume", 500),
-        New Setting("UiMusicStop", False),
-        New Setting("UiMusicStart", False),
-        New Setting("UiMusicRandom", True),
-        New Setting("UiMusicAuto", True),
         New Setting("UiHiddenPageDownload", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
-        New Setting("UiHiddenPageLink", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenPageSetup", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenPageOther", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenFunctionSelect", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
@@ -162,7 +128,6 @@ Public Class Settings
         New Setting("UiHiddenFunctionHidden", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenSetupLaunch", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenSetupUi", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
-        New Setting("UiHiddenSetupLink", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenSetupSystem", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenOtherHelp", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenOtherFeedback", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
@@ -190,11 +155,7 @@ Public Class Settings
         New Setting("VersionArgumentJavaV2", 0, Source:=Sources.Instance),
         New Setting("VersionArgumentJavaRange", "", Source:=Sources.Instance),
         New Setting("VersionServerEnter", "", Source:=Sources.Instance),
-        New Setting("VersionServerLogin", 0, Source:=Sources.Instance, OnChanged:=AddressOf PageInstanceSetup.OnVersionServerLoginChanged),
-        New Setting("VersionServerNide", "", Source:=Sources.Instance),
-        New Setting("VersionServerAuthRegister", "", Source:=Sources.Instance),
-        New Setting("VersionServerAuthName", "", Source:=Sources.Instance),
-        New Setting("VersionServerAuthServer", "", Source:=Sources.Instance)
+        New Setting("VersionServerLogin", 0, Source:=Sources.Instance, OnChanged:=AddressOf PageInstanceSetup.OnVersionServerLoginChanged)
     }).ToDictionary(Function(e) e.Key)
 
     Public Enum Sources
@@ -314,10 +275,7 @@ Public Class Settings
         Dim Value = Entry.GetCache(Instance)
         If Value IsNot Nothing Then Return Value
         '对部分设置强制赋值
-        Static ForcedSettings As New Dictionary(Of String, Object) From {
-            {"UiHiddenPageLink", True},
-            {"UiHiddenSetupLink", True}
-        }
+        Static ForcedSettings As New Dictionary(Of String, Object)
         Dim ForcedSetting As Object = Nothing
         If ForcedSettings.TryGetValue(Key, ForcedSetting) Then
             Entry.Set(ForcedSetting, Instance)

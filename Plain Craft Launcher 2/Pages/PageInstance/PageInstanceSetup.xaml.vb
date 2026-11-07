@@ -53,9 +53,9 @@ Public Class PageInstanceSetup
             UpdateJavaList()
 
             '服务器
-            ComboServerLogin.SelectedIndex = Settings.Get(Of Integer)("VersionServerLogin", Instance:=PageInstanceLeft.Instance)
+            Dim ServerLogin = Settings.Get(Of Integer)("VersionServerLogin", Instance:=PageInstanceLeft.Instance)
+            ComboServerLogin.SelectedIndex = If(ServerLogin > 2, 0, ServerLogin) '3、4 是已删除的统一通行证与 Authlib 登录
             ComboServerLoginLast = ComboServerLogin.SelectedIndex
-            UpdateServerLoginUI()
 
             '高级设置
             If Settings.Get(Of Integer)("VersionAdvanceAssets", Instance:=PageInstanceLeft.Instance) = 2 Then
@@ -344,43 +344,15 @@ PreFin:
 
     '全局
     Private ComboServerLoginLast As Integer
-    Private Sub ComboServerLogin_Changed() Handles ComboServerLogin.SelectionChanged, TextServerNide.ValidatedTextChanged, TextServerAuthServer.ValidatedTextChanged, TextServerAuthRegister.ValidatedTextChanged
+    Private Sub ComboServerLogin_Changed() Handles ComboServerLogin.SelectionChanged
         If AniControlEnabled <> 0 Then Return
-        UpdateServerLoginUI()
-        '检查是否输入正确，正确才触发设置改变
-        If ComboServerLogin.SelectedIndex = 3 AndAlso Not TextServerNide.IsValidated Then Return
-        If ComboServerLogin.SelectedIndex = 4 AndAlso Not TextServerAuthServer.IsValidated Then Return
         '检查结果是否发生改变，未改变则不触发设置改变
         If ComboServerLoginLast = ComboServerLogin.SelectedIndex Then Return
         '触发
         ComboServerLoginLast = ComboServerLogin.SelectedIndex
         Settings.Set("VersionServerLogin", ComboServerLogin.SelectedIndex, Instance:=PageInstanceLeft.Instance)
     End Sub
-    Private Sub UpdateServerLoginUI()
-        If LabServerNide Is Nothing Then Return
-        Dim Type = ComboServerLogin.SelectedIndex
-        LabServerNide.Visibility = If(Type = 3, Visibility.Visible, Visibility.Collapsed)
-        TextServerNide.Visibility = If(Type = 3, Visibility.Visible, Visibility.Collapsed)
-        PanServerNide.Visibility = If(Type = 3, Visibility.Visible, Visibility.Collapsed)
-        LabServerAuthName.Visibility = If(Type = 4, Visibility.Visible, Visibility.Collapsed)
-        TextServerAuthName.Visibility = If(Type = 4, Visibility.Visible, Visibility.Collapsed)
-        LabServerAuthRegister.Visibility = If(Type = 4, Visibility.Visible, Visibility.Collapsed)
-        TextServerAuthRegister.Visibility = If(Type = 4, Visibility.Visible, Visibility.Collapsed)
-        LabServerAuthServer.Visibility = If(Type = 4, Visibility.Visible, Visibility.Collapsed)
-        TextServerAuthServer.Visibility = If(Type = 4, Visibility.Visible, Visibility.Collapsed)
-        BtnServerAuthLittle.Visibility = If(Type = 4, Visibility.Visible, Visibility.Collapsed)
-        CardServer.TriggerForceResize()
-    End Sub
 
-    'LittleSkin
-    Private Sub BtnServerAuthLittle_Click(sender As Object, e As EventArgs) Handles BtnServerAuthLittle.Click
-        If TextServerAuthServer.Text <> "" AndAlso TextServerAuthServer.Text <> "https://littleskin.cn/api/yggdrasil" AndAlso
-            MyMsgBox("即将把第三方登录设置覆盖为 LittleSkin 登录。" & vbCrLf & "除非你是服主，或者服主要求你这样做，否则请不要继续。" & vbCrLf & vbCrLf & "是否确实需要覆盖当前设置？",
-                     "设置覆盖确认", "继续", "取消") = 2 Then Return
-        TextServerAuthServer.Text = "https://littleskin.cn/api/yggdrasil"
-        TextServerAuthRegister.Text = "https://littleskin.cn/auth/register"
-        TextServerAuthName.Text = "LittleSkin 登录"
-    End Sub
 
 #End Region
 

@@ -145,11 +145,6 @@
       <HintPath>Resources\Imazen.WebP.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="NAudio, Version=1.7.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Resources\NAudio.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Resources\Newtonsoft.Json.dll</HintPath>
@@ -253,7 +248,6 @@
     <Compile Include="Controls\MyTextButton.vb" />
     <Compile Include="GlobalSuppressions.vb" />
     <Compile Include="Modules\Minecraft\ModCrash.vb" />
-    <Compile Include="Modules\ModMusic.vb" />
     <Compile Include="Modules\ModDevelop.vb" />
     <Compile Include="Modules\Minecraft\ModWatcher.vb" />
     <Compile Include="Modules\ModSecret.vb" />
@@ -289,23 +283,11 @@
     <Compile Include="Pages\PageLaunch\MyMsgLogin.xaml.vb">
       <DependentUpon>MyMsgLogin.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Pages\PageLaunch\PageLoginAuth.xaml.vb">
-      <DependentUpon>PageLoginAuth.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Pages\PageLaunch\PageLoginAuthSkin.xaml.vb">
-      <DependentUpon>PageLoginAuthSkin.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Pages\PageLaunch\PageLoginMs.xaml.vb">
       <DependentUpon>PageLoginMs.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\PageLaunch\PageLoginMsSkin.xaml.vb">
       <DependentUpon>PageLoginMsSkin.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Pages\PageLaunch\PageLoginNideSkin.xaml.vb">
-      <DependentUpon>PageLoginNideSkin.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Pages\PageLink\PageLinkMain.xaml.vb">
-      <DependentUpon>PageLinkMain.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\PageOther\PageOtherHelpDetail.xaml.vb">
       <DependentUpon>PageOtherHelpDetail.xaml</DependentUpon>
@@ -340,9 +322,6 @@
     </Compile>
     <Compile Include="Pages\PageLaunch\MySkin.xaml.vb">
       <DependentUpon>MySkin.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Pages\PageLaunch\PageLoginNide.xaml.vb">
-      <DependentUpon>PageLoginNide.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\PageLaunch\PageLoginLegacy.xaml.vb">
       <DependentUpon>PageLoginLegacy.xaml</DependentUpon>
@@ -380,9 +359,6 @@
     </Compile>
     <Compile Include="Pages\PageSetup\PageSetupSystem.xaml.vb">
       <DependentUpon>PageSetupSystem.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Pages\PageSetup\PageSetupLink.xaml.vb">
-      <DependentUpon>PageSetupLink.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\PageSetup\PageSetupUI.xaml.vb">
       <DependentUpon>PageSetupUI.xaml</DependentUpon>
@@ -540,14 +516,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Pages\PageLaunch\PageLoginAuth.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Pages\PageLaunch\PageLoginAuthSkin.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="Pages\PageLaunch\PageLoginMs.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -556,18 +524,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Pages\PageLaunch\PageLoginNideSkin.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <None Include="app.manifest" />
     <None Include="Resources\Custom.xaml">
       <SubType>Designer</SubType>
     </None>
-    <Page Include="Pages\PageLink\PageLinkMain.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="Pages\PageOther\PageOtherHelpDetail.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -581,10 +541,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\PageLaunch\MySkin.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Pages\PageLaunch\PageLoginNide.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -633,10 +589,6 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Pages\PageSetup\PageSetupSystem.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Pages\PageSetup\PageSetupLink.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -755,7 +707,6 @@
   <ItemGroup>
     <Resource Include="Resources\Font.ttf" />
     <None Include="Resources\Help.zip" />
-    <None Include="Resources\NAudio.dll" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\Heads\LTCat.jpg" />
@@ -907,7 +858,6 @@
     <None Include="Resources\System.Net.Http.Formatting.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Images\Heads\EasyTier.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\lwjgl-unsafe-agent.jar" />

@@ -10,8 +10,6 @@ Friend Module ModSecret
     Public OAuthClientId As String = If(Environment.GetEnvironmentVariable("PCL_MS_CLIENT_ID"), "")
     'CurseForge API Key
     Public CurseForgeAPIKey As String = If(Environment.GetEnvironmentVariable("PCL_CURSEFORGE_API_KEY"), "")
-    '用于匿名数据收集的腾讯云日志服务上报 URL，形如 https://{region}.cls.tencentcs.com/track?topic_id={topic_id}
-    Public Const ClsBaseUrl As String = ""
 
 #Region "网络鉴权"
 
@@ -63,7 +61,6 @@ Friend Module ModSecret
 
     Public ThemeNow As Integer = -1
     Public ColorHue As Integer = 210, ColorSat As Integer = 85, ColorLightAdjust As Integer = 0, ColorHueTopbarDelta As OneOf(Of Integer, Integer()) = 0
-    Public ThemeDontClick As Integer = 0
 
     Public Sub ThemeRefresh(Optional NewTheme As Integer = -1)
         Try
@@ -132,14 +129,6 @@ Friend Module ModSecret
             FrmMain.PanForm.Background.Freeze()
         End Sub)
     End Sub
-    Friend Sub ThemeCheckAll(EffectSetup As Boolean)
-    End Sub
-    Friend Function ThemeCheckOne(Id As Integer) As Boolean
-        Return True
-    End Function
-    Friend Function ThemeUnlock(Id As Integer, Optional ShowDoubleHint As Boolean = True, Optional UnlockHint As String = Nothing) As Boolean
-        Return False
-    End Function
 
 #End Region
 
@@ -178,18 +167,7 @@ Friend Module ModSecret
 
 #End Region
 
-#Region "赞助等级"
-
-    Public ReadOnly Property CurrentRank As DonationRank
-        Get
-            Return DonationRank.None
-        End Get
-    End Property
-
-    Public Sub InputPotatoCode(IsUpdating As Boolean)
-    End Sub
-    Friend Sub GeneratePotatoCode()
-    End Sub
+#Region "识别码"
 
     ''' <summary>
     ''' 获取设备识别码。

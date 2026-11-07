@@ -33,12 +33,6 @@ Public Module ModWatcher
         McLaunchLog("[全局] 已无运行中的 Minecraft")
         HasRunningMinecraft = False
         FrmMain.BtnExtraShutdown.ShowRefresh()
-        '音乐播放
-        If Settings.Get(Of Boolean)("UiMusicStop") Then
-            RunInUi(Sub() If MusicResume() Then Logger.Info("已根据设置，在结束后开始音乐播放"))
-        ElseIf Settings.Get(Of Boolean)("UiMusicStart") Then
-            RunInUi(Sub() If MusicPause() Then Logger.Info("已根据设置，在结束后暂停音乐播放"))
-        End If
         '启动器可见性
         Select Case Settings.Get(Of Integer)("LaunchArgumentVisible")
             Case 2

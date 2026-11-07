@@ -263,12 +263,6 @@ Public Module ModJava
             AddConstraint(ValueRange(Of Version).LessThan(New Version(9, 0)))
         End If
 
-        '统一通行证检测
-        If Settings.Get(Of McLoginType)("LoginType") = McLoginType.Nide Then
-            '至少 Java 8u101
-            AddConstraint(ValueRange(Of Version).AtLeast(New Version(8, 0, 141)))
-        End If
-
         Return (JavaRange, RecommendedComponent)
     End Function
 

@@ -374,7 +374,6 @@ EndHint:
     Public FrmSpeedRight As PageSpeedRight
 
     '联机页面声明
-    Public FrmLinkMain As PageLinkMain
 
     '下载页面声明
     Public FrmDownloadLeft As PageDownloadLeft
@@ -390,7 +389,6 @@ EndHint:
     Public FrmSetupLaunch As PageSetupLaunch
     Public FrmSetupUI As PageSetupUI
     Public FrmSetupSystem As PageSetupSystem
-    Public FrmSetupLink As PageSetupLink
 
     '其他页面声明
     Public FrmOtherLeft As PageOtherLeft
@@ -400,10 +398,6 @@ EndHint:
 
     '登录页面声明
     Public FrmLoginLegacy As PageLoginLegacy
-    Public FrmLoginNide As PageLoginNide
-    Public FrmLoginNideSkin As PageLoginNideSkin
-    Public FrmLoginAuth As PageLoginAuth
-    Public FrmLoginAuthSkin As PageLoginAuthSkin
     Public FrmLoginMs As PageLoginMs
     Public FrmLoginMsSkin As PageLoginMsSkin
 
@@ -881,10 +875,6 @@ NextFile:
                     Text = Text.Replace("{login}", Replacer("离线"))
                 Case McLoginType.Ms
                     Text = Text.Replace("{login}", Replacer("正版"))
-                Case McLoginType.Nide
-                    Text = Text.Replace("{login}", Replacer("统一通行证"))
-                Case McLoginType.Auth
-                    Text = Text.Replace("{login}", Replacer("Authlib-Injector"))
             End Select
         Else
             Text = Text.Replace("{user}", Replacer(Nothing))
@@ -958,7 +948,7 @@ NextFile:
 
 #End Region
 
-#Region "反馈与遥测"
+#Region "反馈"
 
     '反馈
     Public Sub Feedback(Optional ShowMsgbox As Boolean = True, Optional ForceOpenLog As Boolean = False)
@@ -982,26 +972,6 @@ NextFile:
             "文件位置：" & Paths.Base)
     End Sub
 
-    '遥测
-    Public Sub Telemetry([Event] As String, ParamArray Datas As String())
-        If BuildType = BuildTypes.Debug Then Return '开发版不上传遥测
-        If Not Settings.Get(Of Boolean)("SystemSystemTelemetry") Then Return '用户关闭了遥测
-        If Not ClsBaseUrl.StartsWithF("http") Then Return '开源版没有设置遥测地址
-        RunInNewThread(
-        Sub()
-            Try
-                Logger.Info($"匿名数据上报：{[Event]}")
-                Dim Url As String = $"{ClsBaseUrl}&Event={StringUtils.UrlEscape([Event])}"
-                For i = 0 To Datas.Length - 1 Step 2
-                    Url &= "&" & StringUtils.UrlEscape(Datas(i)) & "=" & StringUtils.UrlEscape(Datas(i + 1).ReplaceLineEndings(vbLf, mergeMultiple:=True))
-                Next
-                NetRequestByClient(Url, MakeLog:=False)
-            Catch ex As Exception
-                Logger.Warn(ex, "匿名数据上报失败")
-            End Try
-        End Sub, "Telemetry", ThreadPriority.Lowest)
-    End Sub
-
 #End Region
 
     Public DragControl = Nothing
@@ -1014,7 +984,6 @@ NextFile:
             MyMsgBoxTick()
             FrmMain.DragTick()
             LoaderTaskbarProgressRefresh()
-            If ThemeDontClick = 2 Then ThemeRefresh()
 #End Region
         Catch ex As Exception
             Logger.Error(ex, "短程主时钟执行异常", LogBehavior.AlertThenCrash)
@@ -1024,7 +993,6 @@ NextFile:
             Timer4Count = 0
             Try
 #Region "每 250ms 执行一次的代码"
-                If ThemeNow = 12 Then ThemeRefresh()
 #End Region
             Catch ex As Exception
                 Logger.Warn(ex, "中程主时钟执行异常")
