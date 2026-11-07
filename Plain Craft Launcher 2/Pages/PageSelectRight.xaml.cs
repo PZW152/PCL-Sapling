@@ -187,7 +187,7 @@ namespace PCL
                     {
                         this.LabEmptyTitle.Text = "无可用版本";
                         this.LabEmptyContent.Text = "未找到任何版本的游戏，请先下载任意版本的游戏。" + Constants.vbCrLf + "若有已存在的游戏，请在左边的列表中选择添加文件夹，选择 .minecraft 文件夹将其导入。";
-                        this.BtnEmptyDownload.Visibility = ModSecret.RestrictMcDownload || Settings.Get<bool>("UiHiddenPageDownload") && !PageSetupUI.HiddenForceShow ? Visibility.Collapsed : Visibility.Visible;
+                        this.BtnEmptyDownload.Visibility = Settings.Get<bool>("UiHiddenPageDownload") && !PageSetupUI.HiddenForceShow ? Visibility.Collapsed : Visibility.Visible;
                     }
                 }
                 else

@@ -30,11 +30,6 @@ namespace PCL
     /// </summary>
         public static void ModpackInstall()
         {
-            if (ModSecret.RestrictMcDownload)
-            {
-                ModMain.Hint("为遵守相关法律法规，PCL 不再提供 MC 下载功能，非常抱歉 qwq……", ModMain.HintType.Red);
-                return;
-            }
             string File = Dialogs.SelectFile("选择整合包压缩文件", false, filter: new[] { (new[] { "rar", "zip", "mrpack" }, "整合包文件") }).FirstOrDefault(); // 选择整合包文件
             if (string.IsNullOrEmpty(File))
                 return;
@@ -187,8 +182,6 @@ namespace PCL
                 }
                 while (false);
                 // 执行对应的安装方法
-                if (ModSecret.RestrictMcDownload)
-                    throw new Exception("为遵守相关法律法规，PCL 不再提供 MC 下载功能，非常抱歉 qwq……");
                 switch (PackType)
                 {
                     case 0:
@@ -667,7 +660,6 @@ namespace PCL
                 }
                 // 添加下载文件
                 var Urls = File["downloads"].SelectMany(t => ResourceVersion.ParseCurseForgeDownloadUrls(t.ToString())).ToList();
-                Urls.AddRange(Urls.Select(u => ModDownload.DlSourceModGet(u)).ToList());
                 Urls = ResourceVersion.ParseModrinthTrackArguments(Urls, ResourceVersion.DownloadReason.ModPack, TargetVersion.VanillaName, TargetVersion.ModLoaders).ToList(); // Modrinth 来源追踪信息
                 Urls = Urls.Distinct().ToList();
                 string TargetPath = Path.Combine(VersionFolder, File["path"].ToString().TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
@@ -1066,10 +1058,10 @@ namespace PCL
                 if (MinecraftVersion.EndsWithF(".0"))
                     MinecraftVersion = MinecraftVersion.Substring(0, MinecraftVersion.Length - 2);
                 string OptiFineFileSuffix = "_HD_" + Addons["optifine"].AfterLast("HD_") + ".jar";
-                // 从镜像源拉取 OptiFine 列表
-                if (ModDownload.DlOptiFineListBmclapiLoader.State != ModBase.LoadState.Finished)
-                    ModDownload.DlOptiFineListBmclapiLoader.WaitForExit();
-                var Entry = ModDownload.DlOptiFineListBmclapiLoader.Output.Value.FirstOrDefault(v => (v.Inherit ?? "") == (MinecraftVersion ?? "") && v.FileName.EndsWithF(OptiFineFileSuffix));
+                // 从官方源拉取 OptiFine 列表
+                if (ModDownload.DlOptiFineListLoader.State != ModBase.LoadState.Finished)
+                    ModDownload.DlOptiFineListLoader.WaitForExit();
+                var Entry = ModDownload.DlOptiFineListLoader.Output.Value.FirstOrDefault(v => (v.Inherit ?? "") == (MinecraftVersion ?? "") && v.FileName.EndsWithF(OptiFineFileSuffix));
                 if (Entry is null)
                     throw new Exception($"OptiFine 列表中没有整合包所需的 OptiFine {Addons["optifine"]}（Minecraft {Addons["game"]}）");
                 OptiFineEntry = JObject.FromObject(Entry);

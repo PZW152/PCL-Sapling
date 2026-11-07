@@ -16,16 +16,10 @@ namespace PCL
     /// </summary>
         public FormMain.PageSubType PageID = FormMain.PageSubType.DownloadInstall;
 
-        // 隐藏 MC 下载
+
         public PageDownloadLeft()
         {
             this.InitializeComponent();
-            if (!ModSecret.RestrictMcDownload)
-                return;
-            this.ItemInstall.Visibility = Visibility.Collapsed;
-            this.LabResource.Visibility = Visibility.Collapsed;
-            PageID = FormMain.PageSubType.DownloadMod;
-            this.ItemMod.Checked = true;
         }
 
         /// <summary>

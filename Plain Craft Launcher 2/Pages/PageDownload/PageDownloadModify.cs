@@ -200,13 +200,7 @@ namespace PCL
             if (Manifest is not null)
             {
                 SelectedOptiFine = Components.OptiFineEntry?.ToObject<ModDownload.DlOptiFineListEntry>();
-                if (SelectedOptiFine is not null && !ModDownload.DlOptiFineListLoader.Output.Value.Any(v => (v.FileName ?? "") == (SelectedOptiFine.FileName ?? "")))
-                {
-                    // 如果 OptiFine 是 pre 版，可能只在 BMCLAPI 下有，官方源删了。如果是这种缺失数据的情况，换用 BMCLAPI 源作为输出
-                    if (ModDownload.DlOptiFineListBmclapiLoader.State != ModBase.LoadState.Finished)
-                        ModDownload.DlOptiFineListBmclapiLoader.WaitForExit();
-                    ModDownload.DlOptiFineListLoader.Output = ModDownload.DlOptiFineListBmclapiLoader.Output;
-                }
+                // 只使用官方源：若该 OptiFine 版本（如已下架的 pre 版）不在官方列表中，则无法还原
             }
             else if (OptiFineVersion is not null && OptiFineVersion != "未知版本")
             {
@@ -412,7 +406,7 @@ namespace PCL
             IsSelectNameEdited = !string.Equals(OriginalName, GetSelectName(), StringComparison.Ordinal);
             TextSelectName.ValidateRules = new System.Collections.ObjectModel.Collection<ValidateType>() { new ValidateFolderName(ModMinecraft.McFolderSelected + "versions", IgnoreList: new List<string>() { OriginalName }) };
             // 修改页 UI
-            CardMinecraft.Visibility = ModSecret.RestrictMcDownload ? Visibility.Collapsed : Visibility.Visible;
+            CardMinecraft.Visibility = Visibility.Visible;
             this.BtnBack.Visibility = Visibility.Collapsed;
             this.ImgLogo.Margin = new Thickness(15d, 15d, 0d, 0d);
             TextSelectName.Margin = new Thickness(56d, 16d, 16d, 0d);

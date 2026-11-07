@@ -377,7 +377,7 @@ namespace PCL
         private static RedoableWorker<List<JavaDownloadInfo>> _SelectOrDownloadJava_DownloadListWorker = new RedoableWorker<List<JavaDownloadInfo>>(cancellationToken =>
 {
     // 下载 Mojang 提供的 Java 列表
-string IndexFileStr = ModNet.NetRequestByLoader(ModDownload.DlVersionListOrder(new[] { "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json" }, new[] { "https://bmclapi2.bangbang93.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json" }), IsJson: true);
+string IndexFileStr = ModNet.NetRequestByLoader(new[] { "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json" }, IsJson: true);
 cancellationToken?.ThrowIfCancellationRequested();
     // 解析 Java 列表
 var Results = new List<JavaDownloadInfo>();
@@ -747,7 +747,7 @@ return Results;
             // 分析需要下载的 Java 文件列表
             string Address = (string)Target.Java["manifest"]["url"];
             Logger.Info($"准备下载 Java {Target.Java["version"]["name"]}（{Target.ComponentName}）：{Address}");
-            string ListFileStr = ModNet.NetRequestByLoader(ModDownload.DlSourceOrder(new[] { Address }, new[] { Address.Replace("piston-meta.mojang.com", "bmclapi2.bangbang93.com") }), IsJson: true);
+            string ListFileStr = ModNet.NetRequestByLoader(new[] { Address }, IsJson: true);
             string BaseDir = $@"{Paths.AppData}.minecraft\runtime\{Target.ComponentName}\";
             var FilesToDownload = new List<ModNet.NetFile>();
             foreach (JProperty File in ((JObject)ListFileStr.DeserializeJson())["files"])
@@ -761,7 +761,7 @@ return Results;
                     continue; // 跳过 3 个无意义大量重复文件（#3827）
                 }
                 string Url = (string)Info["url"];
-                FilesToDownload.Add(new ModNet.NetFile(ModDownload.DlSourceOrder(new[] { Url }, new[] { Url.Replace("piston-data.mojang.com", "bmclapi2.bangbang93.com") }), BaseDir + File.Name, Checker));
+                FilesToDownload.Add(new ModNet.NetFile(new[] { Url }, BaseDir + File.Name, Checker));
             }
             Logger.Info($"该 Java 需要下载 {FilesToDownload.Count} 个文件，目标文件夹：{BaseDir}");
 

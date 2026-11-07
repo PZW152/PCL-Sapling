@@ -358,7 +358,16 @@ namespace PCL
         /// <summary>
     /// 用于异步执行并监控单一函数的加载器。
     /// </summary>
-        public class LoaderTask<TIn, TOut> : LoaderBase
+        /// <summary>
+        /// 不依赖泛型参数访问 LoaderTask 的接口，供 LoaderCombo 等在只知道 LoaderBase 时使用。
+        /// （原 VB 以晚期绑定调用 ShouldStart，并隐式处理其 ByRef 参数；C# 的 dynamic 不会这样做，会导致绑定失败）
+        /// </summary>
+        public interface ILoaderTask
+        {
+            bool ShouldStartBoxed(object Input, bool IsForceRestart = false, bool IgnoreReloadTimeout = false);
+            object OutputBoxed { get; }
+        }
+        public class LoaderTask<TIn, TOut> : LoaderBase, ILoaderTask
         {
 
             // 线程设定
@@ -413,6 +422,12 @@ namespace PCL
                 return Input;
             }
             // 代码执行
+            public bool ShouldStartBoxed(object Input, bool IsForceRestart = false, bool IgnoreReloadTimeout = false)
+            {
+                TIn Value = Input is null ? default : (TIn)Input;
+                return ShouldStart(ref Value, IsForceRestart, IgnoreReloadTimeout);
+            }
+            public object OutputBoxed => Output;
             public bool ShouldStart(ref TIn Input, bool IsForceRestart = false, bool IgnoreReloadTimeout = false)
             {
                 // 获取输入
@@ -784,13 +799,13 @@ namespace PCL
                                 // 检查 LoaderTask 是否需要重启
                                 if (GeneralUtils.IsGenericInstanceOf(Loader, typeof(LoaderTask<,>)))
                                 {
-                                    if (Conversions.ToBoolean(((dynamic)Loader).ShouldStart(Input is not null && ReferenceEquals(Loader.GetType().GenericTypeArguments.First(), Input.GetType()) ? Input : null, IgnoreReloadTimeout: true)))
+                                    if (((ILoaderTask)Loader).ShouldStartBoxed(Input is not null && ReferenceEquals(Loader.GetType().GenericTypeArguments.First(), Input.GetType()) ? Input : null, IgnoreReloadTimeout: true))
                                     {
                                         Logger.Info($"由于输入条件变更，重启已完成的加载器 {Loader.Name}");
                                         goto default;
                                     }
                                     // 更新下一个加载器的输入
-                                    Input = ((dynamic)Loader).Output;
+                                    Input = ((ILoaderTask)Loader).OutputBoxed;
                                 }
                                 // 如果不让继续启动，且已有加载器正在加载中，就不继续启动
                                 if (Loader.Block && !IsFinished)
@@ -802,7 +817,7 @@ namespace PCL
                                 // 检查 LoaderTask 是否需要重启
                                 if (GeneralUtils.IsGenericInstanceOf(Loader, typeof(LoaderTask<,>)))
                                 {
-                                    if (Conversions.ToBoolean(((dynamic)Loader).ShouldStart(Input is not null && ReferenceEquals(Loader.GetType().GenericTypeArguments.First(), Input.GetType()) ? Input : null, IgnoreReloadTimeout: true)))
+                                    if (((ILoaderTask)Loader).ShouldStartBoxed(Input is not null && ReferenceEquals(Loader.GetType().GenericTypeArguments.First(), Input.GetType()) ? Input : null, IgnoreReloadTimeout: true))
                                     {
                                         Logger.Warn($"由于输入条件变更，重启进行中的加载器 {Loader.Name}");
                                         goto default;

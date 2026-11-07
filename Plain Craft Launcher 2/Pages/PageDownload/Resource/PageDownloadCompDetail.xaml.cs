@@ -376,7 +376,7 @@ namespace PCL
             // 实例化每个元素
             foreach (var Version in Versions)
             {
-                if (!ModSecret.RestrictMcDownload && TargetResourceType == ResourceTypes.ModPack)
+                if (TargetResourceType == ResourceTypes.ModPack)
                 {
                     Stack.Children.Add(Version.ToListItem((_, __) => this.Install_Click((MyListItem)(object)_, (EventArgs)(object)__), this.Save_Click, IsBadDisplay: HasDuplicates));
                 }

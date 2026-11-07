@@ -1277,11 +1277,6 @@ namespace PCL
                 }
                 catch (Exception ex)
                 {
-                    if (ModSecret.RestrictMcDownload && ex.Message == "为遵守相关法律法规，PCL 不再提供 MC 下载功能，非常抱歉 qwq……")
-                    {
-                        ModMain.Hint(ex.Message, ModMain.HintType.Red);
-                        return;
-                    }
                     if (ex.IsCanceled())
                         return;
                     // 安装失败，继续往后尝试

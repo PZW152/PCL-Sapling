@@ -2380,18 +2380,6 @@ namespace PCL
                     {
                         Urls.AddRange(ModDownload.DlSourceLauncherOrMetaGet(Token.Url)); // Mappings（#4425）
                     }
-                    if (Token.Url.Contains("maven"))
-                    {
-                        string BmclapiUrl = Token.Url.Replace(Token.Url.Substring(0, Token.Url.IndexOfF("maven")), "https://bmclapi2.bangbang93.com/").Replace("maven.fabricmc.net", "maven").Replace("maven.minecraftforge.net", "maven").Replace("maven.neoforged.net/releases", "maven");
-                        if (ModDownload.DlSourcePreferMojang)
-                        {
-                            Urls.Add(BmclapiUrl); // 官方源优先
-                        }
-                        else
-                        {
-                            Urls.Insert(0, BmclapiUrl);
-                        } // 镜像源优先
-                    }
                 }
                 if (Token.LocalPath.Contains("transformer-discovery-service"))
                 {
@@ -2403,12 +2391,7 @@ namespace PCL
                 }
                 else if (Token.LocalPath.Contains(@"optifine\OptiFine"))
                 {
-                    // OptiFine 主 Jar
-                    string OptiFineBase = Token.LocalPath.Replace(CustomMcFolder + @"libraries\optifine\OptiFine\", "").Split("_")[0] + "/" + PathUtils.GetLastPart(Token.LocalPath).Replace("-", "_");
-                    OptiFineBase = "/maven/com/optifine/" + OptiFineBase;
-                    if (OptiFineBase.Contains("_pre"))
-                        OptiFineBase = OptiFineBase.Replace("com/optifine/", "com/optifine/preview_");
-                    Urls.Add("https://bmclapi2.bangbang93.com" + OptiFineBase);
+                    // OptiFine 主 Jar：由安装时从 OptiFine 官网下载的安装器生成；官方没有可直接补全它的下载地址（原先只有镜像源提供）
                 }
                 else if (Urls.Count <= 2)
                 {
@@ -2671,7 +2654,7 @@ namespace PCL
                     return;
                 DateTime Time = (DateTime)Version["releaseTime"];
                 string MsgBoxText = $"新版本：{VersionName}{Constants.vbCrLf}" + ((DateTime.Now - Time).TotalDays > 1d ? "更新时间：" + Time.ToString() : "更新于：" + StringUtils.FormatTimeSpan(Time - DateTime.Now, false));
-                int MsgResult = ModMain.MyMsgBox(MsgBoxText, "Minecraft 更新提示", "确定", ModSecret.RestrictMcDownload ? "" : "下载", (DateTime.Now - Time).TotalHours > 3d ? "更新日志" : "", Button3Action: () => ModDownloadLib.McUpdateLogShow(Version));
+                int MsgResult = ModMain.MyMsgBox(MsgBoxText, "Minecraft 更新提示", "确定", "下载", (DateTime.Now - Time).TotalHours > 3d ? "更新日志" : "", Button3Action: () => ModDownloadLib.McUpdateLogShow(Version));
                 // 弹窗结果
                 if (MsgResult == 2)
                 {

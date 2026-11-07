@@ -206,25 +206,8 @@ namespace PCL
         public static ModLoader.LoaderTask<string, DlClientListResult> DlClientListLoader = new ModLoader.LoaderTask<string, DlClientListResult>("DlClientList Main", DlClientListMain);
         private static void DlClientListMain(ModLoader.LoaderTask<string, DlClientListResult> Loader)
         {
-            switch (Settings.Get<int>("ToolDownloadVersion"))
-            {
-                case 0:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<string, DlClientListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<string, DlClientListResult>, int>(DlClientListBmclapiLoader, 30), new KeyValuePair<ModLoader.LoaderTask<string, DlClientListResult>, int>(DlClientListMojangLoader, 30 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-                case 1:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<string, DlClientListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<string, DlClientListResult>, int>(DlClientListMojangLoader, 5), new KeyValuePair<ModLoader.LoaderTask<string, DlClientListResult>, int>(DlClientListBmclapiLoader, 5 + 30) }, Loader.IsForceRestarting);
-                        break;
-                    }
-
-                default:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<string, DlClientListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<string, DlClientListResult>, int>(DlClientListMojangLoader, 60), new KeyValuePair<ModLoader.LoaderTask<string, DlClientListResult>, int>(DlClientListBmclapiLoader, 60 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-            }
+            // 只使用官方源
+            DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<string, DlClientListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<string, DlClientListResult>, int>(DlClientListMojangLoader, 60) }, Loader.IsForceRestarting);
             // 提取所有 Drop 序数
             var Drops = new List<int>();
             foreach (JObject Version in Loader.Output.Value["versions"])
@@ -256,13 +239,7 @@ namespace PCL
                 JArray Versions = (JArray)Json["versions"];
                 if (Versions.Count < 200)
                     throw new Exception("获取到的版本列表长度不足（" + Json.ToString() + "）");
-                // 确定官方源是否可用
-                if (!DlPreferMojang)
-                {
-                    long DeltaTime = ModBase.GetTimeMs() - StartTime;
-                    DlPreferMojang = DeltaTime < 4000L;
-                    Logger.Info($"Mojang 官方源加载耗时：{DeltaTime}ms，{(DlPreferMojang ? "可优先使用官方源" : "不优先使用官方源")}");
-                }
+                Logger.Info($"Mojang 官方源加载耗时：{ModBase.GetTimeMs() - StartTime}ms");
                 // 返回
                 Loader.Output = new DlClientListResult() { IsOfficial = true, SourceName = "Mojang 官方源", Value = Json };
                 string Version;
@@ -286,38 +263,6 @@ namespace PCL
             catch (Exception ex)
             {
                 throw new Exception("Minecraft 官方源版本列表解析失败", ex);
-            }
-        }
-        /// <summary>
-    /// Minecraft 客户端 版本列表，BMCLAPI 源加载器。
-    /// </summary>
-        public static ModLoader.LoaderTask<string, DlClientListResult> DlClientListBmclapiLoader = new ModLoader.LoaderTask<string, DlClientListResult>("DlClientList Bmclapi", DlClientListBmclapiMain);
-        private static void DlClientListBmclapiMain(ModLoader.LoaderTask<string, DlClientListResult> Loader)
-        {
-            JObject Json = (JObject)ModNet.NetRequestByClientRetry("https://bmclapi2.bangbang93.com/mc/game/version_manifest.json", RequireJson: true).DeserializeJson();
-            try
-            {
-                JArray Versions = (JArray)Json["versions"];
-                if (Versions.Count < 200)
-                    throw new Exception("获取到的版本列表长度不足（" + Json.ToString() + "）");
-                // 添加 PCL 特供项
-                if (FileUtils.Exists(ModBase.PathTemp + @"Cache\download.json"))
-                    Versions.Merge(FileUtils.ReadAsJson(ModBase.PathTemp + @"Cache\download.json"));
-                // 检查是否有要求的版本（#5195）
-                if (!string.IsNullOrEmpty(Loader.Input))
-                {
-                    string Id = Loader.Input;
-                    if (DlClientListLoader.Output.Value is not null && !DlClientListLoader.Output.Value["versions"].Any(v => (string)v["id"] == Id))
-                    {
-                        throw new Exception("BMCLAPI 源未包含目标版本 " + Id);
-                    }
-                }
-                // 返回
-                Loader.Output = new DlClientListResult() { IsOfficial = false, SourceName = "BMCLAPI", Value = Json };
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Minecraft BMCLAPI 版本列表解析失败（" + Json.ToString() + "）", ex);
             }
         }
 
@@ -447,25 +392,8 @@ namespace PCL
         public static ModLoader.LoaderTask<int, DlOptiFineListResult> DlOptiFineListLoader = new ModLoader.LoaderTask<int, DlOptiFineListResult>("DlOptiFineList Main", DlOptiFineListMain);
         private static void DlOptiFineListMain(ModLoader.LoaderTask<int, DlOptiFineListResult> Loader)
         {
-            switch (Settings.Get<int>("ToolDownloadVersion"))
-            {
-                case 0:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlOptiFineListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlOptiFineListResult>, int>(DlOptiFineListBmclapiLoader, 30), new KeyValuePair<ModLoader.LoaderTask<int, DlOptiFineListResult>, int>(DlOptiFineListOfficialLoader, 30 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-                case 1:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlOptiFineListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlOptiFineListResult>, int>(DlOptiFineListOfficialLoader, 5), new KeyValuePair<ModLoader.LoaderTask<int, DlOptiFineListResult>, int>(DlOptiFineListBmclapiLoader, 5 + 30) }, Loader.IsForceRestarting);
-                        break;
-                    }
-
-                default:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlOptiFineListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlOptiFineListResult>, int>(DlOptiFineListOfficialLoader, 60), new KeyValuePair<ModLoader.LoaderTask<int, DlOptiFineListResult>, int>(DlOptiFineListBmclapiLoader, 60 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-            }
+            // 只使用官方源
+            DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlOptiFineListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlOptiFineListResult>, int>(DlOptiFineListOfficialLoader, 60) }, Loader.IsForceRestarting);
         }
 
         /// <summary>
@@ -516,39 +444,6 @@ namespace PCL
             }
         }
 
-        /// <summary>
-    /// OptiFine 版本列表，BMCLAPI。
-    /// </summary>
-        public static ModLoader.LoaderTask<int, DlOptiFineListResult> DlOptiFineListBmclapiLoader = new ModLoader.LoaderTask<int, DlOptiFineListResult>("DlOptiFineList Bmclapi", DlOptiFineListBmclapiMain);
-        private static void DlOptiFineListBmclapiMain(ModLoader.LoaderTask<int, DlOptiFineListResult> Loader)
-        {
-            JArray Json = (JArray)ModNet.NetRequestByClientRetry("https://bmclapi2.bangbang93.com/optifine/versionList", RequireJson: true).DeserializeJson();
-            try
-            {
-                var Versions = new List<DlOptiFineListEntry>();
-                foreach (JObject Token in Json)
-                {
-                    var Entry = new DlOptiFineListEntry()
-                    {
-                        DisplayName = (Token["mcversion"].ToString() + Token["type"].ToString().Replace("HD_U", "").Replace("_", " ") + " " + Token["patch"].ToString()).Replace(".0 ", " "),
-                        ReleaseTime = "",
-                        IsPreview = Token["patch"].ToString().ContainsIgnoreCase("pre"),
-                        Inherit = Token["mcversion"].ToString(),
-                        FileName = Token["filename"].ToString(),
-                        RequiredForgeVersion = (Token["forge"] ?? "").ToString().Replace("Forge ", "").Replace("#", "")
-                    };
-                    if (Entry.RequiredForgeVersion.Contains("N/A"))
-                        Entry.RequiredForgeVersion = null;
-                    Entry.InstanceName = Entry.Inherit + "-OptiFine_" + (Token["type"].ToString() + " " + Token["patch"].ToString()).Replace(".0 ", " ").Replace(" ", "_").Replace(Entry.Inherit + "_", "");
-                    Versions.Add(Entry);
-                }
-                Loader.Output = new DlOptiFineListResult() { IsOfficial = false, SourceName = "BMCLAPI", Value = Versions };
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("OptiFine BMCLAPI 版本列表解析失败（" + Json.ToString() + "）", ex);
-            }
-        }
 
         #endregion
 
@@ -576,25 +471,8 @@ namespace PCL
         public static ModLoader.LoaderTask<int, DlForgeListResult> DlForgeListLoader = new ModLoader.LoaderTask<int, DlForgeListResult>("DlForgeList Main", DlForgeListMain);
         private static void DlForgeListMain(ModLoader.LoaderTask<int, DlForgeListResult> Loader)
         {
-            switch (Settings.Get<int>("ToolDownloadVersion"))
-            {
-                case 0:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlForgeListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlForgeListResult>, int>(DlForgeListBmclapiLoader, 30), new KeyValuePair<ModLoader.LoaderTask<int, DlForgeListResult>, int>(DlForgeListOfficialLoader, 30 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-                case 1:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlForgeListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlForgeListResult>, int>(DlForgeListOfficialLoader, 5), new KeyValuePair<ModLoader.LoaderTask<int, DlForgeListResult>, int>(DlForgeListBmclapiLoader, 5 + 30) }, Loader.IsForceRestarting);
-                        break;
-                    }
-
-                default:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlForgeListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlForgeListResult>, int>(DlForgeListOfficialLoader, 60), new KeyValuePair<ModLoader.LoaderTask<int, DlForgeListResult>, int>(DlForgeListBmclapiLoader, 60 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-            }
+            // 只使用官方源
+            DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlForgeListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlForgeListResult>, int>(DlForgeListOfficialLoader, 60) }, Loader.IsForceRestarting);
         }
 
         /// <summary>
@@ -614,18 +492,6 @@ namespace PCL
             Loader.Output = new DlForgeListResult() { IsOfficial = true, SourceName = "Forge 官方源", Value = Names };
         }
 
-        /// <summary>
-    /// Forge 版本列表，BMCLAPI。
-    /// </summary>
-        public static ModLoader.LoaderTask<int, DlForgeListResult> DlForgeListBmclapiLoader = new ModLoader.LoaderTask<int, DlForgeListResult>("DlForgeList Bmclapi", DlForgeListBmclapiMain);
-        private static void DlForgeListBmclapiMain(ModLoader.LoaderTask<int, DlForgeListResult> Loader)
-        {
-            JArray Result = (JArray)ModNet.NetRequestByClientRetry("https://bmclapi2.bangbang93.com/forge/minecraft", Encoding: Encoding.Default, RequireJson: true).DeserializeJson();
-            var Names = Result.Select(v => v.ToString()).ToList();
-            if (Names.Count < 10)
-                throw new Exception("获取到的版本数量不足");
-            Loader.Output = new DlForgeListResult() { IsOfficial = false, SourceName = "BMCLAPI", Value = Names };
-        }
 
         #endregion
 
@@ -742,26 +608,8 @@ namespace PCL
         public static void DlForgeVersionMain(ModLoader.LoaderTask<string, List<DlForgeVersionEntry>> Loader)
         {
             var DlForgeVersionOfficialLoader = new ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>("DlForgeVersion Official", DlForgeVersionOfficialMain);
-            var DlForgeVersionBmclapiLoader = new ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>("DlForgeVersion Bmclapi", DlForgeVersionBmclapiMain);
-            switch (Settings.Get<int>("ToolDownloadVersion"))
-            {
-                case 0:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>, int>>() { new KeyValuePair<ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>, int>(DlForgeVersionBmclapiLoader, 30), new KeyValuePair<ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>, int>(DlForgeVersionOfficialLoader, 30 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-                case 1:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>, int>>() { new KeyValuePair<ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>, int>(DlForgeVersionOfficialLoader, 5), new KeyValuePair<ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>, int>(DlForgeVersionBmclapiLoader, 5 + 30) }, Loader.IsForceRestarting);
-                        break;
-                    }
-
-                default:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>, int>>() { new KeyValuePair<ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>, int>(DlForgeVersionOfficialLoader, 60), new KeyValuePair<ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>, int>(DlForgeVersionBmclapiLoader, 60 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-            }
+            // 只使用官方源
+            DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>, int>>() { new KeyValuePair<ModLoader.LoaderTask<string, List<DlForgeVersionEntry>>, int>(DlForgeVersionOfficialLoader, 60) }, Loader.IsForceRestarting);
         }
 
         /// <summary>
@@ -860,83 +708,6 @@ namespace PCL
             Loader.Output = Versions;
         }
 
-        /// <summary>
-    /// Forge 版本列表，BMCLAPI。
-    /// </summary>
-        public static void DlForgeVersionBmclapiMain(ModLoader.LoaderTask<string, List<DlForgeVersionEntry>> Loader)
-        {
-            JArray Json = (JArray)ModNet.NetRequestByClientRetry("https://bmclapi2.bangbang93.com/forge/minecraft/" + Loader.Input.Replace("-", "_"), RequireJson: true).DeserializeJson(); // 兼容 Forge 1.7.10-pre4，#4057
-            var Versions = new List<DlForgeVersionEntry>();
-            try
-            {
-                string Recommended = ModDownloadLib.McDownloadForgeRecommendedGet(Loader.Input);
-                foreach (JObject Token in Json)
-                {
-                    // 分类与 Hash 获取
-                    string Hash = null;
-                    string Category = "unknown";
-                    int Proi = -1;
-                    foreach (JObject File in Token["files"])
-                    {
-                        switch (File["category"].ToString() ?? "")
-                        {
-                            case "installer":
-                                {
-                                    if (File["format"].ToString() == "jar")
-                                    {
-                                        // 类型为 installer.jar，支持范围 ~753 (~ 1.6.1 部分), 738~684 (1.5.2 全部)
-                                        Hash = (string)File["hash"];
-                                        Category = "installer";
-                                        Proi = 2;
-                                    }
-
-                                    break;
-                                }
-                            case "universal":
-                                {
-                                    if (Proi <= 1 && File["format"].ToString() == "zip")
-                                    {
-                                        // 类型为 universal.zip，支持范围 751~449 (1.6.1 部分), 682~183 (1.5.1 ~ 1.3.2 部分)
-                                        Hash = (string)File["hash"];
-                                        Category = "universal";
-                                        Proi = 1;
-                                    }
-
-                                    break;
-                                }
-                            case "client":
-                                {
-                                    if (Proi <= 0 && File["format"].ToString() == "zip")
-                                    {
-                                        // 类型为 client.zip，支持范围 182~ (1.3.2 部分 ~)
-                                        Hash = (string)File["hash"];
-                                        Category = "client";
-                                        Proi = 0;
-                                    }
-
-                                    break;
-                                }
-                        }
-                    }
-                    // 获取 Entry
-                    string Branch = (string)Token["branch"];
-                    string Name = (string)Token["version"];
-                    // 基础信息获取
-                    var Entry = new DlForgeVersionEntry(Name, Branch, Loader.Input) { Hash = Hash, Category = Category, IsRecommended = (Recommended ?? "") == (Name ?? "") };
-                    string[] TimeSplit = Token["modified"].ToString().Split('-', 'T', ':', '.', ' ', '/');
-                    Entry.ReleaseTime = Token["modified"].ToObject<DateTime>().ToLocalTime().ToString("yyyy'/'MM'/'dd HH':'mm");
-                    // 添加项
-                    Versions.Add(Entry);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Forge BMCLAPI 版本列表解析失败（" + Json.ToString() + "）", ex);
-            }
-            if (!Versions.Any())
-                throw new Exception("无");
-            Loader.Output = Versions;
-        }
 
         #endregion
 
@@ -1046,25 +817,8 @@ namespace PCL
         public static ModLoader.LoaderTask<int, DlNeoForgeListResult> DlNeoForgeListLoader = new ModLoader.LoaderTask<int, DlNeoForgeListResult>("DlNeoForgeList Main", DlNeoForgeListMain);
         private static void DlNeoForgeListMain(ModLoader.LoaderTask<int, DlNeoForgeListResult> Loader)
         {
-            switch (Settings.Get<int>("ToolDownloadVersion"))
-            {
-                case 0:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlNeoForgeListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlNeoForgeListResult>, int>(DlNeoForgeListBmclapiLoader, 30), new KeyValuePair<ModLoader.LoaderTask<int, DlNeoForgeListResult>, int>(DlNeoForgeListOfficialLoader, 30 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-                case 1:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlNeoForgeListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlNeoForgeListResult>, int>(DlNeoForgeListOfficialLoader, 5), new KeyValuePair<ModLoader.LoaderTask<int, DlNeoForgeListResult>, int>(DlNeoForgeListBmclapiLoader, 5 + 30) }, Loader.IsForceRestarting);
-                        break;
-                    }
-
-                default:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlNeoForgeListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlNeoForgeListResult>, int>(DlNeoForgeListOfficialLoader, 60), new KeyValuePair<ModLoader.LoaderTask<int, DlNeoForgeListResult>, int>(DlNeoForgeListBmclapiLoader, 60 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-            }
+            // 只使用官方源
+            DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlNeoForgeListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlNeoForgeListResult>, int>(DlNeoForgeListOfficialLoader, 60) }, Loader.IsForceRestarting);
         }
 
         /// <summary>
@@ -1094,32 +848,6 @@ namespace PCL
             }
         }
 
-        /// <summary>
-    /// NeoForge 版本列表，BMCLAPI。
-    /// </summary>
-        public static ModLoader.LoaderTask<int, DlNeoForgeListResult> DlNeoForgeListBmclapiLoader = new ModLoader.LoaderTask<int, DlNeoForgeListResult>("DlNeoForgeList Bmclapi", DlNeoForgeListBmclapiMain);
-        public static void DlNeoForgeListBmclapiMain(ModLoader.LoaderTask<int, DlNeoForgeListResult> Loader)
-        {
-            // 获取版本列表 JSON
-            string ResultLatest = ModNet.NetRequestByClientRetry("https://bmclapi2.bangbang93.com/neoforge/meta/api/maven/details/releases/net/neoforged/neoforge", RequireJson: true);
-            string ResultLegacy = ModNet.NetRequestByClientRetry("https://bmclapi2.bangbang93.com/neoforge/meta/api/maven/details/releases/net/neoforged/forge", RequireJson: true);
-            if (ResultLatest.Length < 100 || ResultLegacy.Length < 100)
-                throw new Exception("获取到的版本列表长度不足（" + ResultLatest + "）");
-            // 解析
-            try
-            {
-                Loader.Output = new DlNeoForgeListResult()
-                {
-                    IsOfficial = true,
-                    SourceName = "BMCLAPI",
-                    Value = GetNeoForgeEntries(ResultLatest, ResultLegacy)
-                };
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("NeoForge BMCLAPI 版本列表解析失败（" + ResultLatest + Constants.vbCrLf + Constants.vbCrLf + ResultLegacy + "）", ex);
-            }
-        }
 
         private static List<DlNeoForgeListEntry> GetNeoForgeEntries(string LatestJson, string LatestLegacyJson)
         {
@@ -1192,25 +920,8 @@ namespace PCL
         public static ModLoader.LoaderTask<int, DlLiteLoaderListResult> DlLiteLoaderListLoader = new ModLoader.LoaderTask<int, DlLiteLoaderListResult>("DlLiteLoaderList Main", DlLiteLoaderListMain);
         private static void DlLiteLoaderListMain(ModLoader.LoaderTask<int, DlLiteLoaderListResult> Loader)
         {
-            switch (Settings.Get<int>("ToolDownloadVersion"))
-            {
-                case 0:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlLiteLoaderListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlLiteLoaderListResult>, int>(DlLiteLoaderListBmclapiLoader, 30), new KeyValuePair<ModLoader.LoaderTask<int, DlLiteLoaderListResult>, int>(DlLiteLoaderListOfficialLoader, 30 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-                case 1:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlLiteLoaderListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlLiteLoaderListResult>, int>(DlLiteLoaderListOfficialLoader, 5), new KeyValuePair<ModLoader.LoaderTask<int, DlLiteLoaderListResult>, int>(DlLiteLoaderListBmclapiLoader, 5 + 30) }, Loader.IsForceRestarting);
-                        break;
-                    }
-
-                default:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlLiteLoaderListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlLiteLoaderListResult>, int>(DlLiteLoaderListOfficialLoader, 60), new KeyValuePair<ModLoader.LoaderTask<int, DlLiteLoaderListResult>, int>(DlLiteLoaderListBmclapiLoader, 60 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-            }
+            // 只使用官方源
+            DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlLiteLoaderListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlLiteLoaderListResult>, int>(DlLiteLoaderListOfficialLoader, 60) }, Loader.IsForceRestarting);
         }
 
         /// <summary>
@@ -1248,40 +959,6 @@ namespace PCL
             }
         }
 
-        /// <summary>
-    /// LiteLoader 版本列表，BMCLAPI。
-    /// </summary>
-        public static ModLoader.LoaderTask<int, DlLiteLoaderListResult> DlLiteLoaderListBmclapiLoader = new ModLoader.LoaderTask<int, DlLiteLoaderListResult>("DlLiteLoaderList Bmclapi", DlLiteLoaderListBmclapiMain);
-        private static void DlLiteLoaderListBmclapiMain(ModLoader.LoaderTask<int, DlLiteLoaderListResult> Loader)
-        {
-            JObject Result = (JObject)ModNet.NetRequestByClientRetry("https://bmclapi2.bangbang93.com/maven/com/mumfrey/liteloader/versions.json", RequireJson: true).DeserializeJson();
-            try
-            {
-                JObject Json = (JObject)Result["versions"];
-                var Versions = new List<DlLiteLoaderListEntry>();
-                foreach (KeyValuePair<string, JToken> Pair in Json)
-                {
-                    if (Pair.Key.StartsWithF("1.6") || Pair.Key.StartsWithF("1.5"))
-                        continue;
-                    var RealEntry = (Pair.Value["artefacts"] ?? Pair.Value["snapshots"])["com.mumfrey:liteloader"]["latest"];
-                    Versions.Add(new DlLiteLoaderListEntry()
-                    {
-                        Inherit = Pair.Key,
-                        IsLegacy = Conversions.ToDouble(Pair.Key.Split(".")[1]) < 8d,
-                        IsPreview = RealEntry["stream"].ToString().Lower() == "snapshot",
-                        FileName = "liteloader-installer-" + Pair.Key + (Pair.Key == "1.8" || Pair.Key == "1.9" ? ".0" : "") + "-00-SNAPSHOT.jar",
-                        MD5 = (string)RealEntry["md5"],
-                        ReleaseTime = ModBase.GetLocalTime(ModBase.GetDate((int)RealEntry["timestamp"])).ToString("yyyy'/'MM'/'dd HH':'mm"),
-                        JsonToken = RealEntry
-                    });
-                }
-                Loader.Output = new DlLiteLoaderListResult() { IsOfficial = false, SourceName = "BMCLAPI", Value = Versions };
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("LiteLoader BMCLAPI 版本列表解析失败（" + Result.ToString() + "）", ex);
-            }
-        }
 
         #endregion
 
@@ -1309,25 +986,8 @@ namespace PCL
         public static ModLoader.LoaderTask<int, DlFabricListResult> DlFabricListLoader = new ModLoader.LoaderTask<int, DlFabricListResult>("DlFabricList Main", DlFabricListMain);
         private static void DlFabricListMain(ModLoader.LoaderTask<int, DlFabricListResult> Loader)
         {
-            switch (Settings.Get<int>("ToolDownloadVersion"))
-            {
-                case 0:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlFabricListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlFabricListResult>, int>(DlFabricListBmclapiLoader, 30), new KeyValuePair<ModLoader.LoaderTask<int, DlFabricListResult>, int>(DlFabricListOfficialLoader, 30 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-                case 1:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlFabricListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlFabricListResult>, int>(DlFabricListOfficialLoader, 5), new KeyValuePair<ModLoader.LoaderTask<int, DlFabricListResult>, int>(DlFabricListBmclapiLoader, 5 + 30) }, Loader.IsForceRestarting);
-                        break;
-                    }
-
-                default:
-                    {
-                        DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlFabricListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlFabricListResult>, int>(DlFabricListOfficialLoader, 60), new KeyValuePair<ModLoader.LoaderTask<int, DlFabricListResult>, int>(DlFabricListBmclapiLoader, 60 + 60) }, Loader.IsForceRestarting);
-                        break;
-                    }
-            }
+            // 只使用官方源
+            DlSourceLoader(Loader, new List<KeyValuePair<ModLoader.LoaderTask<int, DlFabricListResult>, int>>() { new KeyValuePair<ModLoader.LoaderTask<int, DlFabricListResult>, int>(DlFabricListOfficialLoader, 60) }, Loader.IsForceRestarting);
         }
 
         /// <summary>
@@ -1350,25 +1010,6 @@ namespace PCL
             }
         }
 
-        /// <summary>
-    /// Fabric 列表，BMCLAPI。
-    /// </summary>
-        public static ModLoader.LoaderTask<int, DlFabricListResult> DlFabricListBmclapiLoader = new ModLoader.LoaderTask<int, DlFabricListResult>("DlFabricList Bmclapi", DlFabricListBmclapiMain);
-        private static void DlFabricListBmclapiMain(ModLoader.LoaderTask<int, DlFabricListResult> Loader)
-        {
-            JObject Result = (JObject)ModNet.NetRequestByClientRetry("https://bmclapi2.bangbang93.com/fabric-meta/v2/versions", RequireJson: true).DeserializeJson();
-            try
-            {
-                var Output = new DlFabricListResult() { IsOfficial = false, SourceName = "BMCLAPI", Value = Result };
-                if (Output.Value["game"] is null || Output.Value["loader"] is null || Output.Value["installer"] is null)
-                    throw new Exception("获取到的列表缺乏必要项");
-                Loader.Output = Output;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Fabric BMCLAPI 版本列表解析失败（" + Result.ToString() + "）", ex);
-            }
-        }
 
         /// <summary>
     /// Fabric API 列表，官方源。
@@ -1385,47 +1026,13 @@ namespace PCL
         #region DlMod | Mod 镜像源请求
 
         /// <summary>
-    /// 对可能涉及 Mod 镜像源的请求进行处理，返回 JToken。
+    /// 请求 Modrinth / CurseForge 官方 API，返回 JToken。
     /// 调用 NetRequest，会进行重试。
     /// </summary>
         public static JToken DlModRequest(string Url, HttpMethod Method = null, string Content = null, string ContentType = null)
         {
-            var Urls = new List<(string Url, int Timeout)>();
-            string McimUrl = DlSourceModGet(Url);
-            if ((McimUrl ?? "") != (Url ?? ""))
-            {
-                switch (Settings.Get<int>("ToolDownloadMod"))
-                {
-                    case 0:
-                        {
-                            Urls.Add((McimUrl, 10));
-                            Urls.Add((McimUrl, 10));
-                            Urls.Add((Url, 30));
-                            break;
-                        }
-                    case 1:
-                        {
-                            Urls.Add((Url, Url.Contains("modrinth") ? 20 : 10)); // 至少 20s，要不然 Modrinth 返回不过来
-                            Urls.Add((McimUrl, 10));
-                            Urls.Add((Url, 30));
-                            Urls.Add((McimUrl, 30));
-                            break;
-                        }
-
-                    default:
-                        {
-                            Urls.Add((Url, Url.Contains("modrinth") ? 20 : 10));
-                            Urls.Add((Url, 30));
-                            Urls.Add((McimUrl, 30));
-                            break;
-                        }
-                }
-            }
-            else
-            {
-                Urls.Add((Url, Url.Contains("modrinth") ? 20 : 10));
-                Urls.Add((Url, 30));
-            }
+            // 只使用 Modrinth / CurseForge 官方 API
+            var Urls = new List<(string Url, int Timeout)>() { (Url, Url.Contains("modrinth") ? 20 : 10), (Url, 30) }; // Modrinth 至少 20s，要不然返回不过来
             var Errors = new List<Exception>();
             foreach (var Source in Urls)
             {
@@ -1443,43 +1050,8 @@ namespace PCL
 
         #endregion
 
-        #region DlSource | 镜像下载源
+        #region DlSource | 下载地址（只使用官方源）
 
-        private static bool DlPreferMojang = false;
-        /// <summary>
-    /// 下载文件（而非获取版本列表）的时候，是否优先使用官方源。
-    /// </summary>
-        public static bool DlSourcePreferMojang
-        {
-            get
-            {
-                return Settings.Get<int>("ToolDownloadSource") == 2 || Settings.Get<int>("ToolDownloadSource") == 1 && DlPreferMojang;
-            }
-        }
-        /// <summary>
-    /// 下载文件（而非获取版本列表）的时候，根据是否优先使用官方源决定使用 Url 的顺序。
-    /// </summary>
-        public static IEnumerable<string> DlSourceOrder(IEnumerable<string> OfficialUrls, IEnumerable<string> MirrorUrls)
-        {
-            return DlSourcePreferMojang ? OfficialUrls.Union(MirrorUrls) : MirrorUrls.Union(OfficialUrls);
-        }
-        /// <summary>
-    /// 获取版本列表（而非下载文件）的时候，是否优先使用官方源。
-    /// </summary>
-        public static bool DlVersionListPreferMojang
-        {
-            get
-            {
-                return Settings.Get<int>("ToolDownloadVersion") == 2 || Settings.Get<int>("ToolDownloadVersion") == 1 && DlPreferMojang;
-            }
-        }
-        /// <summary>
-    /// 获取版本列表（而非下载文件）的时候，根据是否优先使用官方源决定使用 Url 的顺序。
-    /// </summary>
-        public static IEnumerable<string> DlVersionListOrder(IEnumerable<string> OfficialUrls, IEnumerable<string> MirrorUrls)
-        {
-            return DlVersionListPreferMojang ? OfficialUrls.Union(MirrorUrls) : MirrorUrls.Union(OfficialUrls);
-        }
 
 
         /// <summary>
@@ -1488,21 +1060,14 @@ namespace PCL
         public static IEnumerable<string> DlSourceAssetsGet(string Original)
         {
             Original = Original.Replace("http://resources.download.minecraft.net", "https://resources.download.minecraft.net");
-            return DlSourceOrder(new[] { Original }, new[] { Original.Replace("https://piston-data.mojang.com", "https://bmclapi2.bangbang93.com/assets").Replace("https://piston-meta.mojang.com", "https://bmclapi2.bangbang93.com/assets").Replace("https://resources.download.minecraft.net", "https://bmclapi2.bangbang93.com/assets") });
+            return new[] { Original };
         }
         /// <summary>
     /// 下载 Libraries 文件。
     /// </summary>
         public static IEnumerable<string> DlSourceLibraryGet(string Original)
         {
-            if (new[] { "minecraftforge", "fabricmc", "neoforged" }.Any(k => Original.Contains(k))) // 不添加原版源
-            {
-                return new[] { Original.Replace("https://piston-data.mojang.com", "https://bmclapi2.bangbang93.com/maven").Replace("https://piston-meta.mojang.com", "https://bmclapi2.bangbang93.com/maven").Replace("https://libraries.minecraft.net", "https://bmclapi2.bangbang93.com/maven"), Original.Replace("https://piston-data.mojang.com", "https://bmclapi2.bangbang93.com/libraries").Replace("https://piston-meta.mojang.com", "https://bmclapi2.bangbang93.com/libraries").Replace("https://libraries.minecraft.net", "https://bmclapi2.bangbang93.com/libraries") };
-            }
-            else
-            {
-                return DlSourceOrder(new[] { Original }, new[] { Original.Replace("https://piston-data.mojang.com", "https://bmclapi2.bangbang93.com/maven").Replace("https://piston-meta.mojang.com", "https://bmclapi2.bangbang93.com/maven").Replace("https://libraries.minecraft.net", "https://bmclapi2.bangbang93.com/maven"), Original.Replace("https://piston-data.mojang.com", "https://bmclapi2.bangbang93.com/libraries").Replace("https://piston-meta.mojang.com", "https://bmclapi2.bangbang93.com/libraries").Replace("https://libraries.minecraft.net", "https://bmclapi2.bangbang93.com/libraries") });
-            }
+            return new[] { Original }; // 只使用官方源（Mojang、Forge、Fabric、NeoForge 各自的官方 Maven）
         }
         /// <summary>
     /// 下载 Launcher 或 Meta 文件。
@@ -1512,14 +1077,9 @@ namespace PCL
         {
             if (Original is null)
                 throw new Exception("无对应的 json 下载地址");
-            return DlSourceOrder(new[] { Original }, new[] { Original.Replace("https://piston-data.mojang.com", "https://bmclapi2.bangbang93.com").Replace("https://piston-meta.mojang.com", "https://bmclapi2.bangbang93.com").Replace("https://launcher.mojang.com", "https://bmclapi2.bangbang93.com").Replace("https://launchermeta.mojang.com", "https://bmclapi2.bangbang93.com") });
+            return new[] { Original };
         }
 
-        // Mod 下载源
-        public static string DlSourceModGet(string Original)
-        {
-            return Original.Replace("api.modrinth.com", "mod.mcimirror.top/modrinth").Replace("staging-api.modrinth.com", "mod.mcimirror.top/modrinth").Replace("cdn.modrinth.com", "mod.mcimirror.top").Replace("api.curseforge.com", "mod.mcimirror.top/curseforge").Replace("edge.forgecdn.net", "mod.mcimirror.top").Replace("mediafilez.forgecdn.net", "mod.mcimirror.top").Replace("media.forgecdn.net", "mod.mcimirror.top");
-        }
 
         // Loader 自动切换
         private static void DlSourceLoader<InputType, OutputType>(ModLoader.LoaderTask<InputType, OutputType> MainLoader, List<KeyValuePair<ModLoader.LoaderTask<InputType, OutputType>, int>> LoaderList, bool IsForceRestart = false)

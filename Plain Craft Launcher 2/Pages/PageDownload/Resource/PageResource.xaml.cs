@@ -83,7 +83,7 @@ namespace PCL
                 if (_Type == value)
                     return;
                 _Type = value;
-                this.BtnSearchInstallModPack.Visibility = value == ResourceTypes.ModPack && !ModSecret.RestrictMcDownload ? Visibility.Visible : Visibility.Collapsed;
+                this.BtnSearchInstallModPack.Visibility = value == ResourceTypes.ModPack ? Visibility.Visible : Visibility.Collapsed;
             }
         }
         private ResourceTypes _Type = (ResourceTypes)(-1);

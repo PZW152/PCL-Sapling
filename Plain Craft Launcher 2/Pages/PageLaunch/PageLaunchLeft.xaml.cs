@@ -681,7 +681,7 @@ namespace PCL
             }
             else if (ModMinecraft.McInstanceSelected is null)
             {
-                if (ModSecret.RestrictMcDownload || Settings.Get<bool>("UiHiddenPageDownload") && !PageSetupUI.HiddenForceShow)
+                if (Settings.Get<bool>("UiHiddenPageDownload") && !PageSetupUI.HiddenForceShow)
                 {
                     CurrentState = 1;
                 }

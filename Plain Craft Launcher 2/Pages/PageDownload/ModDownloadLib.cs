@@ -132,7 +132,7 @@ namespace PCL
         {
             // 确定图标
             string Logo;
-            switch ("type")
+            switch (Entry["type"]?.ToString()) // 按版本类型选择图标（转换时曾误丢 Entry，导致全部显示为圆石）
             {
                 case "release":
                     {
@@ -694,18 +694,6 @@ pause";
             Loaders.Add(new ModLoader.LoaderTask<string, List<ModNet.NetFile>>("获取 OptiFine 主文件下载地址", (Task) =>
         {
             var Sources = new List<string>();
-            // BMCLAPI 源
-            string BmclapiInherit = DownloadInfo.Inherit;
-            if (BmclapiInherit == "1.8" || BmclapiInherit == "1.9")
-                BmclapiInherit += ".0"; // #4281
-            if (DownloadInfo.IsPreview)
-            {
-                Sources.Add("https://bmclapi2.bangbang93.com/optifine/" + BmclapiInherit + "/HD_U_" + DownloadInfo.DisplayName.Replace(DownloadInfo.Inherit + " ", "").Replace(" ", "/"));
-            }
-            else
-            {
-                Sources.Add("https://bmclapi2.bangbang93.com/optifine/" + BmclapiInherit + "/HD_U/" + DownloadInfo.DisplayName.Replace(DownloadInfo.Inherit + " ", ""));
-            }
             // 官方源
             string PageData;
             try
@@ -875,18 +863,6 @@ pause";
             Loaders.Add(new ModLoader.LoaderTask<ModDownload.DlOptiFineListEntry, List<ModNet.NetFile>>("获取 OptiFine 下载地址", (Task) =>
         {
             var Sources = new List<string>();
-            // BMCLAPI 源
-            string BmclapiInherit = DownloadInfo.Inherit;
-            if (BmclapiInherit == "1.8" || BmclapiInherit == "1.9")
-                BmclapiInherit += ".0"; // #4281
-            if (DownloadInfo.IsPreview)
-            {
-                Sources.Add("https://bmclapi2.bangbang93.com/optifine/" + BmclapiInherit + "/HD_U_" + DownloadInfo.DisplayName.Replace(DownloadInfo.Inherit + " ", "").Replace(" ", "/"));
-            }
-            else
-            {
-                Sources.Add("https://bmclapi2.bangbang93.com/optifine/" + BmclapiInherit + "/HD_U/" + DownloadInfo.DisplayName.Replace(DownloadInfo.Inherit + " ", ""));
-            }
             // 官方源
             string PageData;
             try
@@ -1216,13 +1192,13 @@ pause";
                     // NeoForge
                     ModDownload.DlNeoForgeListEntry NeoForge = (ModDownload.DlNeoForgeListEntry)Info;
                     string Url = NeoForge.UrlBase + "-installer.jar";
-                    Files.Add(new ModNet.NetFile(new[] { Url.Replace("maven.neoforged.net/releases", "bmclapi2.bangbang93.com/maven"), Url }, Target, new FileChecker() { MinSize = 64 * 1024 }));
+                    Files.Add(new ModNet.NetFile(new[] { Url }, Target, new FileChecker() { MinSize = 64 * 1024 }));
                 }
                 else
                 {
                     // Forge
                     ModDownload.DlForgeVersionEntry Forge = (ModDownload.DlForgeVersionEntry)Info;
-                    Files.Add(new ModNet.NetFile(new[] { $"https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/{Forge.Inherit}-{Forge.FileVersion}/forge-{Forge.Inherit}-{Forge.FileVersion}-{Forge.Category}.{Forge.FileExtension}", $"https://files.minecraftforge.net/maven/net/minecraftforge/forge/{Forge.Inherit}-{Forge.FileVersion}/forge-{Forge.Inherit}-{Forge.FileVersion}-{Forge.Category}.{Forge.FileExtension}" }, Target, new FileChecker() { MinSize = 64 * 1024, Hash = Forge.Hash }));
+                    Files.Add(new ModNet.NetFile(new[] { $"https://files.minecraftforge.net/maven/net/minecraftforge/forge/{Forge.Inherit}-{Forge.FileVersion}/forge-{Forge.Inherit}-{Forge.FileVersion}-{Forge.Category}.{Forge.FileExtension}" }, Target, new FileChecker() { MinSize = 64 * 1024, Hash = Forge.Hash }));
                 }
 
                 // 构造加载器
@@ -1529,14 +1505,14 @@ pause";
                 // NeoForge
                 ModDownload.DlNeoForgeListEntry Neo = (ModDownload.DlNeoForgeListEntry)Info;
                 string Url = Neo.UrlBase + "-installer.jar";
-                Files.Add(new ModNet.NetFile(new[] { Url.Replace("maven.neoforged.net/releases", "bmclapi2.bangbang93.com/maven"), Url }, InstallerAddress, new FileChecker() { MinSize = 64 * 1024 }));
+                Files.Add(new ModNet.NetFile(new[] { Url }, InstallerAddress, new FileChecker() { MinSize = 64 * 1024 }));
             }
             else
             {
                 // Forge
                 ModDownload.DlForgeVersionEntry Forge = (ModDownload.DlForgeVersionEntry)Info;
                 string FileName = $"{Forge.Inherit.Replace("-", "_")}-{Forge.FileVersion}/forge-{Forge.Inherit.Replace("-", "_")}-{Forge.FileVersion}-{Forge.Category}.{Forge.FileExtension}";
-                Files.Add(new ModNet.NetFile(new[] { $"https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/{FileName}", $"https://files.minecraftforge.net/maven/net/minecraftforge/forge/{FileName}" }, InstallerAddress, new FileChecker() { MinSize = 64 * 1024, Hash = Forge.Hash }));
+                Files.Add(new ModNet.NetFile(new[] { $"https://files.minecraftforge.net/maven/net/minecraftforge/forge/{FileName}" }, InstallerAddress, new FileChecker() { MinSize = 64 * 1024, Hash = Forge.Hash }));
             }
             Task.Output = Files;
         })
@@ -1966,7 +1942,31 @@ pause";
             // 获取所有推荐版本列表
             // 内容为："1.15.2":"31.2.0"
             // 保存
-            ModBase.RunInNewThread(() => { try { Logger.Info("刷新 Forge 推荐版本缓存开始"); string Result = ModNet.NetRequestByClientRetry("https://bmclapi2.bangbang93.com/forge/promos", RequireJson: true); if (Result.Length < 1000) throw new Exception("获取的结果过短（" + Result + "）"); JContainer ResultJson = (JContainer)Result.DeserializeJson(); var RecommendedList = new List<string>(); foreach (JObject Version in ResultJson) { if (Version["name"] is null || Version["build"] is null) continue; string Name = (string)Version["name"]; if (!Name.EndsWithF("-recommended")) continue; RecommendedList.Add("\"" + Name.Replace("-recommended", "\":\"" + Version["build"]["version"].ToString() + "\"")); } if (RecommendedList.Count < 5) throw new Exception("获取的推荐版本数过少（" + Result + "）"); string CacheJson = "{" + RecommendedList.Join(",") + "}"; FileUtils.Write(ModBase.PathTemp + @"Cache\ForgeRecommendedList.json", CacheJson); Logger.Info("刷新 Forge 推荐版本缓存成功"); } catch (Exception ex) { Logger.Warn(ex, "刷新 Forge 推荐版本缓存失败"); } }, "ForgeRecommendedRefresh");
+            ModBase.RunInNewThread(() =>
+            {
+                try
+                {
+                    Logger.Info("刷新 Forge 推荐版本缓存开始");
+                    // 官方源：promotions_slim.json，形如 {"promos": {"1.20.1-recommended": "47.1.0", ...}}
+                    string Result = ModNet.NetRequestByClientRetry("https://files.minecraftforge.net/maven/net/minecraftforge/forge/promotions_slim.json", RequireJson: true);
+                    var Promos = (JObject)((JObject)Result.DeserializeJson())["promos"];
+                    var RecommendedList = new List<string>();
+                    foreach (var Promo in Promos.Properties())
+                    {
+                        if (!Promo.Name.EndsWithF("-recommended"))
+                            continue;
+                        RecommendedList.Add("\"" + Promo.Name.Replace("-recommended", "") + "\":\"" + Promo.Value + "\"");
+                    }
+                    if (RecommendedList.Count < 5)
+                        throw new Exception("获取的推荐版本数过少（" + Result + "）");
+                    FileUtils.Write(ModBase.PathTemp + @"Cache\ForgeRecommendedList.json", "{" + RecommendedList.Join(",") + "}");
+                    Logger.Info("刷新 Forge 推荐版本缓存成功");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, "刷新 Forge 推荐版本缓存失败");
+                }
+            }, "ForgeRecommendedRefresh");
         }
         private static bool IsForgeRecommendedRefreshed = false;
 
@@ -2184,7 +2184,7 @@ pause";
 
             // 下载 Json
             MinecraftName = MinecraftName.Replace("∞", "infinite"); // 放在 ID 后面避免影响版本文件夹名称
-            Loaders.Add(new ModLoader.LoaderTask<string, List<ModNet.NetFile>>("获取 Fabric 主文件下载地址", (Task) => Task.Output = new List<ModNet.NetFile>() { new ModNet.NetFile(new[] { "https://bmclapi2.bangbang93.com/fabric-meta/v2/versions/loader/" + MinecraftName + "/" + FabricVersion + "/profile/json", "https://meta.fabricmc.net/v2/versions/loader/" + MinecraftName + "/" + FabricVersion + "/profile/json" }, VersionFolder + Id + ".json", new FileChecker() { IsJson = true }) }) { ProgressWeight = 0.5d }); // 构造文件请求
+            Loaders.Add(new ModLoader.LoaderTask<string, List<ModNet.NetFile>>("获取 Fabric 主文件下载地址", (Task) => Task.Output = new List<ModNet.NetFile>() { new ModNet.NetFile(new[] { "https://meta.fabricmc.net/v2/versions/loader/" + MinecraftName + "/" + FabricVersion + "/profile/json" }, VersionFolder + Id + ".json", new FileChecker() { IsJson = true }) }) { ProgressWeight = 0.5d }); // 构造文件请求
             Loaders.Add(new ModNet.LoaderDownload("下载 Fabric 主文件", new List<ModNet.NetFile>()) { ProgressWeight = 2.5d });
 
             return Loaders;
@@ -2525,9 +2525,9 @@ pause";
             }
             // 填入 minecraftArguments
             var SplitArguments = new List<string>();
-            foreach (var Argument in AllArguments.Split(" ", true).Select(Value => Value.Trim()))
+            foreach (string Argument in ((string)AllArguments).Split(" ", true).Select(Value => Value.Trim()))
             {
-                if (Conversions.ToBoolean(!((dynamic)Argument).StartsWithF("-") && SplitArguments.Any()))
+                if (!Argument.StartsWithF("-") && SplitArguments.Any())
                 {
                     string LastArgument = SplitArguments.Last();
                     if (LastArgument.StartsWithF("-") && !LastArgument.Contains(" "))

@@ -42,14 +42,7 @@ namespace PCL
         public virtual void LoaderInit()
         {
             ControlInit();
-            if (ModSecret.RestrictMcDownload)
-            {
-                this.PageLoaderInit(this.LoadMinecraft, this.PanLoad, this.PanAllBack, (FrameworkElement)null, new ModLoader.LoaderTask<string, ModDownload.DlClientListResult>("关闭下载", _ => { throw new Exception("为遵守相关法律法规，PCL 不再提供 MC 下载功能，非常抱歉 qwq……"); }), (_) => LoadMinecraft_OnFinish());
-            }
-            else
-            {
-                this.PageLoaderInit(this.LoadMinecraft, this.PanLoad, this.PanAllBack, (FrameworkElement)null, ModDownload.DlClientListLoader, (_) => LoadMinecraft_OnFinish());
-            }
+            this.PageLoaderInit(this.LoadMinecraft, this.PanLoad, this.PanAllBack, (FrameworkElement)null, ModDownload.DlClientListLoader, (_) => LoadMinecraft_OnFinish());
         }
 
         private bool IsLoad = false;

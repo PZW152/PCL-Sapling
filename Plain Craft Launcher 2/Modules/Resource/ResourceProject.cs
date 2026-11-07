@@ -1210,7 +1210,6 @@ namespace PCL
             else
             {
                 Img.Source = LogoUrl;
-                Img.FallbackSource = ModDownload.DlSourceModGet(LogoUrl);
             }
         }
         public (string Title, string SubTitle) GetControlTitle(bool HasModLoaderDescription)

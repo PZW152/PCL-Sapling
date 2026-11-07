@@ -28,7 +28,6 @@ namespace PCL
 
         #region 网络鉴权
 
-        public const bool RestrictMcDownload = true;
         internal static string SecretCdnSign(string UrlWithMark)
         {
             if (!UrlWithMark.EndsWithF("{CDN}"))

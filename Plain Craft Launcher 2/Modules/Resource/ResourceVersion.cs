@@ -165,7 +165,6 @@ namespace PCL
                 if (string.IsNullOrEmpty(Url))
                     Url = $"https://edge.forgecdn.net/files/{Conversions.ToInteger(Result.Id.ToString().Substring(0, 4))}/{Conversions.ToInteger(Result.Id.ToString().Substring(4))}/{Result.FileName}";
                 Result.DownloadUrls = ParseCurseForgeDownloadUrls(Url.Replace(Result.FileName, StringUtils.UrlEscape(Result.FileName))); // 对脑残 CurseForge 的下载地址进行多种修正
-                Result.DownloadUrls.Add(ModDownload.DlSourceModGet(Url)); // 添加镜像源；注意 MCIM 源不支持 URL 编码后的文件名，必须传入 URL 编码前的文件名
                 Result.DownloadUrls = Result.DownloadUrls.Distinct().ToList(); // 最终去重
                 // Dependencies
                 if (Data.ContainsKey("dependencies"))
@@ -213,7 +212,7 @@ namespace PCL
                 {
                     var File = Data["files"][0];
                     Result.FileName = (string)File["filename"];
-                    Result.DownloadUrls = new List<string>() { (string)File["url"], ModDownload.DlSourceModGet((string)File["url"]) }.Distinct().ToList(); // 同时添加了镜像源
+                    Result.DownloadUrls = new List<string>() { (string)File["url"] };
                     Result.Size = (int)File["size"];
                     Result.Hash = File["hashes"]["sha1"]?.ToString().Lower();
                 }
