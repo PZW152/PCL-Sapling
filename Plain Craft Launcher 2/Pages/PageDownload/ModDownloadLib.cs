@@ -603,7 +603,7 @@ pause";
                     Task.Progress += 0.7d / 7000d;
                 }
             }
-            catch (ObjectDisposedException ex)
+            catch (ObjectDisposedException)
             {
             }
             catch (Exception ex)
@@ -639,7 +639,7 @@ pause";
                     Task.Progress += 0.7d / 7000d;
                 }
             }
-            catch (ObjectDisposedException ex)
+            catch (ObjectDisposedException)
             {
             }
             catch (Exception ex)
@@ -1275,7 +1275,7 @@ pause";
                     ForgelikeInjectorLine(e.Data, Task);
                 }
             }
-            catch (ObjectDisposedException ex)
+            catch (ObjectDisposedException)
             {
             }
             catch (Exception ex)
@@ -1311,7 +1311,7 @@ pause";
                     ForgelikeInjectorLine(e.Data, Task);
                 }
             }
-            catch (ObjectDisposedException ex)
+            catch (ObjectDisposedException)
             {
             }
             catch (Exception ex)

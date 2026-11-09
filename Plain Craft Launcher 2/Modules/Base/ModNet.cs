@@ -53,7 +53,7 @@ namespace PCL
                 }
                 return Result;
             }
-            catch (FormatException ex)
+            catch (FormatException)
             {
                 throw;
             }
@@ -380,11 +380,11 @@ namespace PCL
                     HttpDiskCache.Store(Response, Url, ResponseBytes);
                 return ResponseBytes;
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException)
             {
                 throw;
             }
-            catch (TimeoutException ex)
+            catch (TimeoutException)
             {
                 throw new WebException($"连接服务器超时，请稍后再试，或使用 VPN 改善网络环境（{Method}, {Url}）", WebExceptionStatus.Timeout);
             }
@@ -734,6 +734,10 @@ namespace PCL
             {
                 return !(left == right);
             }
+            public override int GetHashCode()
+            {
+                return Uuid;
+            }
         }
         /// <summary>
     /// 下载单个文件。
@@ -984,6 +988,10 @@ namespace PCL
             {
                 NetFile @file = obj as NetFile;
                 return @file is not null && Uuid == @file.Uuid;
+            }
+            public override int GetHashCode()
+            {
+                return Uuid;
             }
 
             #endregion
@@ -1588,7 +1596,7 @@ namespace PCL
                     {
                         FileUtils.Delete(LocalPath);
                     }
-                    catch (Exception exx)
+                    catch (Exception)
                     {
                         Logger.Warn(ex, $"删除合并失败的文件出错（{LocalPath}）");
                     }

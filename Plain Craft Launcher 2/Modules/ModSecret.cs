@@ -199,12 +199,6 @@ namespace PCL
 
         #region 联网配置
 
-        /// <summary>
-    /// 联网获取的配置信息。
-    /// 若获取失败或仍在获取中，可能为 Nothing。
-    /// </summary>
-        public static JObject ServerConfig;
-
         public static ModLoader.LoaderTask<int, int> ServerLoader = new ModLoader.LoaderTask<int, int>("PCL 配置更新", _ => Logger.Info("该版本中不包含更新通知功能……"), Priority: ThreadPriority.BelowNormal) { ReloadTimeout = 1000 * 60 * 60 }; // 超时 1 小时
 
         #endregion

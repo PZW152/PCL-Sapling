@@ -26,6 +26,7 @@ namespace PCL
                 this.y = y;
             }
         }
+#pragma warning disable CS0649 // 这些字段由 Win32 的 WM_GETMINMAXINFO 填充，托管代码只读取
         private struct MINMAXINFO
         {
             public POINT ptReserved;
@@ -34,6 +35,7 @@ namespace PCL
             public POINT ptMinTrackSize;
             public POINT ptMaxTrackSize;
         }
+#pragma warning restore CS0649
         private struct RECT
         {
             public int left;

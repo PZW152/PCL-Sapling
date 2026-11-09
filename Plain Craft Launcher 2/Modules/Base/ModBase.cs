@@ -287,19 +287,16 @@ namespace PCL
             }
             public static bool operator ==(MyColor a, MyColor b)
             {
-                if (a == null && b == null)
+                // 必须使用 is null：写成 a == null 会再次调用本运算符，造成无限递归
+                if (a is null && b is null)
                     return true;
-                if (a == null || b == null)
+                if (a is null || b is null)
                     return false;
                 return a.A == b.A && a.R == b.R && a.G == b.G && a.B == b.B;
             }
             public static bool operator !=(MyColor a, MyColor b)
             {
-                if (a == null && b == null)
-                    return false;
-                if (a == null || b == null)
-                    return true;
-                return !(a.A == b.A && a.R == b.R && a.G == b.G && a.B == b.B);
+                return !(a == b);
             }
             /// <summary>
         /// 获取两颜色间的百分比，基于 RGB 计算。
@@ -488,7 +485,11 @@ namespace PCL
             }
             public override bool Equals(object obj)
             {
-                return Operators.ConditionalCompareObjectEqual(this, obj, false);
+                return obj is MyColor Other && this == Other;
+            }
+            public override int GetHashCode()
+            {
+                return (A, R, G, B).GetHashCode();
             }
 
         }
@@ -979,6 +980,24 @@ namespace PCL
             var NewProcess = StartProcess(new ProcessStartInfo(PathExe) { Verb = "runas", Arguments = Argument });
             NewProcess.WaitForExit();
             return NewProcess.ExitCode;
+        }
+
+        /// <summary>
+    /// 获取与 <see cref="PathUtils.IsSame"/> 一致的路径哈希值，供重写 GetHashCode 时使用。
+    /// 两个 IsSame 为真的路径必定得到相同结果。null 与空字符串视为同一个空路径。本方法不会抛出异常。
+    /// </summary>
+        public static int GetPathHashCode(string PathName)
+        {
+            if (string.IsNullOrEmpty(PathName))
+                return 0;
+            try
+            {
+                return StringComparer.OrdinalIgnoreCase.GetHashCode(PathUtils.ForCompare(PathName));
+            }
+            catch (ArgumentException)
+            {
+                return StringComparer.OrdinalIgnoreCase.GetHashCode(PathName); // 路径不合法时退化为原字符串
+            }
         }
 
         private static int Uuid = 1;

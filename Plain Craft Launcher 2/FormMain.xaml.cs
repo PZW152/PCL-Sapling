@@ -1614,7 +1614,7 @@ namespace PCL
                 }
                 else if (other is int)
                 {
-                    if (Operators.ConditionalCompareObjectNotEqual(Page, other, false))
+                    if ((int)Page != (int)other)
                         return false;
                     return Additional is null;
                 }
@@ -1630,6 +1630,10 @@ namespace PCL
             public static bool operator !=(PageStackData left, PageStackData right)
             {
                 return !(left == right);
+            }
+            public override int GetHashCode()
+            {
+                return (int)Page * 397 ^ (Additional is null ? 0 : Additional.GetHashCode());
             }
             public static implicit operator PageStackData(PageType Value)
             {

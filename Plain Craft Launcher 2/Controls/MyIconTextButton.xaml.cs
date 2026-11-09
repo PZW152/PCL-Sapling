@@ -17,12 +17,6 @@ namespace PCL
         // 基础
 
         public int Uuid = ModBase.GetUuid();
-        public event CheckEventHandler Check;
-
-        public delegate void CheckEventHandler(object sender, bool raiseByMouse);
-        public event ChangeEventHandler Change;
-
-        public delegate void ChangeEventHandler(object sender, bool raiseByMouse);
 
         // 自定义属性
 

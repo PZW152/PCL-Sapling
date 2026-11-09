@@ -220,7 +220,6 @@ namespace PCL
         // 点击事件
 
         private bool MouseDowned = false;
-        private bool AllowMouseDown = true;
         private void Radiobox_MouseUp()
         {
             if (!MouseDowned)

@@ -353,6 +353,10 @@ namespace PCL
                 LoaderBase @base = obj as LoaderBase;
                 return @base is not null && Uuid == @base.Uuid;
             }
+            public override int GetHashCode()
+            {
+                return Uuid;
+            }
 
         }
         /// <summary>
@@ -489,7 +493,7 @@ namespace PCL
                 {
                     LastRunningThread.Start(); // 不能使用 RunInNewThread，否则在函数返回前线程就会运行完，导致误判 IsCanceled
                 }
-                catch (ThreadStateException ex) // 若遇到偶发的 “线程正在运行或被终止”，则等待后重试
+                catch (ThreadStateException) // 若遇到偶发的 “线程正在运行或被终止”，则等待后重试
                 {
                     Thread.Sleep(500);
                     LastRunningThread.Start();
@@ -1012,6 +1016,10 @@ namespace PCL
                     return false;
                 LoaderFolderDictionaryEntry entry = (LoaderFolderDictionaryEntry)obj;
                 return EqualityComparer<DateTime?>.Default.Equals(LastCheckTime, entry.LastCheckTime) && (FolderPath ?? "") == (entry.FolderPath ?? "");
+            }
+            public override int GetHashCode()
+            {
+                return (LastCheckTime, FolderPath ?? "").GetHashCode();
             }
         }
         public enum LoaderFolderRunType

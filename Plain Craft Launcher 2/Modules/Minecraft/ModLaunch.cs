@@ -368,6 +368,10 @@ namespace PCL
             {
                 return obj is not null && obj.GetHashCode() == GetHashCode();
             }
+            /// <summary>
+        /// 由各登录方式实现：相等判断完全基于此哈希值。
+        /// </summary>
+            public abstract override int GetHashCode();
         }
         public class McLoginMs : McLoginData
         {
@@ -1306,7 +1310,7 @@ namespace PCL
             {
                 McLaunchEncoding = Encoding.GetEncoding(EncodingName.Equals("GBK", StringComparison.OrdinalIgnoreCase) ? "GB18030" : EncodingName);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 var FallbackEncoding = Encoding.GetEncoding(System.Globalization.CultureInfo.CurrentCulture.TextInfo.ANSICodePage); // 老版本 Java 的编码选择行为
                 McLaunchLog($"无法识别 Java 编码 {EncodingName ?? "Nothing"}，已回退为 {FallbackEncoding.WebName}", LogLevel.Warn);

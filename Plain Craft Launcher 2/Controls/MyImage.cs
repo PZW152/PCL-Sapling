@@ -34,7 +34,7 @@ namespace PCL
                 SetValue(EnableCacheProperty, value);
             }
         }
-        public static new readonly DependencyProperty EnableCacheProperty = DependencyProperty.Register("EnableCache", typeof(bool), typeof(MyImage), new PropertyMetadata(true));
+        public static readonly DependencyProperty EnableCacheProperty = DependencyProperty.Register("EnableCache", typeof(bool), typeof(MyImage), new PropertyMetadata(true));
 
         /// <summary>
     /// 与 Image 的 Source 类似。

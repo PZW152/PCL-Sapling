@@ -44,15 +44,14 @@ namespace PCL
         {
             this.InitializeComponent();
             this.SetResourceReference(ForegroundProperty, "ColorBrush3");
+            StateProgressChanged = (_, __) => RefreshText();
+            StateLoadingStateChanged = (_, __) => RefreshState();
             IsErrorChanged += (_, __) => RefreshText();
             this.Loaded += (_, __) => RefreshText();
             this.Loaded += (_, __) => InitState();
             this.Loaded += (_, __) => RefreshState();
             this.Unloaded += (_, __) => RefreshState();
             this.MouseLeftButtonUp += Button_MouseUp;
-            this.MouseLeftButtonDown += Button_MouseDown;
-            this.MouseLeave += Button_MouseLeave;
-            this.MouseLeftButtonUp += Button_MouseLeave;
         }
 
         #endregion
@@ -109,7 +108,7 @@ namespace PCL
 
         private void RefreshText()
         {
-            ModBase.RunInUi(() => { if (InnerState == MyLoadingState.Error) { if (TextErrorInherit && State.IsLoader) { Exception Ex = ((ModLoader.LoaderBase)State).Error; if (Ex is null) { this.LabText.Text = "未知错误"; } else { this.LabText.Text = Ex.GetDisplay(false); } } else { this.LabText.Text = TextError; } } else if (ShowProgress && State.IsLoader) { this.LabText.Text = Conversions.ToString(Operators.ConcatenateObject(Operators.ConcatenateObject(Text + " - ", Math.Floor(((ModLoader.LoaderBase)State).Progress * 100)), "%")); } else { this.LabText.Text = Text; } });
+            ModBase.RunInUi(() => { if (InnerState == MyLoadingState.Error) { if (TextErrorInherit && State.IsLoader) { Exception Ex = ((ModLoader.LoaderBase)State).Error; if (Ex is null) { this.LabText.Text = "未知错误"; } else { this.LabText.Text = Ex.GetDisplay(false); } } else { this.LabText.Text = TextError; } } else if (ShowProgress && State.IsLoader) { this.LabText.Text = $"{Text} - {Math.Floor(((ModLoader.LoaderBase)State).Progress * 100)}%"; } else { this.LabText.Text = Text; } });
         }
 
         #endregion
@@ -127,6 +126,10 @@ namespace PCL
 
         // 用于外部改变的公开状态
         private ILoadingTrigger __State;
+        // 必须保存委托实例：若在 -= 时新建 Lambda，旧的处理器永远不会解绑，
+        // 被替换掉的加载器会一直持有本控件，且每次进度变化都重复刷新
+        private readonly ILoadingTrigger.ProgressChangedEventHandler StateProgressChanged;
+        private readonly ILoadingTrigger.LoadingStateChangedEventHandler StateLoadingStateChanged;
 
         private ILoadingTrigger _State
         {
@@ -141,15 +144,15 @@ namespace PCL
             {
                 if (__State != null)
                 {
-                    __State.ProgressChanged -= (_, __) => RefreshText();
-                    __State.LoadingStateChanged -= (_, __) => RefreshState();
+                    __State.ProgressChanged -= StateProgressChanged;
+                    __State.LoadingStateChanged -= StateLoadingStateChanged;
                 }
 
                 __State = value;
                 if (__State != null)
                 {
-                    __State.ProgressChanged += (_, __) => RefreshText();
-                    __State.LoadingStateChanged += (_, __) => RefreshState();
+                    __State.ProgressChanged += StateProgressChanged;
+                    __State.LoadingStateChanged += StateLoadingStateChanged;
                 }
             }
         }
@@ -300,16 +303,6 @@ namespace PCL
         {
             Click?.Invoke(sender, e);
         }
-        private bool IsMouseDown = false;
-        private void Button_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            // 鼠标点击判定（务必放在点击事件之后，以使得 Button_MouseUp 先于 Button_MouseLeave 执行）
-            IsMouseDown = true;
-        }
-        private void Button_MouseLeave(object sender, object e)
-        {
-            IsMouseDown = false;
-        }
 
         #endregion
 
@@ -348,6 +341,8 @@ namespace PCL
         public bool IsLoader { get; private set; } = false;
 
         public event ILoadingTrigger.LoadingStateChangedEventHandler LoadingStateChanged;
+#pragma warning disable CS0067 // 由 ILoadingTrigger 规定，但模拟器没有进度概念，故永不引发
         public event ILoadingTrigger.ProgressChangedEventHandler ProgressChanged;
+#pragma warning restore CS0067
     }
 }

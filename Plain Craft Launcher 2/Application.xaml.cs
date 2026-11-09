@@ -69,7 +69,7 @@ namespace PCL
                 {
                     var _unused = new FormattedText("", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Fonts.SystemTypefaces.First(), 96d, new ModBase.MyColor(), ModBase.DPI);
                 }
-                catch (UriFormatException ex)
+                catch (UriFormatException)
                 {
                     Environment.SetEnvironmentVariable("windir", Environment.GetEnvironmentVariable("SystemRoot"), EnvironmentVariableTarget.User);
                     var _unused = new FormattedText("", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Fonts.SystemTypefaces.First(), 96d, new ModBase.MyColor(), ModBase.DPI);
@@ -91,7 +91,7 @@ namespace PCL
                             ModMain.SetGPUPreference(e.Args[1].Trim('"'));
                             Environment.Exit((int)ModBase.ProcessReturnValues.TaskDone);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             Environment.Exit((int)ModBase.ProcessReturnValues.Fail);
                         }
@@ -125,7 +125,7 @@ namespace PCL
                     DirectoryUtils.Create(Paths.Base + @"PCL\Pictures\");
                     ModBase.CheckPermissionWithException(Paths.Base + @"PCL\");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     Interaction.MsgBox($@"PCL 没有对当前文件夹的权限（{Paths.Base}PCL\），请尝试：" + Constants.vbCrLf + "1. 将 PCL 移动到其他文件夹" + (PathUtils.GetDiskName(Paths.Base) is { } arg1 && arg1 == 'C' ? "，例如 C 盘和桌面以外的其他位置。" : "。") + Constants.vbCrLf + "2. 删除当前目录中的 PCL 文件夹，然后再试。" + Constants.vbCrLf + "3. 右键 PCL 选择属性，打开 兼容性 中的 以管理员身份运行此程序。", MsgBoxStyle.Critical, "运行环境错误");
                     Environment.Exit((int)ModBase.ProcessReturnValues.Cancel);
@@ -232,7 +232,7 @@ namespace PCL
                         if (PclMutex.WaitOne(10000))
                             return; // 等待至多 10 秒
                     }
-                    catch (AbandonedMutexException Ignored)
+                    catch (AbandonedMutexException)
                     {
                         return; // 已有实例异常退出，继续启动
                     }

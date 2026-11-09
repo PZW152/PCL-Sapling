@@ -202,7 +202,7 @@ namespace PCL
                     var Range = ValueRange<Version>.FromString(Settings.Get<string>("VersionArgumentJavaRange", Instance), s => StringUtils.ParseVersionWithDefaults(s));
                     return (Range, null);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     Logger.Warn($"版本设置中指定的 Java 版本范围有误（{Settings.Get<string>("VersionArgumentJavaRange", Instance)}），这可能是因为首次修改此设置，尚未初始化");
                 }

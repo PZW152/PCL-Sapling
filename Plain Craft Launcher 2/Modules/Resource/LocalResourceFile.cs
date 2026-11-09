@@ -349,6 +349,10 @@ namespace PCL
             LocalResourceFile Target = obj as LocalResourceFile;
             return Target is not null && PathUtils.IsSame(File.FullName, Target.File.FullName);
         }
+        public override int GetHashCode()
+        {
+            return ModBase.GetPathHashCode(File?.FullName);
+        }
 
         #endregion
 

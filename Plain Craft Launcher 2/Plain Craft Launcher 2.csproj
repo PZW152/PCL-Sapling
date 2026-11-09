@@ -25,7 +25,8 @@
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
     <!-- 不讓 SDK 按配置名自動添加 DEBUG/RELEASE 等符號，版本類型完全由下方配置決定 -->
     <DisableImplicitConfigurationDefines>true</DisableImplicitConfigurationDefines>
-    <NoWarn>$(NoWarn);CS0162;CS0168;CS0169;CS0219;CS0414;CS0649;CS1998;CS4014;CS8981</NoWarn>
+    <!-- CS0162：BuildType 在各配置下是常量，另一分支必然不可达；CS8981：全小写的类型名 -->
+    <NoWarn>$(NoWarn);CS0162;CS8981</NoWarn>
   </PropertyGroup>
 
   <!-- 與原 VB 項目一致：Debug 與 Snapshot 都編譯為快照版，Release 為正式版 -->

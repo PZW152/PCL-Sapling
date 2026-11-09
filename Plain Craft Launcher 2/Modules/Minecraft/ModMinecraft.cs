@@ -78,6 +78,10 @@ namespace PCL
                 McFolder Folder = (McFolder)obj;
                 return (Name ?? "") == (Folder.Name ?? "") && PathUtils.IsSame(Location, Folder.Location) && Type == Folder.Type;
             }
+            public override int GetHashCode()
+            {
+                return (Name ?? "", ModBase.GetPathHashCode(Location), Type).GetHashCode();
+            }
             public override string ToString()
             {
                 return Location;
@@ -1173,6 +1177,10 @@ namespace PCL
             public static bool operator !=(McInstance a, McInstance b)
             {
                 return !(a == b);
+            }
+            public override int GetHashCode()
+            {
+                return ModBase.GetPathHashCode(PathVersion);
             }
 
         }
