@@ -1733,6 +1733,7 @@ namespace PCL
 
             // 更新 options.txt
             string SetupFileAddress = ModMinecraft.McInstanceSelected.PathIndie + "options.txt";
+            bool IsNewGame = !FileUtils.Exists(SetupFileAddress) && !FileUtils.Exists(ModMinecraft.McInstanceSelected.PathIndie + @"config\yosbr\options.txt");
             if (!FileUtils.Exists(SetupFileAddress))
             {
                 // Yosbr Mod 兼容（#2385）：https://www.curseforge.com/minecraft/mc-mods/yosbr
@@ -1768,6 +1769,15 @@ namespace PCL
                     ModBase.WriteIni(SetupFileAddress, "lang", "-"); // 触发缓存更改，避免删除后重新下载残留缓存
                     ModBase.WriteIni(SetupFileAddress, "lang", RequiredLang);
                     McLaunchLog($"已将语言从 {CurrentLang} 修改为 {RequiredLang}");
+                }
+                // 新游戏的默认设置（只在游戏第一次启动前写入一次）
+                if (IsNewGame)
+                {
+                    foreach (var Entry in GameDefaults.Entries(Settings.Get<int>("LaunchDefaultRenderDistance"), Settings.Get<int>("LaunchDefaultVolume"), Settings.Get<int>("LaunchDefaultGraphics"), Settings.Get<bool>("LaunchDefaultNoPause")))
+                    {
+                        ModBase.WriteIni(SetupFileAddress, Entry.Key, Entry.Value);
+                        McLaunchLog($"新游戏默认设置：{Entry.Key} = {Entry.Value}");
+                    }
                 }
                 // '如果是初次设置，一并修改 forceUnicodeFont
                 // If Settings.Get(Of Boolean)("ToolHelpChinese") AndAlso (CurrentLang = "none" OrElse Not DirectoryUtils.Exists(McInstanceSelected.PathIndie & "saves")) Then
