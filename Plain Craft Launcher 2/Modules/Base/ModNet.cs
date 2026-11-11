@@ -1874,7 +1874,9 @@ namespace PCL
                             File.IsCopy = true;
                             try
                             {
-                                FileUtils.Copy(Target, File.LocalPath);
+                                // 同一磁盘内用硬链接共用同一份内容，不重复占用空间；否则复制
+                                if (!string.Equals(Target, File.LocalPath, StringComparison.OrdinalIgnoreCase))
+                                    FileLinker.LinkOrCopy(Target, File.LocalPath);
                                 File.Finish(false);
                                 continue;
                             }
