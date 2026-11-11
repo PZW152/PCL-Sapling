@@ -105,6 +105,12 @@ namespace PCL
             this.LabCaption.Text = $"登录网页将自动开启，请在网页中输入 {UserCode}（已自动复制）。" + ModBase.CrLf + ModBase.CrLf + $"如果网络环境不佳，网页可能一直加载不出来，届时请使用加速器或 VPN 改善网络环境。" + ModBase.CrLf + $"你也可以用其他设备打开 {Website} 并输入上述代码。";
             CustomEventService.SetEventData(this.Btn1, Website);
             CustomEventService.SetEventData(this.Btn2, UserCode);
+            // 登录页是微软的固定网址时，显示二维码，方便用手机完成登录
+            if (MicrosoftSignIn.CanShowQr(Website))
+            {
+                this.PanQr.Visibility = System.Windows.Visibility.Visible;
+                this.LabCaption.Text += ModBase.CrLf + ModBase.CrLf + "也可以用手机扫描右侧的二维码，在手机上输入上面的代码完成登录。";
+            }
             // 启动工作线程
             ModBase.RunInNewThread(WorkThread, "MyMsgLogin");
         }

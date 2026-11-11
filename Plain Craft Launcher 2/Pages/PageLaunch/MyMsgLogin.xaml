@@ -23,11 +23,28 @@
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" FontSize="23" TextTrimming="None" Foreground="{DynamicResource ColorBrush2}" HorizontalAlignment="Left" Name="LabTitle" MouseLeftButtonDown="__On_LabTitle_MouseLeftButtonDown" Margin="7,-1,70,9" Text="测试标题文本" VerticalAlignment="Top" SnapsToDevicePixels="False" UseLayoutRounding="False" />
             <Rectangle x:Name="ShapeLine" Grid.Row="1" Height="2" Fill="{Binding Foreground, ElementName=LabTitle}" />
-            <local:MyScrollViewer Grid.Row="3" VerticalAlignment="Top" x:Name="PanCaption" Margin="0,0,0,17" Padding="7,0,15,0"
-                               VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" DeltaMult="0.7">
-                <TextBlock VerticalAlignment="Top" TextTrimming="None" TextWrapping="Wrap" Name="LabCaption" FontSize="15" LineHeight="18"
-                           Foreground="#FF5C5C5C" FontWeight="Normal" Padding="1" />
-            </local:MyScrollViewer>
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <local:MyScrollViewer VerticalAlignment="Top" x:Name="PanCaption" Margin="0,0,0,17" Padding="7,0,15,0"
+                                   VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" DeltaMult="0.7">
+                    <TextBlock VerticalAlignment="Top" TextTrimming="None" TextWrapping="Wrap" Name="LabCaption" FontSize="15" LineHeight="18"
+                               Foreground="#FF5C5C5C" FontWeight="Normal" Padding="1" />
+                </local:MyScrollViewer>
+                <!-- 微软登录页的二维码：网址固定，所以直接内嵌预先生成的图形（29×29，四周留 4 格空白） -->
+                <StackPanel x:Name="PanQr" Grid.Column="1" Visibility="Collapsed" VerticalAlignment="Top" Margin="6,2,8,17">
+                    <Border Background="White" BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="4" Width="118" Height="118">
+                        <Viewbox Margin="12">
+                            <Canvas Width="29" Height="29">
+                                <Path Fill="Black" Data="M0 0h7v1h-7zM9 0h1v1h-1zM12 0h1v1h-1zM16 0h1v1h-1zM18 0h1v1h-1zM22 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM10 1h2v1h-2zM13 1h2v1h-2zM16 1h2v1h-2zM19 1h2v1h-2zM22 1h1v1h-1zM28 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM8 2h1v1h-1zM10 2h3v1h-3zM14 2h2v1h-2zM17 2h2v1h-2zM20 2h1v1h-1zM22 2h1v1h-1zM24 2h3v1h-3zM28 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM9 3h2v1h-2zM12 3h2v1h-2zM19 3h2v1h-2zM22 3h1v1h-1zM24 3h3v1h-3zM28 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM8 4h2v1h-2zM13 4h2v1h-2zM17 4h2v1h-2zM22 4h1v1h-1zM24 4h3v1h-3zM28 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM8 5h3v1h-3zM13 5h1v1h-1zM15 5h2v1h-2zM18 5h2v1h-2zM22 5h1v1h-1zM28 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h7v1h-7zM9 7h5v1h-5zM15 7h6v1h-6zM1 8h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM8 8h3v1h-3zM12 8h1v1h-1zM14 8h1v1h-1zM17 8h1v1h-1zM19 8h3v1h-3zM23 8h2v1h-2zM26 8h1v1h-1zM0 9h3v1h-3zM5 9h1v1h-1zM8 9h1v1h-1zM11 9h2v1h-2zM14 9h1v1h-1zM17 9h2v1h-2zM22 9h7v1h-7zM3 10h2v1h-2zM6 10h2v1h-2zM10 10h4v1h-4zM15 10h1v1h-1zM18 10h1v1h-1zM20 10h2v1h-2zM23 10h4v1h-4zM28 10h1v1h-1zM2 11h3v1h-3zM7 11h3v1h-3zM13 11h2v1h-2zM17 11h1v1h-1zM19 11h3v1h-3zM24 11h2v1h-2zM27 11h2v1h-2zM0 12h3v1h-3zM6 12h4v1h-4zM11 12h1v1h-1zM13 12h1v1h-1zM15 12h1v1h-1zM17 12h1v1h-1zM23 12h1v1h-1zM25 12h1v1h-1zM28 12h1v1h-1zM0 13h1v1h-1zM2 13h1v1h-1zM4 13h1v1h-1zM7 13h1v1h-1zM9 13h1v1h-1zM11 13h2v1h-2zM14 13h1v1h-1zM17 13h2v1h-2zM22 13h1v1h-1zM24 13h1v1h-1zM26 13h3v1h-3zM1 14h1v1h-1zM3 14h1v1h-1zM6 14h1v1h-1zM8 14h1v1h-1zM10 14h1v1h-1zM12 14h1v1h-1zM14 14h1v1h-1zM16 14h1v1h-1zM18 14h1v1h-1zM20 14h3v1h-3zM24 14h1v1h-1zM28 14h1v1h-1zM0 15h1v1h-1zM2 15h3v1h-3zM7 15h4v1h-4zM12 15h1v1h-1zM14 15h4v1h-4zM19 15h2v1h-2zM23 15h1v1h-1zM25 15h1v1h-1zM0 16h1v1h-1zM2 16h1v1h-1zM6 16h4v1h-4zM12 16h4v1h-4zM17 16h1v1h-1zM19 16h3v1h-3zM27 16h2v1h-2zM0 17h3v1h-3zM7 17h4v1h-4zM16 17h3v1h-3zM20 17h1v1h-1zM22 17h1v1h-1zM24 17h1v1h-1zM28 17h1v1h-1zM2 18h1v1h-1zM6 18h1v1h-1zM9 18h2v1h-2zM12 18h2v1h-2zM16 18h3v1h-3zM20 18h1v1h-1zM23 18h1v1h-1zM25 18h2v1h-2zM28 18h1v1h-1zM4 19h2v1h-2zM8 19h1v1h-1zM11 19h2v1h-2zM14 19h1v1h-1zM17 19h2v1h-2zM20 19h1v1h-1zM25 19h1v1h-1zM27 19h1v1h-1zM0 20h2v1h-2zM4 20h3v1h-3zM8 20h1v1h-1zM12 20h2v1h-2zM15 20h3v1h-3zM20 20h6v1h-6zM27 20h2v1h-2zM8 21h4v1h-4zM15 21h4v1h-4zM20 21h1v1h-1zM24 21h1v1h-1zM26 21h1v1h-1zM28 21h1v1h-1zM0 22h7v1h-7zM10 22h2v1h-2zM14 22h2v1h-2zM19 22h2v1h-2zM22 22h1v1h-1zM24 22h1v1h-1zM28 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM12 23h3v1h-3zM16 23h5v1h-5zM24 23h2v1h-2zM27 23h1v1h-1zM0 24h1v1h-1zM2 24h3v1h-3zM6 24h1v1h-1zM8 24h2v1h-2zM11 24h3v1h-3zM18 24h7v1h-7zM0 25h1v1h-1zM2 25h3v1h-3zM6 25h1v1h-1zM12 25h1v1h-1zM14 25h1v1h-1zM17 25h2v1h-2zM23 25h1v1h-1zM26 25h2v1h-2zM0 26h1v1h-1zM2 26h3v1h-3zM6 26h1v1h-1zM9 26h2v1h-2zM12 26h1v1h-1zM15 26h3v1h-3zM19 26h3v1h-3zM26 26h3v1h-3zM0 27h1v1h-1zM6 27h1v1h-1zM8 27h4v1h-4zM14 27h5v1h-5zM20 27h1v1h-1zM23 27h1v1h-1zM25 27h1v1h-1zM27 27h2v1h-2zM0 28h7v1h-7zM10 28h3v1h-3zM17 28h1v1h-1zM20 28h3v1h-3zM24 28h1v1h-1zM27 28h1v1h-1z" />
+                            </Canvas>
+                        </Viewbox>
+                    </Border>
+                    <TextBlock Text="手机扫码打开登录页" FontSize="12" Foreground="#FF8C8C8C" HorizontalAlignment="Center" Margin="0,6,0,0" />
+                </StackPanel>
+            </Grid>
             <StackPanel Grid.Row="4" Name="PanBtn" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="150,0,8,0" Orientation="Horizontal">
                 <local:MyButton ColorType="Normal" x:FieldModifier="public" Text="重新打开网页" x:Name="Btn1" Click="__On_Btn1_Click" Margin="12,0,0,0" TextPadding="7" SnapsToDevicePixels="False" Padding="5,0" UseLayoutRounding="False"
                              local:CustomEventService.EventType="打开网页" />
