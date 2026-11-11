@@ -9,7 +9,6 @@ using System.Windows.Threading;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -451,7 +450,7 @@ namespace PCL
             string Uuid = Data.Input.Item2;
             if (string.IsNullOrEmpty(UserName))
             {
-                Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Conversions.ToString(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
+                Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
                 Logger.Info("获取微软正版皮肤失败，ID 为空");
                 goto Finish;
             }
@@ -474,17 +473,17 @@ namespace PCL
                 }
                 else if (ex.GetDisplay(false).Contains("(429)"))
                 {
-                    Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Conversions.ToString(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
+                    Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
                     Logger.Error($"获取正版皮肤失败（{UserName}）：获取皮肤太过频繁，请 5 分钟后再试！", LogBehavior.Toast);
                 }
                 else if (ex.GetDisplay(false).Contains("未设置自定义皮肤"))
                 {
-                    Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Conversions.ToString(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
+                    Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
                     Logger.Info("用户未设置自定义皮肤，跳过皮肤加载");
                 }
                 else
                 {
-                    Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Conversions.ToString(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
+                    Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
                     Logger.Error(ex, $"获取微软正版皮肤失败（{UserName}）", LogBehavior.Toast);
                 }
             }
@@ -542,11 +541,11 @@ namespace PCL
             // 清空已有皮肤
             ModBase.RunInUi(() => { if (ModMain.FrmLoginLegacy is not null && ModMain.FrmLoginLegacy.Skin is not null) ModMain.FrmLoginLegacy.Skin.Clear(); });
             // 获取 Url
-            switch (Conversions.ToInteger(Data.Input.Item1))
+            switch (Coerce.ToInt(Data.Input.Item1))
             {
                 case 0: // 默认
                     {
-                        Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Conversions.ToString(ModLaunch.McLoginLegacyUuid(Data.Input.Item2))) + ".png";
+                        Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(Data.Input.Item2))) + ".png";
                         break;
                     }
                 case 1: // Steve
@@ -571,7 +570,7 @@ namespace PCL
                             }
                             else
                             {
-                                string Result = Conversions.ToString(ModLaunch.McLoginMojangUuid(ID, true));
+                                string Result = Coerce.ToStr(ModLaunch.McLoginMojangUuid(ID, true));
                                 if (Data.IsCanceled)
                                     throw new OperationCanceledException("当前任务已取消：" + ID);
                                 Result = ModMinecraft.McSkinGetAddress(Result, "Mojang");
@@ -592,12 +591,12 @@ namespace PCL
                             }
                             else if (ex.GetDisplay(false).Contains("(429)"))
                             {
-                                Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Conversions.ToString(ModLaunch.McLoginLegacyUuid(ID))) + ".png";
+                                Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(ID))) + ".png";
                                 Logger.Info($"获取离线登录使用的正版皮肤失败（{ID}）：获取皮肤太过频繁，请 5 分钟后再试！");
                             }
                             else
                             {
-                                Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Conversions.ToString(ModLaunch.McLoginLegacyUuid(ID))) + ".png";
+                                Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(ID))) + ".png";
                                 Logger.Warn(ex, $"获取离线登录使用的正版皮肤失败（{ID}）");
                             }
                         }

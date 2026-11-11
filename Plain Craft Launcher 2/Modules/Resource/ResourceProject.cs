@@ -9,7 +9,6 @@ using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -1194,7 +1193,7 @@ namespace PCL
             }
             NewItem.LabSource.Text = Platform.ToString();
             NewItem.LabTime.Text = StringUtils.FormatTimeSpan(LastUpdate - DateTime.Now, true);
-            NewItem.LabDownload.Text = Conversions.ToString(DownloadCount > 100000000 ? global::System.Math.Round(DownloadCount / 100000000d, 2) + " 亿" : DownloadCount > 100000 ? global::System.Math.Floor(DownloadCount / 10000d) + " 万" : DownloadCount);
+            NewItem.LabDownload.Text = Coerce.ToStr(DownloadCount > 100000000 ? global::System.Math.Round(DownloadCount / 100000000d, 2) + " 亿" : DownloadCount > 100000 ? global::System.Math.Floor(DownloadCount / 10000d) + " 万" : DownloadCount);
             return NewItem;
         })
             {

@@ -17,10 +17,6 @@ namespace PCL
         /// <summary>頁面附加參數、提示控件 Tag 等以 object[] 存放的參數列表。</summary>
         public static object[] Args(this object Value) => (object[])Value;
 
-        /// <summary>
-        /// 對應 VB 的 My.Computer（記憶體、螢幕、剪貼簿、鍵盤狀態等）。
-        /// </summary>
-        public static readonly Microsoft.VisualBasic.Devices.Computer Computer = new Microsoft.VisualBasic.Devices.Computer();
     }
 
     /// <summary>

@@ -8,7 +8,6 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -21,7 +20,7 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(GetValue((DependencyProperty)PanScrollProperty));
+                return Coerce.ToStr(GetValue((DependencyProperty)PanScrollProperty));
             }
             set
             {

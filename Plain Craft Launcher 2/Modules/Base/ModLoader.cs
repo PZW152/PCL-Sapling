@@ -9,7 +9,6 @@ using System.Windows.Documents;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -467,14 +466,14 @@ namespace PCL
             public override void Start(object Input = null, bool IsForceRestart = false)
             {
                 // 确认是否开始加载
-                bool localShouldStart() { TIn argInput = Conversions.ToGenericParameter<TIn>(Input); var ret = ShouldStart(ref argInput, IsForceRestart); Input = argInput; return ret; }
+                bool localShouldStart() { TIn argInput = Coerce.To<TIn>(Input); var ret = ShouldStart(ref argInput, IsForceRestart); Input = argInput; return ret; }
 
                 if (localShouldStart())
                 {
                     // 输入不同或失败，开始加载
                     if (State == ModBase.LoadState.Loading)
                         TriggerThreadInterrupt();
-                    this.Input = Conversions.ToGenericParameter<TIn>(Input);
+                    this.Input = Coerce.To<TIn>(Input);
                     lock (LockState)
                     {
                         State = ModBase.LoadState.Loading;
@@ -720,7 +719,7 @@ namespace PCL
                     }
                 }
                 // 启动加载
-                this.Input = Conversions.ToGenericParameter<InputType>(Input);
+                this.Input = Coerce.To<InputType>(Input);
                 if (IsForceRestart)
                 {
                     foreach (var Loader in Loaders)

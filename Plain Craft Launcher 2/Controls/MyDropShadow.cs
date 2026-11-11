@@ -2,7 +2,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -32,7 +31,7 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToDouble(GetValue(ShadowRadiusProperty));
+                return Coerce.ToDouble(GetValue(ShadowRadiusProperty));
             }
             set
             {

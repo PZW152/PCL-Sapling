@@ -12,7 +12,6 @@ using System.Windows.Media;
 using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -234,7 +233,7 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(this.GetValue(TitleProperty));
+                return Coerce.ToStr(this.GetValue(TitleProperty));
             }
             set
             {
@@ -248,7 +247,7 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToDouble(this.GetValue(FontSizeProperty));
+                return Coerce.ToDouble(this.GetValue(FontSizeProperty));
             }
             set
             {
@@ -792,7 +791,7 @@ namespace PCL
                     if (ButtonStack is not null)
                     {
                         Ani.Add(ModAnimation.AaOpacity(ButtonStack, 1d - ButtonStack.Opacity, (int)Math.Round(Time * 0.7d), (int)Math.Round(Time * 0.3d)));
-                        Ani.Add(ModAnimation.AaDouble(i => this.ColumnPaddingRight.Width = new GridLength(Math.Max(0d, this.ColumnPaddingRight.Width.Value + Conversions.ToDouble(i))), (double)Math.Max(MinPaddingRight, 5 + Buttons.Count() * 25) - this.ColumnPaddingRight.Width.Value, (int)Math.Round(Time * 0.3d), (int)Math.Round(Time * 0.7d)));
+                        Ani.Add(ModAnimation.AaDouble(i => this.ColumnPaddingRight.Width = new GridLength(Math.Max(0d, this.ColumnPaddingRight.Width.Value + Coerce.ToDouble(i))), (double)Math.Max(MinPaddingRight, 5 + Buttons.Count() * 25) - this.ColumnPaddingRight.Width.Value, (int)Math.Round(Time * 0.3d), (int)Math.Round(Time * 0.7d)));
                     }
                     Ani.AddRange(new[] { ModAnimation.AaColor(RectBack, Border.BackgroundProperty, IsMouseDown ? "ColorBrush6" : "ColorBrushBg1", Time), ModAnimation.AaOpacity(RectBack, 1d - RectBack.Opacity, Time, Ease: new ModAnimation.AniEaseOutFluent()) });
                     if (IsScaleAnimationEnabled)
@@ -813,7 +812,7 @@ namespace PCL
                     if (ButtonStack is not null)
                     {
                         Ani.Add(ModAnimation.AaOpacity(ButtonStack, -ButtonStack.Opacity, (int)Math.Round(Time * 0.4d)));
-                        Ani.Add(ModAnimation.AaDouble(i => this.ColumnPaddingRight.Width = new GridLength(Math.Max(0d, this.ColumnPaddingRight.Width.Value + Conversions.ToDouble(i))), (double)MinPaddingRight - this.ColumnPaddingRight.Width.Value, (int)Math.Round(Time * 0.4d)));
+                        Ani.Add(ModAnimation.AaDouble(i => this.ColumnPaddingRight.Width = new GridLength(Math.Max(0d, this.ColumnPaddingRight.Width.Value + Coerce.ToDouble(i))), (double)MinPaddingRight - this.ColumnPaddingRight.Width.Value, (int)Math.Round(Time * 0.4d)));
                     }
                     Ani.Add(ModAnimation.AaOpacity(RectBack, -RectBack.Opacity, Time));
                     if (IsScaleAnimationEnabled)

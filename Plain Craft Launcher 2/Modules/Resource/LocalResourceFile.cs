@@ -3,8 +3,6 @@ using System.IO;
 using System.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -109,7 +107,7 @@ namespace PCL
             {
                 if (_Description is null && value is not null && value.Count() > 2)
                 {
-                    _Description = value.ToString().Trim(Conversions.ToChar(Constants.vbLf));
+                    _Description = value.ToString().Trim(Coerce.ToChar(ModBase.Lf));
                     // 优化显示：若以 [a-zA-Z0-9] 结尾，加上小数点句号
                     if (_Description.Lower().LastIndexOfAny("qwertyuiopasdfghjklzxcvbnm0123456789".ToCharArray()) == _Description.Count() - 1)
                         _Description += ".";
@@ -250,7 +248,7 @@ namespace PCL
                     string Cached = ModBase.ReadIni(ModBase.PathTemp + @"Cache\ModHash.ini", CacheKey);
                     if (!string.IsNullOrEmpty(Cached) && Cached.RegexCheck(@"^\d+$")) // #5062
                     {
-                        _CurseForgeHash = Conversions.ToUInteger(Cached);
+                        _CurseForgeHash = Coerce.ToUInt(Cached);
                         return (uint)_CurseForgeHash;
                     }
                     // 读取文件

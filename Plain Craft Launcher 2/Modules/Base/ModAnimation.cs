@@ -13,7 +13,6 @@ using System.Windows.Media;
 using System.Windows.Media.Effects;
 using MeloongCore;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -1088,7 +1087,7 @@ namespace PCL
 
                     case AniType.Number:
                         {
-                            double Delta = MathUtils.Lerp(0d, Conversions.ToDouble(Ani.Value), Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, Ani.TimePercent));
+                            double Delta = MathUtils.Lerp(0d, Coerce.ToDouble(Ani.Value), Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, Ani.TimePercent));
                             if (Delta != 0d)
                             {
                                 switch (Ani.TypeSub)
@@ -1212,7 +1211,7 @@ namespace PCL
                                             var Pair = (object[])Ani.Obj;
                                             var Target = (DependencyObject)Pair[0];
                                             var Property = (DependencyProperty)Pair[1];
-                                            Target.SetValue(Property, Conversions.ToDouble(Target.GetValue(Property)) + Delta);
+                                            Target.SetValue(Property, Coerce.ToDouble(Target.GetValue(Property)) + Delta);
                                             break;
                                         }
                                     case AniTypeSub.DoubleParam:
@@ -1257,8 +1256,8 @@ namespace PCL
 
                     case AniType.TextAppear:
                         {
-                            string Text = Conversions.ToString(Ani.Value.Args()[0]);
-                            int TextCount = (int)Math.Round((double)(Conversions.ToBoolean(Ani.Value.Args()[1]) ? Text.Length : 0) + Math.Round((double)(Text.Length * (Conversions.ToBoolean(Ani.Value.Args()[1]) ? -1 : 1)) * Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, 0d)));
+                            string Text = Coerce.ToStr(Ani.Value.Args()[0]);
+                            int TextCount = (int)Math.Round((double)(Coerce.ToBool(Ani.Value.Args()[1]) ? Text.Length : 0) + Math.Round((double)(Text.Length * (Coerce.ToBool(Ani.Value.Args()[1]) ? -1 : 1)) * Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, 0d)));
                             string NewText = Text.Substring(0, TextCount);
                             // 添加乱码
                             if (TextCount < Text.Length)
@@ -1302,7 +1301,7 @@ namespace PCL
                                     Obj.RenderTransformOrigin = new Point(0.5d, 0.5d);
                                 Obj.RenderTransform = new ScaleTransform(1d, 1d);
                             }
-                            double Delta = MathUtils.Lerp(0d, Conversions.ToDouble(Ani.Value), Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, Ani.TimePercent));
+                            double Delta = MathUtils.Lerp(0d, Coerce.ToDouble(Ani.Value), Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, Ani.TimePercent));
                             ((ScaleTransform)Obj.RenderTransform).ScaleX = Math.Max(((ScaleTransform)Obj.RenderTransform).ScaleX + Delta, 0d);
                             ((ScaleTransform)Obj.RenderTransform).ScaleY = Math.Max(((ScaleTransform)Obj.RenderTransform).ScaleY + Delta, 0d);
                             break;
@@ -1317,7 +1316,7 @@ namespace PCL
                                     Obj.RenderTransformOrigin = new Point(0.5d, 0.5d);
                                 Obj.RenderTransform = new RotateTransform(0d);
                             }
-                            double Delta = MathUtils.Lerp(0d, Conversions.ToDouble(Ani.Value), Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, Ani.TimePercent));
+                            double Delta = MathUtils.Lerp(0d, Coerce.ToDouble(Ani.Value), Ani.Ease.GetDelta(Ani.TimeFinished / Ani.TimeTotal, Ani.TimePercent));
                             ((RotateTransform)Obj.RenderTransform).Angle = ((RotateTransform)Obj.RenderTransform).Angle + Delta;
                             break;
                         }

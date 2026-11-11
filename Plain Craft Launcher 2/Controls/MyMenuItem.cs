@@ -1,7 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -22,7 +21,7 @@ namespace PCL
             {
                 System.Windows.Shapes.Path IconControl = (System.Windows.Shapes.Path)GetTemplateChild("Icon");
                 if (IconControl is not null)
-                    IconControl.Data = (Geometry)new GeometryConverter().ConvertFromString(Conversions.ToString(Icon));
+                    IconControl.Data = (Geometry)new GeometryConverter().ConvertFromString(Coerce.ToStr(Icon));
             }
             // 对父级设置透明度
             if (Parent is ContextMenu)

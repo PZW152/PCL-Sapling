@@ -6,7 +6,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using MeloongCore;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -123,14 +122,14 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(GetValue(ValidateResultProperty));
+                return Coerce.ToStr(GetValue(ValidateResultProperty));
             }
             set
             {
                 SetValue(ValidateResultProperty, value);
             }
         }
-        public static readonly DependencyProperty ValidateResultProperty = DependencyProperty.Register("ValidateResult", typeof(string), typeof(MyTextBox), new PropertyMetadata("", ModBase.DpCallback<MyTextBox>((d, e) => d.SetValue(IsValidatedPropertyKey, string.IsNullOrEmpty(Conversions.ToString(e.NewValue))))));
+        public static readonly DependencyProperty ValidateResultProperty = DependencyProperty.Register("ValidateResult", typeof(string), typeof(MyTextBox), new PropertyMetadata("", ModBase.DpCallback<MyTextBox>((d, e) => d.SetValue(IsValidatedPropertyKey, string.IsNullOrEmpty(Coerce.ToStr(e.NewValue))))));
 
         /// <summary>
     /// 是否通过了输入验证。
@@ -139,7 +138,7 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToBoolean(GetValue(IsValidatedProperty));
+                return Coerce.ToBool(GetValue(IsValidatedProperty));
             }
         }
         private static readonly DependencyPropertyKey IsValidatedPropertyKey = DependencyProperty.RegisterReadOnly("IsValidated", typeof(bool), typeof(MyTextBox), new PropertyMetadata(true));
@@ -274,7 +273,7 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(GetValue(HintTextProperty));
+                return Coerce.ToStr(GetValue(HintTextProperty));
             }
             set
             {

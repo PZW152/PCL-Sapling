@@ -16,8 +16,6 @@ using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using ThrottleDebounce;
 
 namespace PCL
@@ -36,6 +34,10 @@ namespace PCL
         #region 声明
 
         // 下列版本信息由更新器自动修改
+        public const string CrLf = "\r\n";
+        public const string Lf = "\n";
+        public const string Tab = "\t";
+
         public const string VersionBaseName = "2.99.0.1"; // 显示用版本名
         public const string CommitHash = BuildSecrets.CommitHash; // 編譯時由 PCL_COMMIT_HASH 環境變量注入
 #if RELEASE
@@ -683,7 +685,7 @@ namespace PCL
                     FileContent.Append(Pair.Key);
                     FileContent.Append(":");
                     FileContent.Append(Pair.Value);
-                    FileContent.Append(Constants.vbCrLf);
+                    FileContent.Append(ModBase.CrLf);
                 }
                 if (!FileName.Contains(@":\"))
                     FileName = $@"{Paths.Base}PCL\{FileName}.ini";
@@ -757,7 +759,7 @@ namespace PCL
                 return 0d;
             try
             {
-                return Str is string && Operators.ConditionalCompareObjectEqual(Str, "&", false) ? 0d : Conversion.Val(Str);
+                return Str is string Text ? Coerce.Val(Text) : Coerce.ToDouble(Str);
             }
             catch
             {
@@ -1201,7 +1203,7 @@ namespace PCL
             {
                 Logger.Warn(ex, $"无法打开网页（{Url}）");
                 ClipboardSet(Url, false);
-                ModMain.MyMsgBox("可能由于浏览器未正确配置，PCL 无法为你打开网页。" + Constants.vbCrLf + "网址已经复制到剪贴板，若有需要可以手动粘贴访问。" + Constants.vbCrLf + $"网址：{Url}", "无法打开网页");
+                ModMain.MyMsgBox("可能由于浏览器未正确配置，PCL 无法为你打开网页。" + ModBase.CrLf + "网址已经复制到剪贴板，若有需要可以手动粘贴访问。" + ModBase.CrLf + $"网址：{Url}", "无法打开网页");
             }
         }
         /// <summary>
@@ -1240,9 +1242,9 @@ namespace PCL
             {
                 Retrier.Attempt(delay: Attempt => TimeSpan.FromMilliseconds(200d), maxAttempts: 4, isRetryAllowed: ex => true, action: _ => RunInUiWait(() =>
 {
-                    VbCompat.Computer.Clipboard.Clear();
+                    System.Windows.Clipboard.Clear();
                     if (!string.IsNullOrEmpty(Text))
-                        VbCompat.Computer.Clipboard.SetText(Text);
+                        System.Windows.Clipboard.SetText(Text);
                 }));
                 if (ShowSuccessHint)
                     ModMain.Hint("已成功复制！", ModMain.HintType.Green);
@@ -1328,7 +1330,7 @@ namespace PCL
                         {
                             if (Reader.Type is not null && BlackListType.IsAssignableFrom(Reader.Type.UnderlyingType))
                                 throw new UnauthorizedAccessException($"基于安全考虑，不允许使用 {BlackListType.Name} 类型。");
-                            if (Reader.Value is not null && Operators.ConditionalCompareObjectEqual(Reader.Value, BlackListType.Name, false))
+                            if (Reader.Value is not null && Coerce.Equal(Reader.Value, BlackListType.Name))
                                 throw new UnauthorizedAccessException($"基于安全考虑，不允许使用 {BlackListType.Name} 值。");
                         }
                         foreach (var BlackListMember in new[] { "Code", "FactoryMethod", "Static" })

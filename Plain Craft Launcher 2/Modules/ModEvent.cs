@@ -8,8 +8,6 @@ using System.Windows;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 
 
 #region 附加属性
@@ -77,7 +75,7 @@ namespace PCL
         [AttachedPropertyBrowsableForType(typeof(DependencyObject))]
         public static CustomEvent.EventType GetEventType(DependencyObject d)
         {
-            return (CustomEvent.EventType)Conversions.ToInteger(d.GetValue(EventTypeProperty));
+            return (CustomEvent.EventType)Coerce.ToInt(d.GetValue(EventTypeProperty));
         }
 
         // EventData
@@ -90,7 +88,7 @@ namespace PCL
         [AttachedPropertyBrowsableForType(typeof(DependencyObject))]
         public static string GetEventData(DependencyObject d)
         {
-            return Conversions.ToString(d.GetValue(EventDataProperty));
+            return Coerce.ToStr(d.GetValue(EventDataProperty));
         }
 
     }
@@ -132,7 +130,7 @@ namespace PCL
             get
             {
                 var Value = EventType.None;
-                ModBase.RunInUiWait(() => Value = (EventType)Conversions.ToInteger(GetValue(TypeProperty)));
+                ModBase.RunInUiWait(() => Value = (EventType)Coerce.ToInt(GetValue(TypeProperty)));
                 return Value;
             }
             set
@@ -147,7 +145,7 @@ namespace PCL
             get
             {
                 string Value = null;
-                ModBase.RunInUiWait(() => Value = Conversions.ToString(GetValue(DataProperty)));
+                ModBase.RunInUiWait(() => Value = Coerce.ToStr(GetValue(DataProperty)));
                 return Value;
             }
             set
@@ -226,7 +224,7 @@ namespace PCL
                             Arg = Arg.Replace(@"\", "/");
                             if (!Arg.Contains("://") || Arg.StartsWithF("file", true)) // 为了支持更多协议（#2200）
                             {
-                                ModMain.MyMsgBox("EventData 必须为一个网址。" + Constants.vbCrLf + "如果想要启动程序，请将 EventType 改为 打开文件。", "事件执行失败");
+                                ModMain.MyMsgBox("EventData 必须为一个网址。" + ModBase.CrLf + "如果想要启动程序，请将 EventType 改为 打开文件。", "事件执行失败");
                                 return;
                             }
                             ModMain.Hint("正在开启，请稍候：" + Arg);
@@ -335,13 +333,13 @@ namespace PCL
                         {
                             if (Args.Length == 1)
                                 throw new Exception($"EventType {Type} 需要至少 2 个以 | 分割的参数，例如 弹窗标题|弹窗内容");
-                            ModMain.MyMsgBox(Arg1.BeforeLast("|").Replace(@"\n", Constants.vbCrLf), Arg0.Replace(@"\n", Constants.vbCrLf), Args.Length > 2 ? Arg1.AfterLast("|") : "确定");
+                            ModMain.MyMsgBox(Arg1.BeforeLast("|").Replace(@"\n", ModBase.CrLf), Arg0.Replace(@"\n", ModBase.CrLf), Args.Length > 2 ? Arg1.AfterLast("|") : "确定");
                             break;
                         }
 
                     case EventType.弹出提示:
                         {
-                            ModMain.Hint(Arg0.Replace(@"\n", Constants.vbCrLf), Args.Length == 1 ? ModMain.HintType.Blue : EnumUtils.FromString<ModMain.HintType>(Arg1));
+                            ModMain.Hint(Arg0.Replace(@"\n", ModBase.CrLf), Args.Length == 1 ? ModMain.HintType.Blue : EnumUtils.FromString<ModMain.HintType>(Arg1));
                             break;
                         }
 
@@ -408,7 +406,7 @@ namespace PCL
 
                     default:
                         {
-                            ModMain.MyMsgBox("未知的事件类型：" + ((int)Type).ToString() + Constants.vbCrLf + "请检查事件类型填写是否正确，或者 PCL 是否为最新版本。", "事件执行失败");
+                            ModMain.MyMsgBox("未知的事件类型：" + ((int)Type).ToString() + ModBase.CrLf + "请检查事件类型填写是否正确，或者 PCL 是否为最新版本。", "事件执行失败");
                             break;
                         }
                 }
@@ -460,7 +458,7 @@ namespace PCL
         {
             if (Settings.Get<bool>("HintCustomCommand"))
                 return true;
-            switch (ModMain.MyMsgBox(Message + Constants.vbCrLf + "请在确认没有安全隐患后再继续。", "执行确认", "继续", "继续且今后不再要求确认", "取消"))
+            switch (ModMain.MyMsgBox(Message + ModBase.CrLf + "请在确认没有安全隐患后再继续。", "执行确认", "继续", "继续且今后不再要求确认", "取消"))
             {
                 case 1:
                     {

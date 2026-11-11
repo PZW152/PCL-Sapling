@@ -13,8 +13,6 @@ using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -394,7 +392,7 @@ namespace PCL
             // 还原原版信息
             OriginalName = Task.Input.Name;
             CustomLogo = null;
-            if (Conversions.ToBoolean(ModBase.ReadIni(Task.Input.PathVersion + @"PCL\Setup.ini", "LogoCustom", false.ToString())))
+            if (Coerce.ToBool(ModBase.ReadIni(Task.Input.PathVersion + @"PCL\Setup.ini", "LogoCustom", false.ToString())))
             {
                 CustomLogo = Task.Input.Logo.EndsWithF(@"PCL\Logo.png") ? Task.Input.PathVersion + @"PCL\Logo.png" : Task.Input.Logo;
             }
@@ -813,7 +811,7 @@ namespace PCL
             int RightMargin = IsNameChanged ? 40 : 16;
             if (IsInSelectPage && ModAnimation.AniControlEnabled == 0)
             {
-                ModAnimation.AniStart(ModAnimation.AaDouble(Delta => TextSelectName.Margin = new Thickness(56d, 16d, Conversions.ToDouble(Operators.AddObject(TextSelectName.Margin.Right, Delta)), 0d), RightMargin - TextSelectName.Margin.Right, 150, 0, new ModAnimation.AniEaseOutFluent(), After: false), "DownloadModify Name Margin");
+                ModAnimation.AniStart(ModAnimation.AaDouble(Delta => TextSelectName.Margin = new Thickness(56d, 16d, TextSelectName.Margin.Right + Coerce.ToDouble(Delta), 0d), RightMargin - TextSelectName.Margin.Right, 150, 0, new ModAnimation.AniEaseOutFluent(), After: false), "DownloadModify Name Margin");
             }
             else
             {
@@ -843,7 +841,7 @@ namespace PCL
             var Warnings = new List<string>();
             if ((SelectedForge is not null || SelectedNeoForge is not null || SelectedFabric is not null) && !PathUtils.IsSame(TargetInstance.PathIndie, TargetInstance.PathVersion))
             {
-                Warnings.Add("该版本尚未开启版本隔离，可能与别的 MC 版本共用同一个 Mod 和存档文件夹。" + Constants.vbCrLf + "修改版本后，已有的 Mod、存档等需要手动迁移到新的游戏目录。");
+                Warnings.Add("该版本尚未开启版本隔离，可能与别的 MC 版本共用同一个 Mod 和存档文件夹。" + ModBase.CrLf + "修改版本后，已有的 Mod、存档等需要手动迁移到新的游戏目录。");
             }
             bool IsMinecraftVersionChanged = (InitialTarget.MinecraftVersion ?? "") != (Target.MinecraftVersion ?? "");
             if (!IsVanillaVersionReliable && !IsMinecraftVersionChanged)
@@ -873,7 +871,7 @@ namespace PCL
             }
             if (Warnings.Any())
             {
-                if (ModMain.MyMsgBox("请注意：" + Constants.vbCrLf + "• " + Warnings.Join(Constants.vbCrLf + "• "), "修改确认", "开始修改", "取消", IsWarn: true) != 1)
+                if (ModMain.MyMsgBox("请注意：" + ModBase.CrLf + "• " + Warnings.Join(ModBase.CrLf + "• "), "修改确认", "开始修改", "取消", IsWarn: true) != 1)
                     return;
             }
             if (!Configs.HintModifyInstanceWarning.Get())

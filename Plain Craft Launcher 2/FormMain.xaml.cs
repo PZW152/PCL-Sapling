@@ -13,8 +13,6 @@ using System.Windows.Media;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -353,7 +351,7 @@ namespace PCL
             {
                 ContentList.Add((FeatureCount > 0 ? FeatureCount + " 项小调整与修改" : "") + (FeatureCount > 0 && BugCount > 0 ? "，" : "") + (BugCount > 0 ? "修复了 " + BugCount + " 个 Bug" : "") + "，详见完整更新日志");
             }
-            string Content = "· " + ContentList.Join(Constants.vbCrLf + "· ");
+            string Content = "· " + ContentList.Join(ModBase.CrLf + "· ");
             // 输出更新日志
             ModBase.RunInNewThread(() => ModMain.MyMsgBox(Content, "PCL 已更新至" + ModBase.VersionDisplay, "确定"), "UpdateLog Output");
         }
@@ -493,8 +491,8 @@ namespace PCL
             if (ModMain.FrmStart is not null)
                 ModMain.FrmStart.Close(new TimeSpan(0, 0, 0, 0, (int)Math.Round(400d / ModAnimation.AniSpeed)));
             // 更改窗口
-            this.Top = (ModBase.GetWPFSize(VbCompat.Computer.Screen.WorkingArea.Height) - this.Height) / 2d;
-            this.Left = (ModBase.GetWPFSize(VbCompat.Computer.Screen.WorkingArea.Width) - this.Width) / 2d;
+            this.Top = (SystemParameters.WorkArea.Height - this.Height) / 2d;
+            this.Left = (SystemParameters.WorkArea.Width - this.Width) / 2d;
             IsSizeSaveable = true;
             ShowWindowToTop();
             HwndSource HwndSource = (HwndSource)PresentationSource.FromVisual(this);
@@ -502,8 +500,8 @@ namespace PCL
             ModAnimation.AniStart(new[] {
             ModAnimation.AaCode(() => ModAnimation.AniControlEnabled -= 1, 50),
             ModAnimation.AaOpacity(this, Settings.Get<int>("UiLauncherTransparent") / 1000d + 0.4d, 250, 100),
-            ModAnimation.AaDouble(i => this.TransformPos.Y = this.TransformPos.Y + Conversions.ToDouble(i), -this.TransformPos.Y, 600, 100, new ModAnimation.AniEaseOutBack(ModAnimation.AniEasePower.Weak)),
-            ModAnimation.AaDouble(i => this.TransformRotate.Angle = this.TransformRotate.Angle + Conversions.ToDouble(i), -this.TransformRotate.Angle, 500, 100, new ModAnimation.AniEaseOutBack(ModAnimation.AniEasePower.Weak)),
+            ModAnimation.AaDouble(i => this.TransformPos.Y = this.TransformPos.Y + Coerce.ToDouble(i), -this.TransformPos.Y, 600, 100, new ModAnimation.AniEaseOutBack(ModAnimation.AniEasePower.Weak)),
+            ModAnimation.AaDouble(i => this.TransformRotate.Angle = this.TransformRotate.Angle + Coerce.ToDouble(i), -this.TransformRotate.Angle, 500, 100, new ModAnimation.AniEaseOutBack(ModAnimation.AniEasePower.Weak)),
                         ModAnimation.AaCode(() =>
                 {
                 this.PanBack.RenderTransform = (Transform)null;
@@ -521,7 +519,7 @@ namespace PCL
             const int EulaVersion = 2;
             if (Settings.Get<int>("SystemEulaVersion") < EulaVersion)
             {
-                switch (ModMain.MyMsgBox(Settings.Get<int>("SystemEulaVersion") == 0 ? "在使用 PCL 前，请先阅读用户协议与免责声明。" : $"PCL 的用户协议与免责声明已更新。{Constants.vbCrLf}请阅读更新后的用户协议与免责声明。", "协议授权", "同意", "拒绝", "查看用户协议与免责声明", Button3Action: () => ModBase.OpenWebsite("https://shimo.im/docs/rGrd8pY8xWkt6ryW")))
+                switch (ModMain.MyMsgBox(Settings.Get<int>("SystemEulaVersion") == 0 ? "在使用 PCL 前，请先阅读用户协议与免责声明。" : $"PCL 的用户协议与免责声明已更新。{ModBase.CrLf}请阅读更新后的用户协议与免责声明。", "协议授权", "同意", "拒绝", "查看用户协议与免责声明", Button3Action: () => ModBase.OpenWebsite("https://shimo.im/docs/rGrd8pY8xWkt6ryW")))
                 {
                     case 1:
                         {
@@ -566,7 +564,7 @@ namespace PCL
             if (MissingFeatures.Any() && !Settings.Get<bool>("HintOpenSourceKeys"))
             {
                 Settings.Set("HintOpenSourceKeys", true);
-                ModMain.MyMsgBox("该版本中无法使用以下功能：" + Constants.vbCrLf + MissingFeatures.Join(Constants.vbCrLf), "开源版本说明");
+                ModMain.MyMsgBox("该版本中无法使用以下功能：" + ModBase.CrLf + MissingFeatures.Join(ModBase.CrLf), "开源版本说明");
             }
         }, "初始化", ThreadPriority.Lowest);
 
@@ -683,11 +681,11 @@ namespace PCL
                     ModAnimation.AaOpacity(this, -this.Opacity, 140, 40, new ModAnimation.AniEaseOutFluent(ModAnimation.AniEasePower.Weak)),
                                         ModAnimation.AaDouble(i =>
                         {
-                        TransformScale.ScaleX = TransformScale.ScaleX + Conversions.ToDouble(i);
-                        TransformScale.ScaleY = TransformScale.ScaleY + Conversions.ToDouble(i);
+                        TransformScale.ScaleX = TransformScale.ScaleX + Coerce.ToDouble(i);
+                        TransformScale.ScaleY = TransformScale.ScaleY + Coerce.ToDouble(i);
                     }, 0.88d - TransformScale.ScaleX, 180),
-                    ModAnimation.AaDouble(i => TransformPos.Y = TransformPos.Y + Conversions.ToDouble(i), 20d - TransformPos.Y, 180, 0, new ModAnimation.AniEaseOutFluent(ModAnimation.AniEasePower.Weak)),
-                    ModAnimation.AaDouble(i => TransformRotate.Angle = TransformRotate.Angle + Conversions.ToDouble(i), 0.6d - TransformRotate.Angle, 180, 0, new ModAnimation.AniEaseInoutFluent(ModAnimation.AniEasePower.Weak)),
+                    ModAnimation.AaDouble(i => TransformPos.Y = TransformPos.Y + Coerce.ToDouble(i), 20d - TransformPos.Y, 180, 0, new ModAnimation.AniEaseOutFluent(ModAnimation.AniEasePower.Weak)),
+                    ModAnimation.AaDouble(i => TransformRotate.Angle = TransformRotate.Angle + Coerce.ToDouble(i), 0.6d - TransformRotate.Angle, 180, 0, new ModAnimation.AniEaseInoutFluent(ModAnimation.AniEasePower.Weak)),
                                         ModAnimation.AaCode(() =>
                         {
                         this.IsHitTestVisible = false;
@@ -1135,7 +1133,7 @@ namespace PCL
                 e.Effects = DragDropEffects.None;
                 if (e.Data.GetDataPresent(DataFormats.Text))
                 {
-                    string Str = Conversions.ToString(e.Data.GetData(DataFormats.Text));
+                    string Str = Coerce.ToStr(e.Data.GetData(DataFormats.Text));
                     if (Str.StartsWithF("file:///"))
                     {
                         e.Effects = DragDropEffects.Copy;
@@ -1168,7 +1166,7 @@ namespace PCL
                     // 获取文本
                     try
                     {
-                        string Str = Conversions.ToString(e.Data.GetData(DataFormats.Text));
+                        string Str = Coerce.ToStr(e.Data.GetData(DataFormats.Text));
                         Logger.Info($"接受文本拖拽：{Str}");
                         if (Str.StartsWithF("file:///"))
                         {

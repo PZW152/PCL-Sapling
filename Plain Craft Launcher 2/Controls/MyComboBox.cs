@@ -5,7 +5,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -22,7 +21,7 @@ namespace PCL
 
         public MyComboBox()
         {
-            _Text = Conversions.ToString(SelectedItem);
+            _Text = Coerce.ToStr(SelectedItem);
             PreviewMouseLeftButtonDown += MyComboBox_PreviewMouseLeftButtonDown;
             PreviewMouseLeftButtonUp += MyComboBox_PreviewMouseLeftButtonUp;
             MouseLeave += MyComboBox_PreviewMouseLeftButtonUp;
@@ -221,14 +220,14 @@ namespace PCL
 
         private void RefreshSetting(string NewValue)
         {
-            var TargetItem = Items.OfType<DependencyObject>().FirstOrDefault(i => ModBase.Val((object)SettingService.GetValue(i) ?? -1) == Conversions.ToDouble(NewValue));
+            var TargetItem = Items.OfType<DependencyObject>().FirstOrDefault(i => ModBase.Val((object)SettingService.GetValue(i) ?? -1) == Coerce.ToDouble(NewValue));
             if (TargetItem is not null)
             {
                 SelectedItem = TargetItem;
             }
-            else if (Items.Count > Conversions.ToDouble(NewValue))
+            else if (Items.Count > Coerce.ToDouble(NewValue))
             {
-                SelectedIndex = Conversions.ToInteger(NewValue);
+                SelectedIndex = Coerce.ToInt(NewValue);
             }
             else
             {
@@ -246,7 +245,7 @@ namespace PCL
                 return null;
             if (SelectedItem is DependencyObject)
             {
-                return Conversions.ToString((object)SettingService.GetValue((DependencyObject)SelectedItem) ?? SelectedIndex);
+                return Coerce.ToStr((object)SettingService.GetValue((DependencyObject)SelectedItem) ?? SelectedIndex);
             }
             else
             {

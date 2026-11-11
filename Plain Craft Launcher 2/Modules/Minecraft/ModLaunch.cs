@@ -12,8 +12,6 @@ using System.Windows;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PCLCS;
@@ -109,7 +107,7 @@ namespace PCL
             Text = ModMinecraft.FilterUserName(ModMinecraft.FilterAccessToken(Text, '*'), '*');
             if (ModBase.ModeDebug)
             {
-                ModBase.RunInUi(() => ModMain.FrmLaunchRight.LabLog.AppendText($"[{DateTime.Now:HH':'mm':'ss'.'fff}] {Text}{Constants.vbCrLf}"));
+                ModBase.RunInUi(() => ModMain.FrmLaunchRight.LabLog.AppendText($"[{DateTime.Now:HH':'mm':'ss'.'fff}] {Text}{ModBase.CrLf}"));
             }
             Logger.Log(Text, Level);
         }
@@ -276,7 +274,7 @@ namespace PCL
             {
                 if (System.Globalization.CultureInfo.CurrentCulture.Name.StartsWithF("zh") || System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWithF("zh")) // 中文？
                 {
-                    ModBase.RunInNewThread(() => { switch (Settings.Get<int>("SystemLaunchCount")) { case 3: case 8: case 15: case 30: case 50: case 70: case 90: case 110: case 130: case 180: case 220: case 280: case 330: case 380: case 450: case 550: case 660: case 750: case 880: case 950: case 1100: case 1300: case 1500: case 1700: case 1900: { if (ModMain.MyMsgBox("你已经启动了 " + Settings.Get<int>("SystemLaunchCount") + " 次 Minecraft 啦！" + Constants.vbCrLf + "如果觉得 Minecraft 还不错，可以购买正版支持一下，毕竟开发游戏也真的很不容易……不要一直白嫖啦。" + Constants.vbCrLf + Constants.vbCrLf + "在登录一次正版账号后，就不会再出现这个提示了！", "考虑一下正版？", "支持正版游戏！", "下次一定") == 1) { ModBase.OpenWebsite("https://www.xbox.com/zh-cn/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj"); } break; } } }, "Buy Minecraft");
+                    ModBase.RunInNewThread(() => { switch (Settings.Get<int>("SystemLaunchCount")) { case 3: case 8: case 15: case 30: case 50: case 70: case 90: case 110: case 130: case 180: case 220: case 280: case 330: case 380: case 450: case 550: case 660: case 750: case 880: case 950: case 1100: case 1300: case 1500: case 1700: case 1900: { if (ModMain.MyMsgBox("你已经启动了 " + Settings.Get<int>("SystemLaunchCount") + " 次 Minecraft 啦！" + ModBase.CrLf + "如果觉得 Minecraft 还不错，可以购买正版支持一下，毕竟开发游戏也真的很不容易……不要一直白嫖啦。" + ModBase.CrLf + ModBase.CrLf + "在登录一次正版账号后，就不会再出现这个提示了！", "考虑一下正版？", "支持正版游戏！", "下次一定") == 1) { ModBase.OpenWebsite("https://www.xbox.com/zh-cn/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj"); } break; } } }, "Buy Minecraft");
                 }
                 else if (Settings.Get<McLoginType>("LoginType") == McLoginType.Legacy)
                 {
@@ -636,7 +634,7 @@ namespace PCL
                 Thread.Sleep(100);
             if (Converter.Result is ModBase.RestartException)
             {
-                if (ModMain.MyMsgBox($"请在登录时选择 {ModBase.vbLQ}其他登录方法{ModBase.vbRQ}，然后选择 {ModBase.vbLQ}使用我的密码{ModBase.vbRQ}。{Constants.vbCrLf}如果没有该选项，请选择 {ModBase.vbLQ}设置密码{ModBase.vbRQ}，设置完毕后再登录。", "需要使用密码登录", "重新登录", "设置密码", "取消", Button2Action: () => ModBase.OpenWebsite("https://account.live.com/password/Change")) == 1)
+                if (ModMain.MyMsgBox($"请在登录时选择 {ModBase.vbLQ}其他登录方法{ModBase.vbRQ}，然后选择 {ModBase.vbLQ}使用我的密码{ModBase.vbRQ}。{ModBase.CrLf}如果没有该选项，请选择 {ModBase.vbLQ}设置密码{ModBase.vbRQ}，设置完毕后再登录。", "需要使用密码登录", "重新登录", "设置密码", "取消", Button2Action: () => ModBase.OpenWebsite("https://account.live.com/password/Change")) == 1)
                 {
                     goto Retry;
                 }
@@ -746,20 +744,20 @@ namespace PCL
                 }
                 else if (ex.Response.Contains("2148916235"))
                 {
-                    ModMain.MyMsgBox($"你的网络所在的国家或地区无法登录微软账号。{Constants.vbCrLf}请使用加速器或 VPN，然后再试。", "登录失败", "我知道了");
+                    ModMain.MyMsgBox($"你的网络所在的国家或地区无法登录微软账号。{ModBase.CrLf}请使用加速器或 VPN，然后再试。", "登录失败", "我知道了");
                     throw new OperationCanceledException();
                 }
                 else if (ex.Response.Contains("2148916238"))
                 {
-                    if (ModMain.MyMsgBox("该账号年龄不足，你需要先修改出生日期，然后才能登录。" + Constants.vbCrLf + "该账号目前填写的年龄是否在 13 岁以上？", "登录提示", "13 岁以上", "12 岁以下", "我不知道") == 1)
+                    if (ModMain.MyMsgBox("该账号年龄不足，你需要先修改出生日期，然后才能登录。" + ModBase.CrLf + "该账号目前填写的年龄是否在 13 岁以上？", "登录提示", "13 岁以上", "12 岁以下", "我不知道") == 1)
                     {
                         ModBase.OpenWebsite("https://account.live.com/editprof.aspx");
-                        ModMain.MyMsgBox("请在打开的网页中修改账号的出生日期（至少改为 18 岁以上）。" + Constants.vbCrLf + "在修改成功后等待一分钟，然后再回到 PCL，就可以正常登录了！", "登录提示");
+                        ModMain.MyMsgBox("请在打开的网页中修改账号的出生日期（至少改为 18 岁以上）。" + ModBase.CrLf + "在修改成功后等待一分钟，然后再回到 PCL，就可以正常登录了！", "登录提示");
                     }
                     else
                     {
                         ModBase.OpenWebsite("https://support.microsoft.com/zh-cn/account-billing/如何更改-microsoft-帐户上的出生日期-837badbc-999e-54d2-2617-d19206b9540a");
-                        ModMain.MyMsgBox("请根据打开的网页的说明，修改账号的出生日期（至少改为 18 岁以上）。" + Constants.vbCrLf + "在修改成功后等待一分钟，然后再回到 PCL，就可以正常登录了！", "登录提示");
+                        ModMain.MyMsgBox("请根据打开的网页的说明，修改账号的出生日期（至少改为 18 岁以上）。" + ModBase.CrLf + "在修改成功后等待一分钟，然后再回到 PCL，就可以正常登录了！", "登录提示");
                     }
                     throw new OperationCanceledException();
                 }
@@ -794,12 +792,12 @@ namespace PCL
                 else if (ex.StatusCode == HttpStatusCode.Forbidden)
                 {
                     Logger.Warn(ex, "微软登录第 4 步汇报 403");
-                    throw new Exception("$当前 IP 的登录尝试异常。" + Constants.vbCrLf + "如果你使用了 VPN 或加速器，请把它们关掉或更换节点后再试！");
+                    throw new Exception("$当前 IP 的登录尝试异常。" + ModBase.CrLf + "如果你使用了 VPN 或加速器，请把它们关掉或更换节点后再试！");
                 }
                 else if (ex.StatusCode == HttpStatusCode.ServiceUnavailable)
                 {
                     Logger.Warn(ex, "微软登录第 4 步汇报 503");
-                    throw new Exception("$Mojang 服务器出现问题，请稍后再试。" + Constants.vbCrLf + "你的网络是正常的，PCL 也是正常的，是 Mojang 出问题了……");
+                    throw new Exception("$Mojang 服务器出现问题，请稍后再试。" + ModBase.CrLf + "你的网络是正常的，PCL 也是正常的，是 Mojang 出问题了……");
                 }
                 else if (ex.Response?.Contains("ACCOUNT_SUSPENDED") == true) // #8655
                 {
@@ -884,7 +882,7 @@ namespace PCL
         // 返回符合离线皮肤设置的 UUID
         private static string McLoginLegacyUuidWithCustomSkin(string UserName, int SkinType, string SkinName)
         {
-            string Uuid = Conversions.ToString(McLoginLegacyUuid(UserName));
+            string Uuid = Coerce.ToStr(McLoginLegacyUuid(UserName));
             // 根据离线皮肤获取实际使用的 Uuid
             switch (SkinType)
             {
@@ -925,7 +923,7 @@ namespace PCL
                             if (!string.IsNullOrEmpty(SkinName) && ModMinecraft.McInstanceSelected is not null && ModMinecraft.McInstanceSelected.Version.Vanilla.Major < 20) // 1.20+ 或快照版不能使用该项（#3746）
                             {
                                 Logger.Info($"由于离线皮肤设置，使用正版 UUID：{SkinName}");
-                                Uuid = Conversions.ToString(McLoginMojangUuid(SkinName, false));
+                                Uuid = Coerce.ToStr(McLoginMojangUuid(SkinName, false));
                             }
                         }
                         catch (Exception ex)
@@ -957,7 +955,7 @@ namespace PCL
                 return new string('0', 32);
             // 从缓存获取
             string Uuid = ModBase.ReadIni(ModBase.PathTemp + @"Cache\Uuid\Mojang.ini", Name, "");
-            if (Strings.Len(Uuid) == 32)
+            if (Coerce.Len(Uuid) == 32)
                 return Uuid;
             // 从官网获取
             try
@@ -972,7 +970,7 @@ namespace PCL
                 Logger.Warn(ex, $"从官网获取正版 Uuid 失败（{Name}）");
                 if (!ThrowOnNotFound && ex.GetType().Name == "FileNotFoundException")
                 {
-                    Uuid = Conversions.ToString(McLoginLegacyUuid(Name)); // 玩家档案不存在
+                    Uuid = Coerce.ToStr(McLoginLegacyUuid(Name)); // 玩家档案不存在
                 }
                 else
                 {
@@ -980,7 +978,7 @@ namespace PCL
                 }
             }
             // 写入缓存
-            if (!(Strings.Len(Uuid) == 32))
+            if (!(Coerce.Len(Uuid) == 32))
                 throw new Exception("获取的正版 Uuid 长度不足（" + Uuid + "）");
             ModBase.WriteIni(ModBase.PathTemp + @"Cache\Uuid\Mojang.ini", Name, Uuid);
             return Uuid;
@@ -1152,7 +1150,7 @@ namespace PCL
 
             #region 内存管理
 
-            McLaunchLog("当前剩余内存：" + Math.Round(VbCompat.Computer.Info.AvailablePhysicalMemory / 1024d / 1024d / 1024d * 10d) / 10d + "G");
+            McLaunchLog("当前剩余内存：" + Math.Round(SystemInfo.AvailablePhysicalMemory / 1024d / 1024d / 1024d * 10d) / 10d + "G");
             int TargetRam = (int)Math.Round(Math.Floor(PageInstanceSetup.GetRam(ModMinecraft.McInstanceSelected) * 1024d));
             Args.Add("-Xmx" + TargetRam + "m");
 
@@ -1413,7 +1411,7 @@ namespace PCL
             yield return ("${launcher_name}", "PCL");
             yield return ("${launcher_version}", ModBase.VersionCode.ToString());
             yield return ("${version_name}", ModMinecraft.McInstanceSelected.Name);
-            yield return ("${game_directory}", PathUtils.ToShortPath(Strings.Left(ModMinecraft.McInstanceSelected.PathIndie, ModMinecraft.McInstanceSelected.PathIndie.Count() - 1)));
+            yield return ("${game_directory}", PathUtils.ToShortPath(Coerce.Left(ModMinecraft.McInstanceSelected.PathIndie, ModMinecraft.McInstanceSelected.PathIndie.Count() - 1)));
             yield return ("${assets_root}", PathUtils.ToShortPath(ModMinecraft.McFolderSelected + "assets"));
             yield return ("${user_properties}", "{}");
             yield return ("${auth_player_name}", McLoginLoader.Output.Name);
@@ -1477,8 +1475,8 @@ namespace PCL
                 TargetSize.Width /= ModBase.DPI / 96d;
                 TargetSize.Height /= ModBase.DPI / 96d;
             }
-            yield return ("${resolution_width}", Conversions.ToString(Math.Round(TargetSize.Width)));
-            yield return ("${resolution_height}", Conversions.ToString(Math.Round(TargetSize.Height)));
+            yield return ("${resolution_width}", Coerce.ToStr(Math.Round(TargetSize.Width)));
+            yield return ("${resolution_height}", Coerce.ToStr(Math.Round(TargetSize.Height)));
 
             // 支持库
             var Cps = new List<string>();
@@ -2092,7 +2090,7 @@ namespace PCL
             // 输出 bat
             try
             {
-                string CmdString = $"chcp {(McLaunchEncoding.CodePage == 54936 && ModBase.IsGBKEncoding ? 936 : McLaunchEncoding.CodePage)}>nul" + Constants.vbCrLf + "@echo off" + Constants.vbCrLf + $"title 启动 - {ModMinecraft.McInstanceSelected.Name}" + Constants.vbCrLf + "echo 游戏正在启动，请稍候。" + Constants.vbCrLf + $"cd /D \"{PathUtils.ToShortPath(ModMinecraft.McInstanceSelected.PathIndie)}\"" + Constants.vbCrLf + CustomCommandGlobal + Constants.vbCrLf + CustomCommandVersion + Constants.vbCrLf + $"\"{McLaunchJavaSelected.JavaExePath}\" {McLaunchArgument}" + Constants.vbCrLf + "echo 游戏已退出。" + Constants.vbCrLf + "pause";
+                string CmdString = $"chcp {(McLaunchEncoding.CodePage == 54936 && ModBase.IsGBKEncoding ? 936 : McLaunchEncoding.CodePage)}>nul" + ModBase.CrLf + "@echo off" + ModBase.CrLf + $"title 启动 - {ModMinecraft.McInstanceSelected.Name}" + ModBase.CrLf + "echo 游戏正在启动，请稍候。" + ModBase.CrLf + $"cd /D \"{PathUtils.ToShortPath(ModMinecraft.McInstanceSelected.PathIndie)}\"" + ModBase.CrLf + CustomCommandGlobal + ModBase.CrLf + CustomCommandVersion + ModBase.CrLf + $"\"{McLaunchJavaSelected.JavaExePath}\" {McLaunchArgument}" + ModBase.CrLf + "echo 游戏已退出。" + ModBase.CrLf + "pause";
                 FileUtils.Write(filePath: CurrentLaunchOptions.SaveBatch ?? Paths.Base + @"PCL\LatestLaunch.bat", text: ModMinecraft.FilterAccessToken(CmdString, 'F').Replace("%", "%%"), encoding: McLaunchEncoding);
                 if (CurrentLaunchOptions.SaveBatch is not null)
                 {

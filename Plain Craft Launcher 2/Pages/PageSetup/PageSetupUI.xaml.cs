@@ -7,8 +7,6 @@ using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -115,7 +113,7 @@ namespace PCL
         }
         private void BtnBackgroundClear_Click(object sender, EventArgs e)
         {
-            if (ModMain.MyMsgBox("即将删除背景图片文件夹中的所有文件。" + Constants.vbCrLf + "此操作不可撤销，是否确定？", "警告", Button2: "取消", IsWarn: true) == 1)
+            if (ModMain.MyMsgBox("即将删除背景图片文件夹中的所有文件。" + ModBase.CrLf + "此操作不可撤销，是否确定？", "警告", Button2: "取消", IsWarn: true) == 1)
             {
                 DirectoryUtils.Delete(Paths.Base + @"PCL\Pictures");
                 BackgroundRefresh(false, true);
@@ -179,7 +177,7 @@ namespace PCL
                         {
                             if (ex.Message.Contains("参数无效"))
                             {
-                                Logger.Error($"刷新背景图片失败，该图片文件可能并非标准格式。{Constants.vbCrLf}你可以尝试使用画图打开该文件并重新保存，这会让图片变为标准格式。{Constants.vbCrLf}文件：{Address}", LogBehavior.Alert);
+                                Logger.Error($"刷新背景图片失败，该图片文件可能并非标准格式。{ModBase.CrLf}你可以尝试使用画图打开该文件并重新保存，这会让图片变为标准格式。{ModBase.CrLf}文件：{Address}", LogBehavior.Alert);
                             }
                             else
                             {
@@ -217,7 +215,7 @@ namespace PCL
             {
                 if (ex.Message.Contains("参数无效"))
                 {
-                    Logger.Error($"改变标题栏图片失败，该图片文件可能并非标准格式。{Constants.vbCrLf}你可以尝试使用画图打开该文件并重新保存，这会让图片变为标准格式。{Constants.vbCrLf}文件：{TargetPath}", LogBehavior.Alert);
+                    Logger.Error($"改变标题栏图片失败，该图片文件可能并非标准格式。{ModBase.CrLf}你可以尝试使用画图打开该文件并重新保存，这会让图片变为标准格式。{ModBase.CrLf}文件：{TargetPath}", LogBehavior.Alert);
                 }
                 else
                 {
@@ -246,7 +244,7 @@ namespace PCL
                 {
                     if (ex.Message.Contains("参数无效"))
                     {
-                        Logger.Error($"改变标题栏图片失败，该图片文件可能并非标准格式。{Constants.vbCrLf}你可以尝试使用画图打开该文件并重新保存，这会让图片变为标准格式。{Constants.vbCrLf}文件：{TargetPath}", LogBehavior.Alert);
+                        Logger.Error($"改变标题栏图片失败，该图片文件可能并非标准格式。{ModBase.CrLf}你可以尝试使用画图打开该文件并重新保存，这会让图片变为标准格式。{ModBase.CrLf}文件：{TargetPath}", LogBehavior.Alert);
                     }
                     else
                     {
@@ -325,7 +323,7 @@ namespace PCL
         }
         private void BtnCustomTutorial_Click(object sender, EventArgs e)
         {
-            ModMain.MyMsgBox("1. 点击 生成教学文件 按钮，这会在 PCL 文件夹下生成 Custom.xaml 布局文件。" + Constants.vbCrLf + "2. 使用记事本等工具打开这个文件并进行修改，修改完记得保存。" + Constants.vbCrLf + "3. 点击 刷新主页 按钮，查看主页现在长啥样了。" + Constants.vbCrLf + Constants.vbCrLf + "你可以在生成教学文件后直接刷新主页，对照着进行修改，更有助于理解。" + Constants.vbCrLf + "直接将主页文件拖进 PCL 窗口也可以快捷加载。", "主页自定义教程");
+            ModMain.MyMsgBox("1. 点击 生成教学文件 按钮，这会在 PCL 文件夹下生成 Custom.xaml 布局文件。" + ModBase.CrLf + "2. 使用记事本等工具打开这个文件并进行修改，修改完记得保存。" + ModBase.CrLf + "3. 点击 刷新主页 按钮，查看主页现在长啥样了。" + ModBase.CrLf + ModBase.CrLf + "你可以在生成教学文件后直接刷新主页，对照着进行修改，更有助于理解。" + ModBase.CrLf + "直接将主页文件拖进 PCL 窗口也可以快捷加载。", "主页自定义教程");
         }
         public static void OnMainPageTypeChanged()
         {
@@ -347,7 +345,7 @@ namespace PCL
                         ModMain.FrmSetupUI.PanCustomNet.Visibility = Visibility.Collapsed;
                         ModMain.FrmSetupUI.HintCustom.Visibility = Visibility.Visible;
                         ModMain.FrmSetupUI.HintCustomWarn.Visibility = Settings.Get<bool>("HintCustomWarn") ? Visibility.Collapsed : Visibility.Visible;
-                        ModMain.FrmSetupUI.HintCustom.Text = $"从 PCL 文件夹下的 Custom.xaml 读取主页内容。{Constants.vbCrLf}你可以手动编辑该文件，向主页添加文本、图片、常用网站、快捷启动等功能。";
+                        ModMain.FrmSetupUI.HintCustom.Text = $"从 PCL 文件夹下的 Custom.xaml 读取主页内容。{ModBase.CrLf}你可以手动编辑该文件，向主页添加文本、图片、常用网站、快捷启动等功能。";
                         CustomEventService.SetEventType(ModMain.FrmSetupUI.HintCustom, CustomEvent.EventType.None);
                         break;
                     }
@@ -357,7 +355,7 @@ namespace PCL
                         ModMain.FrmSetupUI.PanCustomNet.Visibility = Visibility.Visible;
                         ModMain.FrmSetupUI.HintCustom.Visibility = Visibility.Visible;
                         ModMain.FrmSetupUI.HintCustomWarn.Visibility = Settings.Get<bool>("HintCustomWarn") ? Visibility.Collapsed : Visibility.Visible;
-                        ModMain.FrmSetupUI.HintCustom.Text = $"从指定网址联网获取主页内容。服主也可以用于动态更新服务器公告。{Constants.vbCrLf}请只使用你信任的网址。";
+                        ModMain.FrmSetupUI.HintCustom.Text = $"从指定网址联网获取主页内容。服主也可以用于动态更新服务器公告。{ModBase.CrLf}请只使用你信任的网址。";
                         CustomEventService.SetEventType(ModMain.FrmSetupUI.HintCustom, CustomEvent.EventType.None);
                         break;
                     }
@@ -547,13 +545,13 @@ namespace PCL
         // 滑动条
         private void SliderLoad()
         {
-            this.SliderLauncherTransparent.GetHintText = new Func<object, object>(v => Math.Round(40 + Conversions.ToDouble(v) * 0.1d) + "%");
-            this.SliderLauncherHue.GetHintText = new Func<object, object>(v => Operators.ConcatenateObject(v, "°"));
-            this.SliderLauncherSat.GetHintText = new Func<object, object>(v => Operators.ConcatenateObject(v, "%"));
+            this.SliderLauncherTransparent.GetHintText = new Func<object, object>(v => Math.Round(40 + Coerce.ToDouble(v) * 0.1d) + "%");
+            this.SliderLauncherHue.GetHintText = new Func<object, object>(v => Coerce.Concat(v, "°"));
+            this.SliderLauncherSat.GetHintText = new Func<object, object>(v => Coerce.Concat(v, "%"));
             this.SliderLauncherDelta.GetHintText = new Func<int, string>((Value) => { if (Value > 90) { return "+" + (Value - 90); } else if (Value == 90) { return 0.ToString(); } else { return (Value - 90).ToString(); } });
             this.SliderLauncherLight.GetHintText = new Func<int, string>((Value) => { if (Value > 20) { return "+" + (Value - 20); } else if (Value == 20) { return 0.ToString(); } else { return (Value - 20).ToString(); } });
-            this.SliderBackgroundOpacity.GetHintText = new Func<object, object>(v => Math.Round(Conversions.ToDouble(v) * 0.1d) + "%");
-            this.SliderBackgroundBlur.GetHintText = new Func<object, object>(v => Operators.ConcatenateObject(v, " 像素"));
+            this.SliderBackgroundOpacity.GetHintText = new Func<object, object>(v => Math.Round(Coerce.ToDouble(v) * 0.1d) + "%");
+            this.SliderBackgroundBlur.GetHintText = new Func<object, object>(v => Coerce.Concat(v, " 像素"));
         }
 
     }

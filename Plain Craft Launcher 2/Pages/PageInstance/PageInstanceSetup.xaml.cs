@@ -7,8 +7,6 @@ using System.Windows.Input;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -140,8 +138,8 @@ namespace PCL
                 return;
             // 获取内存情况
             double RamGame = Math.Round(GetRam(PageInstanceLeft.Instance), 5);
-            double RamTotal = Math.Round(VbCompat.Computer.Info.TotalPhysicalMemory / 1024d / 1024d / 1024d, 1);
-            double RamAvailable = Math.Round(VbCompat.Computer.Info.AvailablePhysicalMemory / 1024d / 1024d / 1024d, 1);
+            double RamTotal = Math.Round(SystemInfo.TotalPhysicalMemory / 1024d / 1024d / 1024d, 1);
+            double RamAvailable = Math.Round(SystemInfo.AvailablePhysicalMemory / 1024d / 1024d / 1024d, 1);
             double RamGameActual = Math.Round(Math.Min(RamGame, RamAvailable), 5);
             double RamUsed = Math.Round(RamTotal - RamAvailable, 5);
             double RamEmpty = Math.Round((RamTotal - RamUsed - RamGame).Clamp(0d, 1000d), 1);
@@ -163,9 +161,9 @@ namespace PCL
                 this.SliderRamCustom.MaxValue = (int)Math.Round(Math.Floor((RamTotal - 16d) / 2d) + 33d);
             }
             // 设置文本
-            this.LabRamGame.Text = Conversions.ToString(Operators.ConcatenateObject(Operators.ConcatenateObject(RamGame == Math.Floor(RamGame) ? RamGame + ".0" : RamGame, " GB"), RamGame != RamGameActual ? Operators.ConcatenateObject(Operators.ConcatenateObject(" (可用 ", RamGameActual == Math.Floor(RamGameActual) ? RamGameActual + ".0" : RamGameActual), " GB)") : ""));
-            this.LabRamUsed.Text = Conversions.ToString(Operators.ConcatenateObject(RamUsed == Math.Floor(RamUsed) ? RamUsed + ".0" : RamUsed, " GB"));
-            this.LabRamTotal.Text = Conversions.ToString(Operators.ConcatenateObject(Operators.ConcatenateObject(" / ", RamTotal == Math.Floor(RamTotal) ? RamTotal + ".0" : RamTotal), " GB"));
+            this.LabRamGame.Text = Coerce.ToStr(Coerce.Concat(Coerce.Concat(RamGame == Math.Floor(RamGame) ? RamGame + ".0" : RamGame, " GB"), RamGame != RamGameActual ? Coerce.Concat(Coerce.Concat(" (可用 ", RamGameActual == Math.Floor(RamGameActual) ? RamGameActual + ".0" : RamGameActual), " GB)") : ""));
+            this.LabRamUsed.Text = Coerce.ToStr(Coerce.Concat(RamUsed == Math.Floor(RamUsed) ? RamUsed + ".0" : RamUsed, " GB"));
+            this.LabRamTotal.Text = Coerce.ToStr(Coerce.Concat(Coerce.Concat(" / ", RamTotal == Math.Floor(RamTotal) ? RamTotal + ".0" : RamTotal), " GB"));
             if (ShowAnim)
             {
                 // 宽度动画
@@ -298,7 +296,7 @@ namespace PCL
             if (Settings.Get<int>("VersionRamType", Instance: Instance) == 0)
             {
                 // 自动配置
-                double RamAvailable = Math.Round(VbCompat.Computer.Info.AvailablePhysicalMemory / 1024d / 1024d / 1024d * 10d) / 10d;
+                double RamAvailable = Math.Round(SystemInfo.AvailablePhysicalMemory / 1024d / 1024d / 1024d * 10d) / 10d;
                 // 确定需求的内存值
                 double RamMininum; // 无论如何也需要保证的最低限度内存
                 double RamTarget1; // 估计能勉强带动了的内存
@@ -471,7 +469,7 @@ namespace PCL
                             }
                             else
                             {
-                                this.HintArgumentJava.Text = $"该版本的版本文件夹中没有发现任何 Java！{Constants.vbCrLf}请点击此处打开版本文件夹，然后将 Java 文件夹复制进去。";
+                                this.HintArgumentJava.Text = $"该版本的版本文件夹中没有发现任何 Java！{ModBase.CrLf}请点击此处打开版本文件夹，然后将 Java 文件夹复制进去。";
                                 this.HintArgumentJava.Theme = MyHint.Themes.Red;
                             }
                         }
@@ -512,7 +510,7 @@ namespace PCL
                         }
                         else if (JavaWorker.LastResult is null)
                         {
-                            this.HintArgumentJava.Text = $"你的电脑上没有任何 Java 符合该版本范围！{Constants.vbCrLf}如果 Mojang 提供了对应版本的 Java，PCL 会在启动游戏时自动下载。";
+                            this.HintArgumentJava.Text = $"你的电脑上没有任何 Java 符合该版本范围！{ModBase.CrLf}如果 Mojang 提供了对应版本的 Java，PCL 会在启动游戏时自动下载。";
                             this.HintArgumentJava.Theme = MyHint.Themes.Yellow;
                         }
                         else
@@ -640,7 +638,7 @@ namespace PCL
                 return;
             if (_ComboArgumentIndieV2_SelectionChanged_IsReverting)
                 return;
-            if (ModMain.MyMsgBox("调整版本隔离设置后，你需要游戏存档、Mod 等文件手动迁移到新的游戏文件夹中。" + Constants.vbCrLf + "如果发现存档消失，把这项设置改回来就能恢复。" + Constants.vbCrLf + "如果你不会迁移存档，不建议修改这项设置！", "警告", "我知道我在做什么", "取消", IsWarn: true) == 2)
+            if (ModMain.MyMsgBox("调整版本隔离设置后，你需要游戏存档、Mod 等文件手动迁移到新的游戏文件夹中。" + ModBase.CrLf + "如果发现存档消失，把这项设置改回来就能恢复。" + ModBase.CrLf + "如果你不会迁移存档，不建议修改这项设置！", "警告", "我知道我在做什么", "取消", IsWarn: true) == 2)
             {
                 _ComboArgumentIndieV2_SelectionChanged_IsReverting = true;
                 if (e.RemovedItems.Count > 0)

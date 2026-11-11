@@ -15,8 +15,6 @@ using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -110,9 +108,9 @@ namespace PCL
                     if (!(DoubleStack == null))
                     {
                         // 有重复提示，且该提示的进入动画已播放
-                        if (!ModAnimation.AniIsRun(Conversions.ToString(Operators.ConcatenateObject("Hint Show ", DoubleStack.Tag.Args()[1]))))
+                        if (!ModAnimation.AniIsRun(Coerce.ToStr(Coerce.Concat("Hint Show ", DoubleStack.Tag.Args()[1]))))
                         {
-                            ModAnimation.AniStop(Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", DoubleStack.Tag.Args()[1])));
+                            ModAnimation.AniStop(Coerce.ToStr(Coerce.Concat("Hint Hide ", DoubleStack.Tag.Args()[1])));
                             double Delay = (800 + CurrentHint.Text.Length.Clamp(5, 23) * 180) * ModAnimation.AniSpeed;
                             ModAnimation.AniStart(new[] {
                             ModAnimation.AaX(DoubleStack, -12 - DoubleStack.Margin.Left, 50, Ease: new ModAnimation.AniEaseOutFluent()),
@@ -121,7 +119,7 @@ namespace PCL
                             ModAnimation.AaX(DoubleStack, -8, 50, 150, new ModAnimation.AniEaseInFluent()),
                             ModAnimation.AaDouble(i =>
                                 {
-                                         Percent = Percent + Conversions.ToDouble(i);
+                                         Percent = Percent + Coerce.ToDouble(i);
                                          LinearGradientBrush Gradient = (LinearGradientBrush)DoubleStack.Background;
                                          Gradient.GradientStops[0].Color = TargetColor0 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
                                          Gradient.GradientStops[1].Color = TargetColor1 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
@@ -131,7 +129,7 @@ namespace PCL
                             ModAnimation.AaCode(() => DoubleStack.Tag.Args()[0] = false, (int)Math.Round(Delay)),
                             ModAnimation.AaHeight(DoubleStack, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true),
                             ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(DoubleStack), After: true)
-                      }, Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", DoubleStack.Tag.Args()[1])));
+                      }, Coerce.ToStr(Coerce.Concat("Hint Hide ", DoubleStack.Tag.Args()[1])));
                         }
                     }
                     else
@@ -161,16 +159,16 @@ namespace PCL
                         ModAnimation.AaOpacity(NewHintControl, 1d, 100),
                         ModAnimation.AaDouble(i =>
                             {
-                                     Percent = Percent + Conversions.ToDouble(i);
+                                     Percent = Percent + Coerce.ToDouble(i);
                                      LinearGradientBrush Gradient = (LinearGradientBrush)NewHintControl.Background;
                                      Gradient.GradientStops[0].Color = TargetColor0 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
                                      Gradient.GradientStops[1].Color = TargetColor1 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
                                  }, 0.7d, 250, 100)
                     });
-                        ModAnimation.AniStart(Animations, Conversions.ToString(Operators.ConcatenateObject("Hint Show ", NewHintControl.Tag.Args()[1])));
+                        ModAnimation.AniStart(Animations, Coerce.ToStr(Coerce.Concat("Hint Show ", NewHintControl.Tag.Args()[1])));
                         // 结束动画
                         double Delay = (800 + CurrentHint.Text.Length.Clamp(5, 23) * 180) * ModAnimation.AniSpeed;
-                        ModAnimation.AniStart(new[] { ModAnimation.AaX(NewHintControl, -50, 200, (int)Math.Round(Delay), new ModAnimation.AniEaseInFluent()), ModAnimation.AaOpacity(NewHintControl, -1, 150, (int)Math.Round(Delay)), ModAnimation.AaCode(() => NewHintControl.Tag.Args()[0] = false, (int)Math.Round(Delay)), ModAnimation.AaHeight(NewHintControl, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true), ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(NewHintControl), After: true) }, Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", NewHintControl.Tag.Args()[1])));
+                        ModAnimation.AniStart(new[] { ModAnimation.AaX(NewHintControl, -50, 200, (int)Math.Round(Delay), new ModAnimation.AniEaseInFluent()), ModAnimation.AaOpacity(NewHintControl, -1, 150, (int)Math.Round(Delay)), ModAnimation.AaCode(() => NewHintControl.Tag.Args()[0] = false, (int)Math.Round(Delay)), ModAnimation.AaHeight(NewHintControl, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true), ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(NewHintControl), After: true) }, Coerce.ToStr(Coerce.Concat("Hint Hide ", NewHintControl.Tag.Args()[1])));
                     }
                 // 结束处理
                 EndHint:
@@ -276,20 +274,20 @@ namespace PCL
                     // 主窗体尚未加载，用老土的弹窗来替代
                     if (Button2.Length > 0)
                     {
-                        var RawResult = Interaction.MsgBox(Caption, (MsgBoxStyle)((int)(Button3.Length > 0 ? MsgBoxStyle.YesNoCancel : MsgBoxStyle.YesNo) + (int)(IsWarn ? MsgBoxStyle.Critical : MsgBoxStyle.Question)), Title);
+                        var RawResult = MessageBox.Show(Caption, Title, Button3.Length > 0 ? MessageBoxButton.YesNoCancel : MessageBoxButton.YesNo, IsWarn ? MessageBoxImage.Error : MessageBoxImage.Question);
                         switch (RawResult)
                         {
-                            case MsgBoxResult.Yes:
+                            case MessageBoxResult.Yes:
                                 {
                                     Converter.Result = 1;
                                     break;
                                 }
-                            case MsgBoxResult.No:
+                            case MessageBoxResult.No:
                                 {
                                     Converter.Result = 2;
                                     break;
                                 }
-                            case MsgBoxResult.Cancel:
+                            case MessageBoxResult.Cancel:
                                 {
                                     Converter.Result = 3;
                                     break;
@@ -298,7 +296,7 @@ namespace PCL
                     }
                     else
                     {
-                        Interaction.MsgBox(Caption, (MsgBoxStyle)((int)MsgBoxStyle.OkOnly + (int)(IsWarn ? MsgBoxStyle.Critical : MsgBoxStyle.Question)), Title);
+                        MessageBox.Show(Caption, Title, MessageBoxButton.OK, IsWarn ? MessageBoxImage.Error : MessageBoxImage.Question);
                         Converter.Result = 1;
                     }
                     Logger.Warn($"主窗体加载完成前出现意料外的等待弹窗：{Button1},{Button2},{Button3}");
@@ -320,7 +318,7 @@ namespace PCL
                     }
                 }
                 Logger.Info($"普通弹框返回：{Converter.Result ?? "null"}");
-                return Conversions.ToInteger(Converter.Result);
+                return Coerce.ToInt(Converter.Result);
             }
             else
             {
@@ -360,7 +358,7 @@ namespace PCL
                 ComponentDispatcher.PopModal();
             }
             Logger.Info($"输入弹框返回：{Converter.Result ?? "null"}");
-            return Conversions.ToString(Converter.Result);
+            return Coerce.ToStr(Converter.Result);
         }
         /// <summary>
     /// 显示选择框并返回选择的第几项（从 0 开始）。若点击第二个按钮，则返回 Nothing。
@@ -651,9 +649,9 @@ namespace PCL
                 Text = Text.Replace("{login}", _ArgumentReplace_Replacer(null));
             }
             // 高级
-            Text = Text.RegexReplace(@"\{setup:([a-zA-Z0-9]+)\}", m => _ArgumentReplace_Replacer(Conversions.ToString(Settings.GetSafe(m.Groups[1].Value, ModMinecraft.McInstanceSelected))));
-            Text = Text.RegexReplace(@"\{varible:([^:\}]+)(?::([^\}]+))?\}", m => _ArgumentReplace_Replacer(Conversions.ToString(RegistryUtils.TryRead($@"HKEY_CURRENT_USER\Software\{ModSecret.RegFolder}", $"CustomEvent{m.Groups[1].Value}", m.Groups[2].Value))));
-            Text = Text.RegexReplace(@"\{variable:([^:\}]+)(?::([^\}]+))?\}", m => _ArgumentReplace_Replacer(Conversions.ToString(RegistryUtils.TryRead($@"HKEY_CURRENT_USER\Software\{ModSecret.RegFolder}", $"CustomEvent{m.Groups[1].Value}", m.Groups[2].Value))));
+            Text = Text.RegexReplace(@"\{setup:([a-zA-Z0-9]+)\}", m => _ArgumentReplace_Replacer(Coerce.ToStr(Settings.GetSafe(m.Groups[1].Value, ModMinecraft.McInstanceSelected))));
+            Text = Text.RegexReplace(@"\{varible:([^:\}]+)(?::([^\}]+))?\}", m => _ArgumentReplace_Replacer(Coerce.ToStr(RegistryUtils.TryRead($@"HKEY_CURRENT_USER\Software\{ModSecret.RegFolder}", $"CustomEvent{m.Groups[1].Value}", m.Groups[2].Value))));
+            Text = Text.RegexReplace(@"\{variable:([^:\}]+)(?::([^\}]+))?\}", m => _ArgumentReplace_Replacer(Coerce.ToStr(RegistryUtils.TryRead($@"HKEY_CURRENT_USER\Software\{ModSecret.RegFolder}", $"CustomEvent{m.Groups[1].Value}", m.Groups[2].Value))));
             return Text;
         }
 
@@ -740,7 +738,7 @@ namespace PCL
         public static void FeedbackInfo()
         {
             // 原 VB 為 On Error Resume Next：出錯即跳過該語句
-            try { Logger.Warn($"诊断信息：{Constants.vbCrLf}" + "操作系统：" + RuntimeInformation.OSDescription + Constants.vbCrLf + "剩余内存：" + Conversion.Int(VbCompat.Computer.Info.AvailablePhysicalMemory / 1024d / 1024d) + " M / " + Conversion.Int(VbCompat.Computer.Info.TotalPhysicalMemory / 1024d / 1024d) + " M" + Constants.vbCrLf + "DPI：" + ModBase.DPI + "（" + Math.Round(ModBase.DPI / 96d, 2) * 100d + "%）" + Constants.vbCrLf + "MC 文件夹：" + (ModMinecraft.McFolderSelected ?? "Nothing") + Constants.vbCrLf + "文件位置：" + Paths.Base); } catch { }
+            try { Logger.Warn($"诊断信息：{ModBase.CrLf}" + "操作系统：" + RuntimeInformation.OSDescription + ModBase.CrLf + "剩余内存：" + Math.Floor(SystemInfo.AvailablePhysicalMemory / 1024d / 1024d) + " M / " + Math.Floor(SystemInfo.TotalPhysicalMemory / 1024d / 1024d) + " M" + ModBase.CrLf + "DPI：" + ModBase.DPI + "（" + Math.Round(ModBase.DPI / 96d, 2) * 100d + "%）" + ModBase.CrLf + "MC 文件夹：" + (ModMinecraft.McFolderSelected ?? "Nothing") + ModBase.CrLf + "文件位置：" + Paths.Base); } catch { }
         }
 
         #endregion

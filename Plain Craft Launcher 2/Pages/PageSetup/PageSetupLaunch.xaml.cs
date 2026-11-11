@@ -6,8 +6,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -219,8 +217,8 @@ namespace PCL
                 return;
             // 获取内存情况
             double RamGame = Math.Round(GetRam(ModMinecraft.McInstanceSelected, false), 5);
-            double RamTotal = Math.Round(VbCompat.Computer.Info.TotalPhysicalMemory / 1024d / 1024d / 1024d, 1);
-            double RamAvailable = Math.Round(VbCompat.Computer.Info.AvailablePhysicalMemory / 1024d / 1024d / 1024d, 1);
+            double RamTotal = Math.Round(SystemInfo.TotalPhysicalMemory / 1024d / 1024d / 1024d, 1);
+            double RamAvailable = Math.Round(SystemInfo.AvailablePhysicalMemory / 1024d / 1024d / 1024d, 1);
             double RamGameActual = Math.Round(Math.Min(RamGame, RamAvailable), 5);
             double RamUsed = Math.Round(RamTotal - RamAvailable, 5);
             double RamEmpty = Math.Round((RamTotal - RamUsed - RamGame).Clamp(0d, 1000d), 1);
@@ -242,9 +240,9 @@ namespace PCL
                 this.SliderRamCustom.MaxValue = (int)Math.Round(Math.Floor((RamTotal - 16d) / 2d) + 33d);
             }
             // 设置文本
-            this.LabRamGame.Text = Conversions.ToString(Operators.ConcatenateObject(Operators.ConcatenateObject(RamGame == Math.Floor(RamGame) ? RamGame + ".0" : RamGame, " GB"), RamGame != RamGameActual ? Operators.ConcatenateObject(Operators.ConcatenateObject(" (可用 ", RamGameActual == Math.Floor(RamGameActual) ? RamGameActual + ".0" : RamGameActual), " GB)") : ""));
-            this.LabRamUsed.Text = Conversions.ToString(Operators.ConcatenateObject(RamUsed == Math.Floor(RamUsed) ? RamUsed + ".0" : RamUsed, " GB"));
-            this.LabRamTotal.Text = Conversions.ToString(Operators.ConcatenateObject(Operators.ConcatenateObject(" / ", RamTotal == Math.Floor(RamTotal) ? RamTotal + ".0" : RamTotal), " GB"));
+            this.LabRamGame.Text = Coerce.ToStr(Coerce.Concat(Coerce.Concat(RamGame == Math.Floor(RamGame) ? RamGame + ".0" : RamGame, " GB"), RamGame != RamGameActual ? Coerce.Concat(Coerce.Concat(" (可用 ", RamGameActual == Math.Floor(RamGameActual) ? RamGameActual + ".0" : RamGameActual), " GB)") : ""));
+            this.LabRamUsed.Text = Coerce.ToStr(Coerce.Concat(RamUsed == Math.Floor(RamUsed) ? RamUsed + ".0" : RamUsed, " GB"));
+            this.LabRamTotal.Text = Coerce.ToStr(Coerce.Concat(Coerce.Concat(" / ", RamTotal == Math.Floor(RamTotal) ? RamTotal + ".0" : RamTotal), " GB"));
             if (ShowAnim)
             {
                 // 宽度动画
@@ -373,7 +371,7 @@ namespace PCL
             if (Settings.Get<int>("LaunchRamType") == 0)
             {
                 // 自动配置
-                double RamAvailable = Math.Round(VbCompat.Computer.Info.AvailablePhysicalMemory / 1024d / 1024d / 1024d * 10d) / 10d;
+                double RamAvailable = Math.Round(SystemInfo.AvailablePhysicalMemory / 1024d / 1024d / 1024d * 10d) / 10d;
                 // 确定需求的内存值
                 double RamMininum; // 无论如何也需要保证的最低限度内存
                 double RamTarget1; // 估计能勉强带动了的内存
@@ -586,7 +584,7 @@ namespace PCL
                 return;
             if (this.ComboArgumentVisibie.SelectedIndex == 0)
             {
-                if (ModMain.MyMsgBox("若在游戏启动后立即关闭启动器，崩溃检测、更改游戏标题等功能将失效。" + Constants.vbCrLf + "如果想保留这些功能，可以选择让启动器在游戏启动后隐藏，游戏退出后自动关闭。", "提醒", "继续", "取消") == 2)
+                if (ModMain.MyMsgBox("若在游戏启动后立即关闭启动器，崩溃检测、更改游戏标题等功能将失效。" + ModBase.CrLf + "如果想保留这些功能，可以选择让启动器在游戏启动后隐藏，游戏退出后自动关闭。", "提醒", "继续", "取消") == 2)
                 {
                     if (e.RemovedItems.Count > 0)
                         this.ComboArgumentVisibie.SelectedItem = e.RemovedItems[0];
@@ -601,7 +599,7 @@ namespace PCL
         {
             if (ModAnimation.AniControlEnabled != 0)
                 return;
-            ModMain.MyMsgBox("本设置仅会对之后新安装的版本生效。" + Constants.vbCrLf + "如果要修改已安装的版本的隔离方式，请在它的版本独立设置中调整。");
+            ModMain.MyMsgBox("本设置仅会对之后新安装的版本生效。" + ModBase.CrLf + "如果要修改已安装的版本的隔离方式，请在它的版本独立设置中调整。");
         }
 
         #endregion

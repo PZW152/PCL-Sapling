@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using MeloongCore;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -37,7 +36,7 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(GetValue(TextProperty));
+                return Coerce.ToStr(GetValue(TextProperty));
             }
             set
             {
@@ -46,7 +45,7 @@ namespace PCL
         }
         public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyTextButton), new PropertyMetadata("", ModBase.DpCallback<MyTextButton>((sender, e) =>
 {
-if (Operators.ConditionalCompareObjectEqual(e.OldValue, e.NewValue, false))
+if (Coerce.Equal(e.OldValue, e.NewValue))
     return;
 ModAnimation.AniStart(new[] { ModAnimation.AaOpacity(sender, -sender.Opacity, 50), ModAnimation.AaCode(() => sender.Content = e.NewValue, After: true), ModAnimation.AaOpacity(sender, 1d, 170) }, "MyTextButton Text " + sender.Uuid);
 })));

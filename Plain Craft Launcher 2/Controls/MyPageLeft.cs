@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -16,7 +15,7 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(GetValue(AnimatedControlProperty));
+                return Coerce.ToStr(GetValue(AnimatedControlProperty));
             }
             set
             {

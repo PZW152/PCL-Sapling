@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Input;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -135,7 +134,7 @@ namespace PCL
                     goto Retry;
                 }
                 // 获取新皮肤地址
-                Logger.Info($"皮肤修改返回值：{Constants.vbCrLf}{Result}");
+                Logger.Info($"皮肤修改返回值：{ModBase.CrLf}{Result}");
                 JObject ResultJson = (JObject)Result.DeserializeJson();
                 if (ResultJson.ContainsKey("errorMessage"))
                     throw new Exception(ResultJson["errorMessage"].ToString()); // #5309

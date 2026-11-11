@@ -62,7 +62,6 @@
 		<EmbeddedResource Include="Minecraft\OptiFineHashes.json" LogicalName="Minecraft\OptiFineHashes.json" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Reference Include="Microsoft.VisualBasic" />
 	  <Reference Include="Newtonsoft.Json">
 	    <HintPath>..\Plain Craft Launcher 2\Resources\Newtonsoft.Json.dll</HintPath>
 	  </Reference>

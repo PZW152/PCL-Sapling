@@ -10,7 +10,6 @@ using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -49,11 +48,11 @@ namespace PCL
         public void LoadPageArguments()
         {
             Project = (ResourceProject)ModMain.FrmMain.PageCurrent.Additional.Args()[0];
-            TargetVersion = Conversions.ToString(ModMain.FrmMain.PageCurrent.Additional.Args()[2]);
-            TargetLoaders = (ModLoaders)Conversions.ToInteger(ModMain.FrmMain.PageCurrent.Additional.Args()[3]);
+            TargetVersion = Coerce.ToStr(ModMain.FrmMain.PageCurrent.Additional.Args()[2]);
+            TargetLoaders = (ModLoaders)Coerce.ToInt(ModMain.FrmMain.PageCurrent.Additional.Args()[3]);
             if (TargetLoaders != ModLoaders.None && !TargetLoaders.Flags().IsSingle())
                 TargetLoaders = TargetLoaders.Flags().First(); // 强制取第一个
-            TargetResourceType = (ResourceTypes)Conversions.ToInteger(ModMain.FrmMain.PageCurrent.Additional.Args()[4]);
+            TargetResourceType = (ResourceTypes)Coerce.ToInt(ModMain.FrmMain.PageCurrent.Additional.Args()[4]);
         }
 
         #region 加载器

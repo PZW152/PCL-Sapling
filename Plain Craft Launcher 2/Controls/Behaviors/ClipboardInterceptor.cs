@@ -7,8 +7,6 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using ThrottleDebounce;
 // Author: uye (owner of the MaaAssistantArknights team)
 // Original Source: MaaAssistantArknights project - https://github.com/MaaAssistantArknights/MaaAssistantArknights
@@ -44,20 +42,20 @@ namespace PCL.Controls.Behaviors
 
         public static bool GetEnableSafeClipboard(DependencyObject element)
         {
-            return Conversions.ToBoolean(element.GetValue(EnableSafeClipboardProperty));
+            return Coerce.ToBool(element.GetValue(EnableSafeClipboardProperty));
         }
 
         private static void OnEnableSafeClipboardChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is TextBox && Conversions.ToBoolean(e.NewValue))
+            if (d is TextBox && Coerce.ToBool(e.NewValue))
             {
                 AddCommandBindingsToTextBox((TextBox)d);
             }
-            else if (d is RichTextBox && Conversions.ToBoolean(e.NewValue))
+            else if (d is RichTextBox && Coerce.ToBool(e.NewValue))
             {
                 AddCommandBindingsToRichTextBox((RichTextBox)d);
             }
-            else if (d is DataGrid && Conversions.ToBoolean(e.NewValue))
+            else if (d is DataGrid && Coerce.ToBool(e.NewValue))
             {
                 AddCommandBindingsToDataGrid((DataGrid)d);
             }
@@ -254,7 +252,7 @@ namespace PCL.Controls.Behaviors
 
             foreach (var row in rowGroups)
             {
-                string rowText = string.Join(Constants.vbTab, row.Select(cell =>
+                string rowText = string.Join(ModBase.Tab, row.Select(cell =>
 {
     TextBlock tb = cell.Column.GetCellContent(cell.Item) as TextBlock;
     return tb is not null ? tb.Text : "";
@@ -262,7 +260,7 @@ namespace PCL.Controls.Behaviors
                 sb.AppendLine(rowText);
             }
 
-            string sbStr = sb.ToString().TrimEnd(ControlChars.Cr, ControlChars.Lf);
+            string sbStr = sb.ToString().TrimEnd('\r', '\n');
 
             try
             {

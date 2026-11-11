@@ -10,7 +10,6 @@
 
 
 using System.Diagnostics;
-using Microsoft.VisualBasic;
 
 namespace PCL.My.Resources
 {
@@ -25,7 +24,6 @@ namespace PCL.My.Resources
     [System.CodeDom.Compiler.GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [DebuggerNonUserCode()]
     [System.Runtime.CompilerServices.CompilerGenerated()]
-    [HideModuleName()]
     internal static class Resources
     {
 

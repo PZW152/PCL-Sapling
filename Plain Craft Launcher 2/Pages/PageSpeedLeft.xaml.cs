@@ -7,8 +7,6 @@ using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -81,7 +79,7 @@ namespace PCL
                     string PredictText = Math.Floor(RawPercent * 100d) + "." + Math.Floor((RawPercent * 100d - Math.Floor(RawPercent * 100d)) * 100d).ToString().EnsureLength('0', 2) + " %";
                     this.LabProgress.Text = RawPercent > 0.999999d ? "100 %" : PredictText;
                     this.LabSpeed.Text = StringUtils.FormatByteSize(ModNet.NetManager.Speed) + "/s";
-                    this.LabFile.Text = Conversions.ToString(ModNet.NetManager.FileRemain < 0 ? "0*" : global::PCL.ModNet.NetManager.FileRemain);
+                    this.LabFile.Text = Coerce.ToStr(ModNet.NetManager.FileRemain < 0 ? "0*" : global::PCL.ModNet.NetManager.FileRemain);
                     this.LabThread.Text = ModNet.NetTaskThreadCount + " / " + ModNet.NetTaskThreadLimit;
                 }
             }
@@ -174,7 +172,7 @@ namespace PCL
                                                 {
                                                     case ModBase.LoadState.Waiting:
                                                         {
-                                                            if (Operators.ConditionalCompareObjectNotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Waiting", false))
+                                                            if (Coerce.NotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Waiting"))
                                                             {
                                                                 Card.Children.RemoveAt(Row * 2);
                                                                 Card.Children.Insert(Row * 2, (UIElement)ModBase.GetObjectFromXML("<Path xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" xmlns:local=\"clr-namespace:PCL;assembly=Plain Craft Launcher 2\" Stretch=\"Uniform\" Tag=\"Waiting\" Data=\"F1 M5,0 a5,5 360 1 0 0,0.0001 m15,0 a5,5 360 1 0 0,0.0001 m15,0 a5,5 360 1 0 0,0.0001 Z\" Width=\"18\" HorizontalAlignment=\"Center\" Grid.Column=\"0\" Grid.Row=\"" + Row + "\" Fill=\"{DynamicResource ColorBrush3}\" Margin=\"0,7,0,0\" VerticalAlignment=\"Top\" Height=\"6\"/>"));
@@ -184,7 +182,7 @@ namespace PCL
                                                         }
                                                     case ModBase.LoadState.Loading:
                                                         {
-                                                            if (Operators.ConditionalCompareObjectNotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Loading", false))
+                                                            if (Coerce.NotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Loading"))
                                                             {
                                                                 Card.Children.RemoveAt(Row * 2);
                                                                 Card.Children.Insert(Row * 2, (UIElement)ModBase.GetObjectFromXML("<TextBlock xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" xmlns:local=\"clr-namespace:PCL;assembly=Plain Craft Launcher 2\" Text=\"" + Math.Floor(SubTask.Progress * 100d) + "%\" Tag=\"Loading\" HorizontalAlignment=\"Center\" Grid.Column=\"0\" Grid.Row=\"" + Row + "\" Foreground=\"{DynamicResource ColorBrush3}\"/>"));
@@ -198,7 +196,7 @@ namespace PCL
                                                         }
                                                     case ModBase.LoadState.Finished:
                                                         {
-                                                            if (Operators.ConditionalCompareObjectNotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Finished", false))
+                                                            if (Coerce.NotEqual(((FrameworkElement)Card.Children[Row * 2]).Tag, "Finished"))
                                                             {
                                                                 Card.Children.RemoveAt(Row * 2);
                                                                 Card.Children.Insert(Row * 2, (UIElement)ModBase.GetObjectFromXML("<Path xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" xmlns:local=\"clr-namespace:PCL;assembly=Plain Craft Launcher 2\" Stretch=\"Uniform\" Tag=\"Finished\" Data=\"F1 M 23.7501,33.25L 34.8334,44.3333L 52.2499,22.1668L 56.9999,26.9168L 34.8334,53.8333L 19.0001,38L 23.7501,33.25 Z\" Height=\"16\" Width=\"15\" HorizontalAlignment=\"Center\" Grid.Column=\"0\" Grid.Row=\"" + Row + "\" Fill=\"{DynamicResource ColorBrush3}\" Margin=\"0,3,0,0\" VerticalAlignment=\"Top\"/>"));
@@ -283,7 +281,7 @@ namespace PCL
                         catch (Exception ex)
                         {
                             Logger.Warn(ex, "新建任务管理卡片失败");
-                            Logger.Info($"出错的卡片内容：{Constants.vbCrLf}{CardXAML}");
+                            Logger.Info($"出错的卡片内容：{ModBase.CrLf}{CardXAML}");
                             throw;
                         }
                         ModMain.FrmSpeedRight.PanMain.Children.Insert(0, Card);

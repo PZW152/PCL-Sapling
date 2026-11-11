@@ -6,7 +6,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Markup;
 using MeloongCore;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -125,7 +124,7 @@ namespace PCL
                 {
                     foreach (MyComboBoxItem Item in this.ComboSearchLoader.Items)
                     {
-                        if (Operators.ConditionalCompareObjectEqual(Item.Content, Name, false))
+                        if (Coerce.Equal(Item.Content, Name))
                             return Item;
                     }
                     return (MyComboBoxItem)this.ComboSearchLoader.Items[0];
@@ -174,7 +173,7 @@ namespace PCL
             string GameVersion = this.TextSearchVersion.Text == "全部 (也可自行输入)" ? (string)null : this.TextSearchVersion.Text.Contains(".") || this.TextSearchVersion.Text.Contains("w") ? this.TextSearchVersion.Text : (string)null;
             Request.SearchText = this.TextSearchName.Text;
             Request.GameVersion = GameVersion;
-            Request.Tag = Conversions.ToString(this.ComboSearchTag.SelectedItem.Fe().Tag);
+            Request.Tag = Coerce.ToStr(this.ComboSearchTag.SelectedItem.Fe().Tag);
             Request.ModLoaders = (ModLoaders)Math.Round(PageType == ResourceTypes.Mod ? ModBase.Val(this.ComboSearchLoader.SelectedItem.Fe().Tag) : (double)ModLoaders.None);
             Request.Sources = (ResourcePlatforms)Math.Round(ModBase.Val(this.ComboSearchSource.SelectedItem.Fe().Tag));
             return Request;

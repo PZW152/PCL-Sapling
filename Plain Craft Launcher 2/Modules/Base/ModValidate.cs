@@ -4,8 +4,6 @@ using System.IO;
 using System.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -196,11 +194,11 @@ namespace PCL
         }
         public override string Validate(string Str)
         {
-            if (Strings.Len(Str) != Max && Max == Min)
+            if (Coerce.Len(Str) != Max && Max == Min)
                 return $"长度必须为 {Max} 个字符！";
-            if (Strings.Len(Str) > Max)
+            if (Coerce.Len(Str) > Max)
                 return $"长度最长为 {Max} 个字符！";
-            if (Strings.Len(Str) < Min)
+            if (Coerce.Len(Str) < Min)
                 return $"长度至少需 {Min} 个字符！";
             return "";
         }
@@ -446,7 +444,7 @@ namespace PCL
                         if (!string.IsNullOrEmpty(SameNameCheck))
                             return SameNameCheck;
                     }
-                    else if (Conversions.ToBoolean(RequireParentFolderExists))
+                    else if (Coerce.ToBool(RequireParentFolderExists))
                         return $"父文件夹不存在：{ParentFolder}";
                 }
                 return "";

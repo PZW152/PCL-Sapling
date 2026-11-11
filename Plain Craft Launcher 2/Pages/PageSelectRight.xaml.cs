@@ -9,8 +9,6 @@ using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -180,13 +178,13 @@ namespace PCL
                     if (ShowHidden)
                     {
                         this.LabEmptyTitle.Text = "无隐藏版本";
-                        this.LabEmptyContent.Text = "没有版本被隐藏，你可以在版本设置的版本分类选项中隐藏版本。" + Constants.vbCrLf + "再次按下 F11 即可退出隐藏版本查看模式。";
+                        this.LabEmptyContent.Text = "没有版本被隐藏，你可以在版本设置的版本分类选项中隐藏版本。" + ModBase.CrLf + "再次按下 F11 即可退出隐藏版本查看模式。";
                         this.BtnEmptyDownload.Visibility = Visibility.Collapsed;
                     }
                     else
                     {
                         this.LabEmptyTitle.Text = "无可用版本";
-                        this.LabEmptyContent.Text = "未找到任何版本的游戏，请先下载任意版本的游戏。" + Constants.vbCrLf + "若有已存在的游戏，请在左边的列表中选择添加文件夹，选择 .minecraft 文件夹将其导入。";
+                        this.LabEmptyContent.Text = "未找到任何版本的游戏，请先下载任意版本的游戏。" + ModBase.CrLf + "若有已存在的游戏，请在左边的列表中选择添加文件夹，选择 .minecraft 文件夹将其导入。";
                         this.BtnEmptyDownload.Visibility = Settings.Get<bool>("UiHiddenPageDownload") && !PageSetupUI.HiddenForceShow ? Visibility.Collapsed : Visibility.Visible;
                     }
                 }
@@ -297,11 +295,11 @@ namespace PCL
                     ModMain.Hint("该版本正在被修改，请稍后再删除！", ModMain.HintType.Red);
                     return;
                 }
-                bool IsShiftPressed = VbCompat.Computer.Keyboard.ShiftKeyDown;
+                bool IsShiftPressed = System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Shift);
                 bool IsHintIndie = Instance.State != ModMinecraft.McInstance.McInstanceState.Error && (Instance.PathIndie ?? "") != (ModMinecraft.McFolderSelected ?? "");
                 var SavesFolder = DirectoryUtils.GetInfo(Instance.PathIndie + @"saves\");
                 var SaveEntries = IsHintIndie && SavesFolder.Exists ? SavesFolder.EnumerateDirectories().OrderByDescending(Save => Save.LastWriteTime).Select(Save => $"{Save.Name}（上次修改：{StringUtils.FormatTimeSpan(Save.LastWriteTime - DateTime.Now, false)}）").ToList() : new List<string>();
-                switch (ModMain.MyMsgBox($"你确定要{(IsShiftPressed ? "永久" : "")}删除版本 {Instance.Name} 吗？" + (IsHintIndie ? Constants.vbCrLf + "该版本对应的存档、资源包、Mod 等文件也将被一并删除！" : "") + (SaveEntries.Any() ? Constants.vbCrLf + Constants.vbCrLf + "这会删除以下存档：" + Constants.vbCrLf + "· " + SaveEntries.Join(Constants.vbCrLf + "· ") : ""), "版本删除确认", Button2: "取消", IsWarn: true))
+                switch (ModMain.MyMsgBox($"你确定要{(IsShiftPressed ? "永久" : "")}删除版本 {Instance.Name} 吗？" + (IsHintIndie ? ModBase.CrLf + "该版本对应的存档、资源包、Mod 等文件也将被一并删除！" : "") + (SaveEntries.Any() ? ModBase.CrLf + ModBase.CrLf + "这会删除以下存档：" + ModBase.CrLf + "· " + SaveEntries.Join(ModBase.CrLf + "· ") : ""), "版本删除确认", Button2: "取消", IsWarn: true))
                 {
                     case 1:
                         {

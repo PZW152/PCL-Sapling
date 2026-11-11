@@ -11,8 +11,6 @@ using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -506,7 +504,7 @@ namespace PCL
         {
             if (!ReferenceEquals(ModMain.FrmMain.PageRight, this))
                 return;
-            if (VbCompat.Computer.Keyboard.CtrlKeyDown && e.Key == Key.A)
+            if (System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Control) && e.Key == Key.A)
                 ChangeAllSelected(true);
         }
         private void SearchBox_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -514,7 +512,7 @@ namespace PCL
             // Ctrl + A 会被搜索框捕获，导致无法全选，所以在按下 Ctrl + A 时转移焦点以便捕获
             if (SearchBox.Text.Any())
                 return;
-            if (VbCompat.Computer.Keyboard.CtrlKeyDown && e.Key == Key.A)
+            if (System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Control) && e.Key == Key.A)
                 this.PanBack.Focus();
         }
 
@@ -603,7 +601,7 @@ namespace PCL
         // 点击筛选项触发的改变
         private void ChangeFilter(MyRadioButton sender, bool raiseByMouse)
         {
-            Filter = (FilterType)Conversions.ToInteger(sender.Tag);
+            Filter = (FilterType)Coerce.ToInt(sender.Tag);
             RefreshUI();
         }
 
@@ -648,7 +646,7 @@ namespace PCL
                             // 同时存在两个名称的 Mod
                             if ((CryptographyUtils.ComputeFileHash(ModEntity.File.FullName) ?? "") != (CryptographyUtils.ComputeFileHash(NewPath) ?? ""))
                             {
-                                ModMain.MyMsgBox($"目前同时存在启用和禁用的两个 Mod 文件：{Constants.vbCrLf} - {PathUtils.GetLastPart(NewPath)}{Constants.vbCrLf} - {ModEntity.File.Name}{Constants.vbCrLf}{Constants.vbCrLf}注意，这两个文件的内容并不相同。{Constants.vbCrLf}在手动删除或重命名其中一个文件后，才能继续操作。", "存在文件冲突");
+                                ModMain.MyMsgBox($"目前同时存在启用和禁用的两个 Mod 文件：{ModBase.CrLf} - {PathUtils.GetLastPart(NewPath)}{ModBase.CrLf} - {ModEntity.File.Name}{ModBase.CrLf}{ModBase.CrLf}注意，这两个文件的内容并不相同。{ModBase.CrLf}在手动删除或重命名其中一个文件后，才能继续操作。", "存在文件冲突");
                                 continue;
                             }
                         }
@@ -727,7 +725,7 @@ namespace PCL
             // 更新前警告
             if (!Settings.Get<bool>("HintUpdateMod") || ModList.Count() >= 15)
             {
-                if (ModMain.MyMsgBox($"新版本 Mod 可能不兼容旧存档或者其他 Mod，这可能导致游戏崩溃，甚至永久损坏存档！{Constants.vbCrLf}如果你在游玩整合包，请千万不要自行更新 Mod！{Constants.vbCrLf}{Constants.vbCrLf}在更新前，请先备份存档，并检查 Mod 的更新日志。{Constants.vbCrLf}如果更新后出现问题，你也可以在回收站找回更新前的 Mod。", "Mod 更新警告", "我已了解风险，继续更新", "取消", IsWarn: true) == 1)
+                if (ModMain.MyMsgBox($"新版本 Mod 可能不兼容旧存档或者其他 Mod，这可能导致游戏崩溃，甚至永久损坏存档！{ModBase.CrLf}如果你在游玩整合包，请千万不要自行更新 Mod！{ModBase.CrLf}{ModBase.CrLf}在更新前，请先备份存档，并检查 Mod 的更新日志。{ModBase.CrLf}如果更新后出现问题，你也可以在回收站找回更新前的 Mod。", "Mod 更新警告", "我已了解风险，继续更新", "取消", IsWarn: true) == 1)
                 {
                     Settings.Set("HintUpdateMod", true);
                 }
@@ -868,7 +866,7 @@ namespace PCL
             try
             {
                 bool IsSuccessful = true;
-                bool IsShiftPressed = VbCompat.Computer.Keyboard.ShiftKeyDown;
+                bool IsShiftPressed = System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Shift);
                 // 确认需要删除的文件
                 var ModList = ModsToDelete.SelectMany((Target) => { if (Target.IsEnabled) { return new[] { Target.File.FullName, Target.File.FullName + (FileUtils.Exists(Target.File.FullName + ".old") ? ".old" : ".disabled") }; } else { return new[] { Target.File.FullName, Target.EnabledFullName }; } }).Distinct().Where(m => FileUtils.Exists(m)).Select(m => new LocalResourceFile(m)).ToList();
                 // 实际删除文件
@@ -971,7 +969,7 @@ namespace PCL
                     // 获取信息
                     var ContentLines = new List<string>();
                     if (ModEntry.Description is not null)
-                        ContentLines.Add(ModEntry.Description + Constants.vbCrLf);
+                        ContentLines.Add(ModEntry.Description + ModBase.CrLf);
                     ContentLines.Add("文件：" + ModEntry.File.Name + "（" + StringUtils.FormatByteSize(ModEntry.File.Length) + "）");
                     if (ModEntry.Version is not null)
                         ContentLines.Add("版本：" + ModEntry.Version);
@@ -997,7 +995,7 @@ namespace PCL
                     }
                     ModSearchName = ModSearchName.Replace("++", "+").Replace("pti+Fine", "ptiFine");
                     // 百科搜索链接
-                    if (ModMain.MyMsgBox(ContentLines.Join(Constants.vbCrLf), ModEntry.Display, "百科搜索", "返回") == 1)
+                    if (ModMain.MyMsgBox(ContentLines.Join(ModBase.CrLf), ModEntry.Display, "百科搜索", "返回") == 1)
                     {
                         ModBase.OpenWebsite("https://www.mcmod.cn/s?key=" + ModSearchName + "&site=all&filter=0");
                     }

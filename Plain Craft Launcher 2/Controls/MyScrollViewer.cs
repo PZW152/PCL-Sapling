@@ -3,7 +3,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using MeloongCore;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -39,7 +38,7 @@ namespace PCL
         {
             ModAnimation.AniStart(ModAnimation.AaDouble(RawAnimDelta =>
 {
-double AnimDelta = Conversions.ToDouble(RawAnimDelta);
+double AnimDelta = Coerce.ToDouble(RawAnimDelta);
 RealOffset = (RealOffset + AnimDelta).Clamp(0d, ExtentHeight - ActualHeight);
 ScrollToVerticalOffset(RealOffset);
 }, Delta * DeltaMult, 300, 0, new ModAnimation.AniEaseOutFluent((ModAnimation.AniEasePower)6), After: false));

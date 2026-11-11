@@ -9,8 +9,6 @@ using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -431,7 +429,7 @@ namespace PCL
                 NewestName = NewestSegs.Join("-");
                 Entry._Version = CurrentName; // 使用网络信息作为显示的版本号
             }
-            return $"当前版本：{CurrentName}（{StringUtils.FormatTimeSpan(Entry.ProjectVersion.ReleaseDate - DateTime.Now, false)}）{Constants.vbCrLf}最新版本：{NewestName}（{StringUtils.FormatTimeSpan(Entry.UpdateFile.ReleaseDate - DateTime.Now, false)}）";
+            return $"当前版本：{CurrentName}（{StringUtils.FormatTimeSpan(Entry.ProjectVersion.ReleaseDate - DateTime.Now, false)}）{ModBase.CrLf}最新版本：{NewestName}（{StringUtils.FormatTimeSpan(Entry.UpdateFile.ReleaseDate - DateTime.Now, false)}）";
         }
 
         // 懒加载
@@ -467,7 +465,7 @@ namespace PCL
             if (Entry.HasUpdate)
             {
                 this.BtnUpdate.Visibility = Visibility.Visible;
-                this.BtnUpdate.ToolTip = $"{GetUpdateCompareDescription()}{Constants.vbCrLf}点击以更新，右键查看更新日志。";
+                this.BtnUpdate.ToolTip = $"{GetUpdateCompareDescription()}{ModBase.CrLf}点击以更新，右键查看更新日志。";
             }
             else
             {
@@ -591,12 +589,12 @@ namespace PCL
                 if (this.IsMouseOver)
                 {
                     Ani.Add(ModAnimation.AaOpacity(ButtonStack, 1d - ButtonStack.Opacity, (int)Math.Round(Time * 0.7d), (int)Math.Round(Time * 0.3d)));
-                    Ani.Add(ModAnimation.AaDouble(i => this.ColumnPaddingRight.Width = new GridLength(Math.Max(0d, this.ColumnPaddingRight.Width.Value + Conversions.ToDouble(i))), (double)(5 + Buttons.Count() * 25) - this.ColumnPaddingRight.Width.Value, (int)Math.Round(Time * 0.3d), (int)Math.Round(Time * 0.7d)));
+                    Ani.Add(ModAnimation.AaDouble(i => this.ColumnPaddingRight.Width = new GridLength(Math.Max(0d, this.ColumnPaddingRight.Width.Value + Coerce.ToDouble(i))), (double)(5 + Buttons.Count() * 25) - this.ColumnPaddingRight.Width.Value, (int)Math.Round(Time * 0.3d), (int)Math.Round(Time * 0.7d)));
                 }
                 else
                 {
                     Ani.Add(ModAnimation.AaOpacity(ButtonStack, -ButtonStack.Opacity, (int)Math.Round(Time * 0.4d)));
-                    Ani.Add(ModAnimation.AaDouble(i => this.ColumnPaddingRight.Width = new GridLength(Math.Max(0d, this.ColumnPaddingRight.Width.Value + Conversions.ToDouble(i))), 4d - this.ColumnPaddingRight.Width.Value, (int)Math.Round(Time * 0.4d)));
+                    Ani.Add(ModAnimation.AaDouble(i => this.ColumnPaddingRight.Width = new GridLength(Math.Max(0d, this.ColumnPaddingRight.Width.Value + Coerce.ToDouble(i))), 4d - this.ColumnPaddingRight.Width.Value, (int)Math.Round(Time * 0.4d)));
                 }
             }
             // RectBack
@@ -664,7 +662,7 @@ namespace PCL
         // 触发更新
         private void BtnUpdate_Click(object sender, EventArgs e)
         {
-            switch (ModMain.MyMsgBox($"是否要更新 {Entry.Display}？{Constants.vbCrLf}{Constants.vbCrLf}{GetUpdateCompareDescription()}", "Mod 更新确认", "更新", "查看更新日志", "取消"))
+            switch (ModMain.MyMsgBox($"是否要更新 {Entry.Display}？{ModBase.CrLf}{ModBase.CrLf}{GetUpdateCompareDescription()}", "Mod 更新确认", "更新", "查看更新日志", "取消"))
             {
                 case 1: // 更新
                     {

@@ -7,7 +7,6 @@ using System.Windows.Markup;
 using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -111,7 +110,7 @@ namespace PCL
                 Theme = value ? Themes.Red : Themes.Blue;
             }
         }
-        public static readonly DependencyProperty IsWarnProperty = DependencyProperty.Register("IsWarn", typeof(bool), typeof(MyHint), new PropertyMetadata(true, ModBase.DpCallback<MyHint>((d, e) => d.Theme = Conversions.ToBoolean(e.NewValue) ? Themes.Red : Themes.Blue)));
+        public static readonly DependencyProperty IsWarnProperty = DependencyProperty.Register("IsWarn", typeof(bool), typeof(MyHint), new PropertyMetadata(true, ModBase.DpCallback<MyHint>((d, e) => d.Theme = Coerce.ToBool(e.NewValue) ? Themes.Red : Themes.Blue)));
 
         // 文本
         public InlineCollection Inlines
@@ -125,14 +124,14 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(this.GetValue(TextProperty));
+                return Coerce.ToStr(this.GetValue(TextProperty));
             }
             set
             {
                 this.SetValue(TextProperty, value);
             }
         }
-        public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyHint), new PropertyMetadata("", ModBase.DpCallback<MyHint>((d, e) => d.LabText.Text = Conversions.ToString(e.NewValue))));
+        public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyHint), new PropertyMetadata("", ModBase.DpCallback<MyHint>((d, e) => d.LabText.Text = Coerce.ToStr(e.NewValue))));
 
         // 关闭按钮
         public bool CanClose

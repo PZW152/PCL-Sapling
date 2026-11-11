@@ -5,7 +5,6 @@ using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Media;
 using MeloongCore;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -57,14 +56,14 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(this.GetValue(TextProperty));
+                return Coerce.ToStr(this.GetValue(TextProperty));
             }
             set
             {
                 this.SetValue(TextProperty, value);
             }
         } // 内容
-        public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyIconTextButton), new PropertyMetadata(ModBase.DpCallback<MyIconTextButton>((sender, e) => { if (!(sender == null)) ((MyIconTextButton)sender).LabText.Text = Conversions.ToString(e.NewValue); })));
+        public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyIconTextButton), new PropertyMetadata(ModBase.DpCallback<MyIconTextButton>((sender, e) => { if (!(sender == null)) ((MyIconTextButton)sender).LabText.Text = Coerce.ToStr(e.NewValue); })));
         public enum ColorState
         {
             Black,
@@ -74,7 +73,7 @@ namespace PCL
         {
             get
             {
-                return (ColorState)Conversions.ToInteger(this.GetValue(ColorTypeProperty));
+                return (ColorState)Coerce.ToInt(this.GetValue(ColorTypeProperty));
             }
             set
             {

@@ -6,7 +6,6 @@ using System.Windows.Media;
 using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -128,7 +127,7 @@ namespace PCL
         {
             if (IsLeftMouseHeld)
             {
-                Logger.Info($"按下附加按钮{(Operators.ConditionalCompareObjectEqual(this.ToolTip, "", false) ? "" : Operators.ConcatenateObject("：", this.ToolTip))}");
+                Logger.Info($"按下附加按钮{(Coerce.Equal(this.ToolTip, "") ? "" : Coerce.Concat("：", this.ToolTip))}");
                 Click?.Invoke(sender, e);
                 e.Handled = true;
                 Button_LeftMouseUp();
@@ -138,7 +137,7 @@ namespace PCL
         {
             if (IsRightMouseHeld)
             {
-                Logger.Info($"右键按下附加按钮{(Operators.ConditionalCompareObjectEqual(this.ToolTip, "", false) ? "" : Operators.ConcatenateObject("：", this.ToolTip))}");
+                Logger.Info($"右键按下附加按钮{(Coerce.Equal(this.ToolTip, "") ? "" : Coerce.Concat("：", this.ToolTip))}");
                 RightClick?.Invoke(sender, e);
                 e.Handled = true;
                 Button_RightMouseUp();

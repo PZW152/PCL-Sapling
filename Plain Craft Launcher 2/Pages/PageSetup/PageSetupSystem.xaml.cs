@@ -5,8 +5,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -63,9 +61,9 @@ namespace PCL
         // 滑动条
         private void SliderLoad()
         {
-            this.SliderDownloadThread.GetHintText = new Func<object, object>(v => Operators.AddObject(v, 1));
-            this.SliderDownloadSpeed.GetHintText = new Func<object, object>(v => { switch (v) { case var @case when Operators.ConditionalCompareObjectLessEqual(@case, 14, false): { return Operators.ConcatenateObject(Operators.MultiplyObject(Operators.AddObject(v, 1), 0.1d), " M/s"); } case var case1 when Operators.ConditionalCompareObjectLessEqual(case1, 31, false): { return Operators.ConcatenateObject(Operators.MultiplyObject(Operators.SubtractObject(v, 11), 0.5d), " M/s"); } case var case2 when Operators.ConditionalCompareObjectLessEqual(case2, 41, false): { return Operators.ConcatenateObject(Operators.SubtractObject(v, 21), " M/s"); } default: { return "无限制"; } } });
-            this.SliderDebugAnim.GetHintText = new Func<object, object>(v => Operators.ConditionalCompareObjectGreater(v, 29, false) ? "关闭" : Operators.ConcatenateObject(Operators.AddObject(Operators.DivideObject(v, 10), 0.1d), "x"));
+            this.SliderDownloadThread.GetHintText = new Func<object, object>(v => Coerce.ToInt(v) + 1);
+            this.SliderDownloadSpeed.GetHintText = new Func<object, object>(v => { switch (v) { case var @case when Coerce.LessEqual(@case, 14): { return Coerce.Concat((Coerce.ToInt(v) + 1) * 0.1d, " M/s"); } case var case1 when Coerce.LessEqual(case1, 31): { return Coerce.Concat((Coerce.ToInt(v) - 11) * 0.5d, " M/s"); } case var case2 when Coerce.LessEqual(case2, 41): { return Coerce.Concat(Coerce.ToInt(v) - 21, " M/s"); } default: { return "无限制"; } } });
+            this.SliderDebugAnim.GetHintText = new Func<object, object>(v => Coerce.Greater(v, 29) ? "关闭" : Coerce.Concat(Coerce.ToInt(v) / 10d + 0.1d, "x"));
         }
         private void SliderDownloadThread_PreviewChange(object sender, ModBase.RouteEventArgs e)
         {
@@ -74,7 +72,7 @@ namespace PCL
             if (!Settings.Get<bool>("HintDownloadThread"))
             {
                 Settings.Set("HintDownloadThread", true);
-                ModMain.MyMsgBox("如果设置过多的下载线程，可能会导致下载时出现非常严重的卡顿。" + Constants.vbCrLf + "一般设置 64 线程即可满足大多数下载需求，除非你知道你在干什么，否则不建议设置更多的线程数！", "警告", "我知道了", IsWarn: true);
+                ModMain.MyMsgBox("如果设置过多的下载线程，可能会导致下载时出现非常严重的卡顿。" + ModBase.CrLf + "一般设置 64 线程即可满足大多数下载需求，除非你知道你在干什么，否则不建议设置更多的线程数！", "警告", "我知道了", IsWarn: true);
             }
         }
 

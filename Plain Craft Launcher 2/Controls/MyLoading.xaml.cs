@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 using static PCL.MyLoading;
 
 namespace PCL

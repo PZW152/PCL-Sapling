@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Windows;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -17,7 +16,7 @@ namespace PCL
         {
             if (obj is null)
                 return null;
-            return Conversions.ToString(obj.GetValue(KeyProperty));
+            return Coerce.ToStr(obj.GetValue(KeyProperty));
         }
         public static void SetKey(DependencyObject obj, string value)
         {
@@ -32,7 +31,7 @@ namespace PCL
         {
             if (obj is null)
                 return null;
-            return Conversions.ToString(obj.GetValue(ValueProperty));
+            return Coerce.ToStr(obj.GetValue(ValueProperty));
         }
         public static void SetValue(DependencyObject obj, string value)
         {
@@ -65,7 +64,7 @@ namespace PCL
                 return;
             var NewValue = Settings.Get(Key, Instance: PageInstanceLeft.Instance);
             if (Target is ISettingControl)
-                ((ISettingControl)Target).RefreshSetting(Conversions.ToString(NewValue));
+                ((ISettingControl)Target).RefreshSetting(Coerce.ToStr(NewValue));
         }
 
         /// <summary>

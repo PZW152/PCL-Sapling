@@ -6,7 +6,6 @@ using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using MeloongCore;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -33,14 +32,14 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(this.GetValue(TextProperty));
+                return Coerce.ToStr(this.GetValue(TextProperty));
             }
             set
             {
                 this.SetValue(TextProperty, value);
             }
         } // 显示文本
-        public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyButton), new PropertyMetadata(ModBase.DpCallback<MyButton>((sender, e) => { if (sender is not null) ((MyButton)sender).LabText.Text = Conversions.ToString(e.NewValue); })));
+        public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyButton), new PropertyMetadata(ModBase.DpCallback<MyButton>((sender, e) => { if (sender is not null) ((MyButton)sender).LabText.Text = Coerce.ToStr(e.NewValue); })));
         public Thickness TextPadding
         {
             get

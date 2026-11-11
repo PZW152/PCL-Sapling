@@ -7,7 +7,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using MeloongCore;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -188,8 +187,8 @@ namespace PCL
             {
                 // 从详情页进入（查看前置）
                 TargetType = ResourceTypes.Any; // 允许任意类别
-                TargetInstance = Conversions.ToString(ModMain.FrmMain.PageCurrent.Additional.Args()[2]);
-                TargetLoader = (ModLoaders)Conversions.ToInteger(ModMain.FrmMain.PageCurrent.Additional.Args()[3]);
+                TargetInstance = Coerce.ToStr(ModMain.FrmMain.PageCurrent.Additional.Args()[2]);
+                TargetLoader = (ModLoaders)Coerce.ToInt(ModMain.FrmMain.PageCurrent.Additional.Args()[3]);
             }
             ModMain.FrmMain.PageChange(new FormMain.PageStackData()
             {

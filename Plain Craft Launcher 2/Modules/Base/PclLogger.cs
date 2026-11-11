@@ -2,7 +2,6 @@
 using System.Threading;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic;
 
 namespace PCL
 {
@@ -63,7 +62,7 @@ namespace PCL
                         {
                             // 首次触发
                             _HandleBehavior_FirstTrigger = false;
-                            Interaction.MsgBox(DetailText, MsgBoxStyle.Critical, "错误");
+                            System.Windows.MessageBox.Show(DetailText, "错误", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                         }
                         else
                         {

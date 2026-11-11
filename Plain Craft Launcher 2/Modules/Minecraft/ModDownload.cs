@@ -7,8 +7,6 @@ using System.Threading;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -87,7 +85,7 @@ namespace PCL
             #endregion
 
             #region 下载资源文件
-            if (Conversions.ToBoolean(ModMinecraft.ShouldIgnoreFileCheck(Instance)))
+            if (Coerce.ToBool(ModMinecraft.ShouldIgnoreFileCheck(Instance)))
             {
                 Logger.Warn("设置要求跳过所有 Assets 检查，文件可能不是最新的", LogBehavior.None);
             }
@@ -276,7 +274,7 @@ namespace PCL
                 // 确认版本格式标准
                 Id = Id.Replace("_", "-"); // 1.7.10_pre4 在版本列表中显示为 1.7.10-pre4
                 if (Id != "1.0" && Id.EndsWithF(".0"))
-                    Id = Strings.Left(Id, Id.Length - 2); // OptiFine 1.8 的下载会触发此问题，显示版本为 1.8.0
+                    Id = Coerce.Left(Id, Id.Length - 2); // OptiFine 1.8 的下载会触发此问题，显示版本为 1.8.0
                                                           // 获取 Minecraft 版本列表
                 switch (DlClientListLoader.State)
                 {
@@ -311,7 +309,7 @@ namespace PCL
                     if ((string)Version["id"] == Id)
                         return Version["url"].ToString();
                 }
-                Logger.Warn($"未发现版本 {Id} 的 json 下载地址，版本列表返回为：{Constants.vbCrLf}{DlClientListLoader.Output.Value}");
+                Logger.Warn($"未发现版本 {Id} 的 json 下载地址，版本列表返回为：{ModBase.CrLf}{DlClientListLoader.Output.Value}");
                 return null;
             }
             catch (Exception ex)
@@ -371,7 +369,7 @@ namespace PCL
                 set
                 {
                     if (value.EndsWithF(".0"))
-                        value = Strings.Left(value, value.Length - 2);
+                        value = Coerce.Left(value, value.Length - 2);
                     _inherit = value;
                 }
             }
@@ -590,7 +588,7 @@ namespace PCL
                 // 司马版本的特殊处理
                 if (Version == "11.15.1.2318" || Version == "11.15.1.1902" || Version == "11.15.1.1890")
                     Branch = "1.8.9";
-                if (Branch is null && Inherit == "1.7.10" && Conversions.ToDouble(Version.Split(".")[3]) >= 1300d)
+                if (Branch is null && Inherit == "1.7.10" && Coerce.ToDouble(Version.Split(".")[3]) >= 1300d)
                     Branch = "1.7.10";
                 // 为 DlForgelikeEntry 提供所有信息
                 IsNeoForge = false;
@@ -657,7 +655,7 @@ namespace PCL
                         // 发布时间获取
                         string ReleaseTimeOriginal = VersionCode.RegexSeek("(?<=\"download-time\" title=\")[^\"]+");
                         string[] ReleaseTimeSplit = ReleaseTimeOriginal.Split(" -:".ToCharArray()); // 原格式："2021-02-15 03:24:02"
-                        var ReleaseDate = new DateTime(Conversions.ToInteger(ReleaseTimeSplit[0]), Conversions.ToInteger(ReleaseTimeSplit[1]), Conversions.ToInteger(ReleaseTimeSplit[2]), Conversions.ToInteger(ReleaseTimeSplit[3]), Conversions.ToInteger(ReleaseTimeSplit[4]), Conversions.ToInteger(ReleaseTimeSplit[5]), 0, DateTimeKind.Utc); // 年月日
+                        var ReleaseDate = new DateTime(Coerce.ToInt(ReleaseTimeSplit[0]), Coerce.ToInt(ReleaseTimeSplit[1]), Coerce.ToInt(ReleaseTimeSplit[2]), Coerce.ToInt(ReleaseTimeSplit[3]), Coerce.ToInt(ReleaseTimeSplit[4]), Coerce.ToInt(ReleaseTimeSplit[5]), 0, DateTimeKind.Utc); // 年月日
                                                                                                                                                                                                                                                                                                                                                      // 时分秒
                                                                                                                                                                                                                                                                                                                                                      // 以 UTC 时间作为标准
                         string ReleaseTime = ReleaseDate.ToLocalTime().ToString("yyyy'/'MM'/'dd HH':'mm"); // 时区与格式转换
@@ -788,7 +786,7 @@ namespace PCL
                 {
                     VersionName = ApiName;
                     string[] Segments = ApiName.BeforeFirst("-").Split('.');
-                    Version = new Version(0, 0, Conversions.ToInteger(Segments.Last()));
+                    Version = new Version(0, 0, Coerce.ToInt(Segments.Last()));
                     Inherit = Segments[1];
                 }
                 else // 20.4.30-beta；26.1.0.0-alpha.1+snapshot-1
@@ -804,7 +802,7 @@ namespace PCL
                         Inherit = $"1.{Version.Major}.{Version.Minor}";
                     }
                     if (Inherit.EndsWithF(".0"))
-                        Inherit = Strings.Left(Inherit, Inherit.Length - 2);
+                        Inherit = Coerce.Left(Inherit, Inherit.Length - 2);
                     if (VersionName.Contains("+"))
                         Inherit += "-" + VersionName.AfterFirst("+");
                 }
@@ -844,7 +842,7 @@ namespace PCL
             }
             catch (Exception ex)
             {
-                throw new Exception("NeoForge 官方源版本列表解析失败（" + ResultLatest + Constants.vbCrLf + Constants.vbCrLf + ResultLegacy + "）", ex);
+                throw new Exception("NeoForge 官方源版本列表解析失败（" + ResultLatest + ModBase.CrLf + ModBase.CrLf + ResultLegacy + "）", ex);
             }
         }
 
@@ -943,7 +941,7 @@ namespace PCL
                     Versions.Add(new DlLiteLoaderListEntry()
                     {
                         Inherit = Pair.Key,
-                        IsLegacy = Conversions.ToDouble(Pair.Key.Split(".")[1]) < 8d,
+                        IsLegacy = Coerce.ToDouble(Pair.Key.Split(".")[1]) < 8d,
                         IsPreview = RealEntry["stream"].ToString().Lower() == "snapshot",
                         FileName = "liteloader-installer-" + Pair.Key + (Pair.Key == "1.8" || Pair.Key == "1.9" ? ".0" : "") + "-00-SNAPSHOT.jar",
                         MD5 = (string)RealEntry["md5"],

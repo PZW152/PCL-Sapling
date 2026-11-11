@@ -6,8 +6,6 @@ using System.Windows;
 using System.Windows.Controls;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -71,7 +69,7 @@ namespace PCL
             if (ModMain.FrmLoginMs is null)
                 return new ModLaunch.McLoginMs() { OAuthRefreshToken = Settings.Get<string>("CacheMsV2OAuthRefresh"), UserName = Settings.Get<string>("CacheMsV2Name") };
             ModLaunch.McLoginMs Result = null;
-            ModBase.RunInUiWait(() => { if (ModMain.FrmLoginMs.ComboAccounts.SelectedIndex == 0) { Result = new ModLaunch.McLoginMs(); } else { MyListItem Item = (MyListItem)ModMain.FrmLoginMs.ComboAccounts.SelectedItem; Result = new ModLaunch.McLoginMs() { OAuthRefreshToken = Conversions.ToString(Item.Tag), UserName = Item.Title }; } });
+            ModBase.RunInUiWait(() => { if (ModMain.FrmLoginMs.ComboAccounts.SelectedIndex == 0) { Result = new ModLaunch.McLoginMs(); } else { MyListItem Item = (MyListItem)ModMain.FrmLoginMs.ComboAccounts.SelectedItem; Result = new ModLaunch.McLoginMs() { OAuthRefreshToken = Coerce.ToStr(Item.Tag), UserName = Item.Title }; } });
             return Result;
         }
         /// <summary>
@@ -136,7 +134,7 @@ namespace PCL
                 }
                 else if (ex is System.Security.Authentication.AuthenticationException && ex.Message.Contains("SSL/TLS"))
                 {
-                    Logger.Error(ex, $"正版登录验证失败，请考虑在 [设置 → 其他] 中关闭 [在正版登录时验证 SSL 证书]，然后再试。{Constants.vbCrLf}{Constants.vbCrLf}原始错误信息：", LogBehavior.Alert);
+                    Logger.Error(ex, $"正版登录验证失败，请考虑在 [设置 → 其他] 中关闭 [在正版登录时验证 SSL 证书]，然后再试。{ModBase.CrLf}{ModBase.CrLf}原始错误信息：", LogBehavior.Alert);
                 }
                 else
                 {

@@ -7,7 +7,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using MeloongCore;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -156,7 +155,7 @@ namespace PCL
             if (GetHintText is null)
                 return;
             this.Popup.IsOpen = true;
-            this.TextHint.Text = Conversions.ToString(GetHintText.DynamicInvoke(Value));
+            this.TextHint.Text = Coerce.ToStr(GetHintText.DynamicInvoke(Value));
             var typeface = new Typeface(this.TextHint.FontFamily, this.TextHint.FontStyle, this.TextHint.FontWeight, this.TextHint.FontStretch);
             var formattedText = new FormattedText(this.TextHint.Text, Thread.CurrentThread.CurrentCulture, this.TextHint.FlowDirection, typeface, this.TextHint.FontSize, this.TextHint.Foreground, (double)ModBase.DPI);
             this.TextHint.Width = formattedText.Width; // 使用手动测量的宽度修复 #1057

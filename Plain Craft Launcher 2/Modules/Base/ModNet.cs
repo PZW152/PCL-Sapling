@@ -13,8 +13,6 @@ using System.Threading.Tasks;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -45,7 +43,7 @@ namespace PCL
                 // 在此处检查并报错，可以让 NetRequestByClientRetry 等方法进行重试
                 if (RequireJson)
                 {
-                    Result = Result.Trim((Constants.vbCrLf + " ").ToCharArray()); // Authlib-Injector 的结果会在末尾附带一个空行
+                    Result = Result.Trim((ModBase.CrLf + " ").ToCharArray()); // Authlib-Injector 的结果会在末尾附带一个空行
                     if (!(Result.StartsWithF("{") && Result.EndsWithF("}")) && !(Result.StartsWithF("[") && Result.EndsWithF("]")))
                     {
                         throw new FormatException("返回结果并非 JSON 格式：" + (Result.Length > 2000 ? Result.Substring(0, 1000) + "..." + Result.Substring(Result.Length - 1000) : Result));
@@ -176,7 +174,7 @@ namespace PCL
                     catch
                     {
                     }
-                    return Conversions.ToString(RequestResult);
+                    return Coerce.ToStr(RequestResult);
                 }
                 else if (FailCount == ThreadCount)
                 {
@@ -374,7 +372,7 @@ namespace PCL
                 if (!Response.IsSuccessStatusCode)
                 {
                     string ResponseMessage = ResponseBytes.GetString(Encoding);
-                    throw new HttpRequestCodeException($"错误码 {Response.StatusCode} ({(int)Response.StatusCode})，{Method}，{Url}" + (string.IsNullOrEmpty(ResponseMessage) ? "" : Constants.vbCrLf + ResponseMessage), Response.StatusCode, ResponseMessage);
+                    throw new HttpRequestCodeException($"错误码 {Response.StatusCode} ({(int)Response.StatusCode})，{Method}，{Url}" + (string.IsNullOrEmpty(ResponseMessage) ? "" : ModBase.CrLf + ResponseMessage), Response.StatusCode, ResponseMessage);
                 }
                 if (Cacheable)
                     HttpDiskCache.Store(Response, Url, ResponseBytes);
@@ -1222,7 +1220,7 @@ namespace PCL
                                 double RequiredSpace = (ModBase.PathTemp.StartsWithF(DriveName) ? ContentLength * 1.1d : 0d) + (LocalPath.StartsWithF(DriveName) ? ContentLength + 5 * 1024 * 1024 : 0L);
                                 if (RequiredSpace > 0d && Drive.TotalFreeSpace < RequiredSpace)
                                 {
-                                    throw new Exception(DriveName + " 盘空间不足，无法进行下载。" + Constants.vbCrLf + "需要至少 " + StringUtils.FormatByteSize((long)Math.Round(RequiredSpace)) + " 空间，但当前仅剩余 " + StringUtils.FormatByteSize(Drive.TotalFreeSpace) + "。" + (ModBase.PathTemp.StartsWithF(DriveName) ? Constants.vbCrLf + Constants.vbCrLf + "下载时需要与文件同等大小的空间存放缓存，你可以在设置中调整缓存文件夹的位置。" : ""));
+                                    throw new Exception(DriveName + " 盘空间不足，无法进行下载。" + ModBase.CrLf + "需要至少 " + StringUtils.FormatByteSize((long)Math.Round(RequiredSpace)) + " 空间，但当前仅剩余 " + StringUtils.FormatByteSize(Drive.TotalFreeSpace) + "。" + (ModBase.PathTemp.StartsWithF(DriveName) ? ModBase.CrLf + ModBase.CrLf + "下载时需要与文件同等大小的空间存放缓存，你可以在设置中调整缓存文件夹的位置。" : ""));
                                 }
                             }
                         }
@@ -2004,8 +2002,8 @@ namespace PCL
                             continue;
                         if (File.Sources.All(s => s.Ex.IsCanceled() || s.Ex is TimeoutException))
                             continue;
-                        string Detail = Enumerable.Select<NetSource, string>((IEnumerable<NetSource>)File.Sources, s => $"{(s.Ex is null ? "无错误信息。" : ExceptionExtensions.GetDisplay(s.Ex, false))}（{s.Url}）").Join(Constants.vbCrLf);
-                        Error = new Exception("文件下载失败：" + File.LocalPath + Constants.vbCrLf + "各下载源的错误如下：" + Constants.vbCrLf + Detail, Error);
+                        string Detail = Enumerable.Select<NetSource, string>((IEnumerable<NetSource>)File.Sources, s => $"{(s.Ex is null ? "无错误信息。" : ExceptionExtensions.GetDisplay(s.Ex, false))}（{s.Url}）").Join(ModBase.CrLf);
+                        Error = new Exception("文件下载失败：" + File.LocalPath + ModBase.CrLf + "各下载源的错误如下：" + ModBase.CrLf + Detail, Error);
                         break;
                     }
                     // 在设置 Error 对象后再更改为失败，避免 WaitForExit 无法捕获错误

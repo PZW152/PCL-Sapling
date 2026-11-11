@@ -5,7 +5,6 @@ using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Media;
 using MeloongCore;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -33,7 +32,7 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToBoolean(this.GetValue(CheckedProperty));
+                return Coerce.ToBool(this.GetValue(CheckedProperty));
             }
             set
             {
@@ -148,14 +147,14 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(this.GetValue(TextProperty));
+                return Coerce.ToStr(this.GetValue(TextProperty));
             }
             set
             {
                 this.SetValue(TextProperty, value);
             }
         } // 内容
-        public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyCheckBox), new PropertyMetadata(ModBase.DpCallback<MyCheckBox>((sender, e) => { if (!(sender == null)) ((MyCheckBox)sender).LabText.Text = Conversions.ToString(e.NewValue); })));
+        public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyCheckBox), new PropertyMetadata(ModBase.DpCallback<MyCheckBox>((sender, e) => { if (!(sender == null)) ((MyCheckBox)sender).LabText.Text = Coerce.ToStr(e.NewValue); })));
 
         // 点击事件
 

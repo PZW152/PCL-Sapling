@@ -12,8 +12,6 @@ using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -39,7 +37,7 @@ namespace PCL
             {
                 Loaders.Add(new ModLoader.LoaderTask<string, List<ModNet.NetFile>>("获取原版 json 文件下载地址", (Task) =>
         {
-            string JsonAddress = Conversions.ToString(ModDownload.DlClientListGet(Id));
+            string JsonAddress = Coerce.ToStr(ModDownload.DlClientListGet(Id));
             Task.Output = new List<ModNet.NetFile>() { new ModNet.NetFile(ModDownload.DlSourceLauncherOrMetaGet(JsonAddress), VersionFolder + InstanceName + ".json") };
         })
                 {
@@ -1344,10 +1342,10 @@ pause";
                         // 检查是否安装成功：最后 5 行中是否有 true（true 可能在倒数数行，见 #832）
                         if (LastResults.Reverse().Take(5).Any(l => l == "true"))
                             return;
-                        Logger.Warn(LastResults.Join(Constants.vbCrLf));
+                        Logger.Warn(LastResults.Join(ModBase.CrLf));
                         string LastLines = "";
                         for (int i = Math.Max(0, LastResults.Count - 5), loopTo = LastResults.Count - 1; i <= loopTo; i++) // 最后 5 行
-                            LastLines += Constants.vbCrLf + LastResults.ElementAtOrDefault(i);
+                            LastLines += ModBase.CrLf + LastResults.ElementAtOrDefault(i);
                         throw new Exception($"{LoaderName} 安装器出错，日志结束部分为：" + LastLines);
                     }
                 }
@@ -1524,7 +1522,7 @@ pause";
 
             // 安装（仅在新版安装时需要原版 Jar）
             string CurrentMcFolder = ModMinecraft.McFolderSelected;
-            if (IsNeoForge || Conversions.ToDouble(LoaderVersion.BeforeFirst(".")) >= 20d)
+            if (IsNeoForge || Coerce.ToDouble(LoaderVersion.BeforeFirst(".")) >= 20d)
             {
                 Logger.Info($"检测为{(IsNeoForge ? " Neo" : "新版 ")}Forge：{LoaderVersion}");
                 List<ModMinecraft.McLibEntry> Libs = null;
@@ -1547,7 +1545,7 @@ pause";
                 {
                     // 下载原版 Json 文件
                     Task.Progress = 0.4d;
-                    JObject RawJson = (JObject)ModNet.NetRequestByLoader(ModDownload.DlSourceLauncherOrMetaGet(Conversions.ToString(ModDownload.DlClientListGet(Inherit))), IsJson: true).DeserializeJson();
+                    JObject RawJson = (JObject)ModNet.NetRequestByLoader(ModDownload.DlSourceLauncherOrMetaGet(Coerce.ToStr(ModDownload.DlClientListGet(Inherit))), IsJson: true).DeserializeJson();
                     // [net.minecraft:client:1.17.1-20210706.113038:mappings@txt] 或 @tsrg]
                     string OriginalName = Json["data"]["MOJMAPS"]["client"].ToString().Trim("[]".ToCharArray()).BeforeFirst("@");
                     string Address = Path.ChangeExtension(ModMinecraft.McLibGet(OriginalName, CustomMcFolder: CurrentMcFolder), "." + Json["data"]["MOJMAPS"]["client"].ToString().Trim("[]".ToCharArray()).Split("@")[1]);
@@ -2715,7 +2713,7 @@ pause";
         }
         public static void McInstallFailedClearFolder(ModLoader.LoaderBase Loader)
         {
-            string Folder = Conversions.ToString(((ModLoader.ILoaderCombo)Loader).InputBoxed);
+            string Folder = Coerce.ToStr(((ModLoader.ILoaderCombo)Loader).InputBoxed);
             if (Loader.State != ModBase.LoadState.Failed && Loader.State != ModBase.LoadState.Canceled)
                 return;
             // 删除版本文件夹

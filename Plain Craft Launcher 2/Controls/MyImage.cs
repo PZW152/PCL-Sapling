@@ -5,7 +5,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -27,7 +26,7 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToBoolean(GetValue(EnableCacheProperty));
+                return Coerce.ToBool(GetValue(EnableCacheProperty));
             }
             set
             {

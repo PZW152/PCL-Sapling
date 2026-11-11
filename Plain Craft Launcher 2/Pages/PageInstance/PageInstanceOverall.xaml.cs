@@ -8,8 +8,6 @@ using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -51,7 +49,7 @@ namespace PCL
             ModAnimation.AniControlEnabled += 1;
 
             // 刷新设置项目
-            this.ComboDisplayType.SelectedIndex = Conversions.ToInteger(ModBase.ReadIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "DisplayType", ((int)ModMinecraft.McInstanceCardType.Auto).ToString()));
+            this.ComboDisplayType.SelectedIndex = Coerce.ToInt(ModBase.ReadIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "DisplayType", ((int)ModMinecraft.McInstanceCardType.Auto).ToString()));
             this.BtnDisplayStar.Text = PageInstanceLeft.Instance.IsStar ? "从收藏夹中移除" : "加入收藏夹";
             this.BtnFolderMods.Visibility = PageInstanceLeft.Instance.Modable ? Visibility.Visible : Visibility.Collapsed;
             // 刷新版本显示
@@ -63,12 +61,12 @@ namespace PCL
             // 刷新版本图标
             this.ComboDisplayLogo.SelectedIndex = 0;
             string Logo = ModBase.ReadIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "Logo", "");
-            bool LogoCustom = Conversions.ToBoolean(ModBase.ReadIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "LogoCustom", "False"));
+            bool LogoCustom = Coerce.ToBool(ModBase.ReadIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "LogoCustom", "False"));
             if (LogoCustom)
             {
                 foreach (MyComboBoxItem Selection in this.ComboDisplayLogo.Items)
                 {
-                    if (Operators.ConditionalCompareObjectEqual(Selection.Tag, Logo, false) || Operators.ConditionalCompareObjectEqual(Selection.Tag, @"PCL\Logo.png", false) && Logo.EndsWithF(@"PCL\Logo.png"))
+                    if (Coerce.Equal(Selection.Tag, Logo) || Coerce.Equal(Selection.Tag, @"PCL\Logo.png") && Logo.EndsWithF(@"PCL\Logo.png"))
                     {
                         this.ComboDisplayLogo.SelectedItem = Selection;
                         break;
@@ -93,7 +91,7 @@ namespace PCL
                 {
                     // 若设置分类为可安装 Mod，则显示正常的 Mod 管理页面
                     ModBase.WriteIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "DisplayType", this.ComboDisplayType.SelectedIndex.ToString());
-                    PageInstanceLeft.Instance.DisplayType = (ModMinecraft.McInstanceCardType)Conversions.ToInteger(ModBase.ReadIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "DisplayType", ((int)ModMinecraft.McInstanceCardType.Auto).ToString()));
+                    PageInstanceLeft.Instance.DisplayType = (ModMinecraft.McInstanceCardType)Coerce.ToInt(ModBase.ReadIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "DisplayType", ((int)ModMinecraft.McInstanceCardType.Auto).ToString()));
                     ModMain.FrmInstanceLeft.RefreshModDisabled();
 
                     ModBase.WriteIni(ModMinecraft.McFolderSelected + "PCL.ini", "InstanceCache", ""); // 要求刷新缓存
@@ -112,7 +110,7 @@ namespace PCL
                 {
                     if (!Settings.Get<bool>("HintHide"))
                     {
-                        if (ModMain.MyMsgBox("确认要从版本列表中隐藏该版本吗？隐藏该版本后，它将不再出现于 PCL 显示的版本列表中。" + Constants.vbCrLf + "此后，在版本列表页面按下 F11 才可以查看被隐藏的版本。", "隐藏版本提示", Button2: "取消") != 1)
+                        if (ModMain.MyMsgBox("确认要从版本列表中隐藏该版本吗？隐藏该版本后，它将不再出现于 PCL 显示的版本列表中。" + ModBase.CrLf + "此后，在版本列表页面按下 F11 才可以查看被隐藏的版本。", "隐藏版本提示", Button2: "取消") != 1)
                         {
                             this.ComboDisplayType.SelectedIndex = 0;
                             return;
@@ -210,7 +208,7 @@ namespace PCL
             // 进行更改
             try
             {
-                string NewLogo = Conversions.ToString(this.ComboDisplayLogo.SelectedItem.Fe().Tag);
+                string NewLogo = Coerce.ToStr(this.ComboDisplayLogo.SelectedItem.Fe().Tag);
                 ModBase.WriteIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "Logo", NewLogo);
                 ModBase.WriteIni(PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini", "LogoCustom", (!string.IsNullOrEmpty(NewLogo)).ToString());
                 // 刷新显示
@@ -329,7 +327,7 @@ namespace PCL
                     return;
                 }
                 // 忽略文件检查提示
-                if (Conversions.ToBoolean(ModMinecraft.ShouldIgnoreFileCheck(PageInstanceLeft.Instance)))
+                if (Coerce.ToBool(ModMinecraft.ShouldIgnoreFileCheck(PageInstanceLeft.Instance)))
                 {
                     ModMain.Hint("请先关闭 [版本设置 → 设置 → 高级启动选项 → 关闭文件校验]，然后再尝试补全文件！", ModMain.HintType.Blue);
                     return;
@@ -367,11 +365,11 @@ namespace PCL
                     ModMain.Hint("该版本正在被修改，请稍后再删除！", ModMain.HintType.Red);
                     return;
                 }
-                bool IsShiftPressed = VbCompat.Computer.Keyboard.ShiftKeyDown;
+                bool IsShiftPressed = System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Shift);
                 bool IsHintIndie = PageInstanceLeft.Instance.State != ModMinecraft.McInstance.McInstanceState.Error && (PageInstanceLeft.Instance.PathIndie ?? "") != (ModMinecraft.McFolderSelected ?? "");
                 var SavesFolder = DirectoryUtils.GetInfo(PageInstanceLeft.Instance.PathIndie + @"saves\");
                 var SaveEntries = IsHintIndie && SavesFolder.Exists ? SavesFolder.EnumerateDirectories().OrderByDescending(Save => Save.LastWriteTime).Select(Save => $"{Save.Name}（上次修改：{StringUtils.FormatTimeSpan(Save.LastWriteTime - DateTime.Now, false)}）").ToList() : new List<string>();
-                switch (ModMain.MyMsgBox($"你确定要{(IsShiftPressed ? "永久" : "")}删除版本 {PageInstanceLeft.Instance.Name} 吗？" + (IsHintIndie ? Constants.vbCrLf + "该版本对应的存档、资源包、Mod 等文件也将被一并删除！" + (SaveEntries.Any() ? Constants.vbCrLf + Constants.vbCrLf + "这会删除以下存档：" + Constants.vbCrLf + "· " + SaveEntries.Join(Constants.vbCrLf + "· ") : "") : ""), "版本删除确认", Button2: "取消", IsWarn: IsHintIndie || IsShiftPressed))
+                switch (ModMain.MyMsgBox($"你确定要{(IsShiftPressed ? "永久" : "")}删除版本 {PageInstanceLeft.Instance.Name} 吗？" + (IsHintIndie ? ModBase.CrLf + "该版本对应的存档、资源包、Mod 等文件也将被一并删除！" + (SaveEntries.Any() ? ModBase.CrLf + ModBase.CrLf + "这会删除以下存档：" + ModBase.CrLf + "· " + SaveEntries.Join(ModBase.CrLf + "· ") : "") : ""), "版本删除确认", Button2: "取消", IsWarn: IsHintIndie || IsShiftPressed))
                 {
                     case 1:
                         {

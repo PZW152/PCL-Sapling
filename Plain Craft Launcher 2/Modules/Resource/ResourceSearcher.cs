@@ -6,8 +6,6 @@ using System.Threading;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -253,7 +251,7 @@ namespace PCL
             string RawSearchText = (Request.SearchText ?? "").Trim();
             RawSearchText = RawSearchText.Lower();
             Logger.Info($"工程列表搜索原始文本：{RawSearchText}");
-            RawSearchText = Strings.StrConv(RawSearchText, VbStrConv.SimplifiedChinese); // 繁体转简体
+            RawSearchText = Coerce.ToSimplifiedChinese(RawSearchText); // 繁体转简体
 
             bool IsChineseSearch = RawSearchText.RegexCheck(@"[\u4e00-\u9fbb]") && !string.IsNullOrEmpty(RawSearchText) && (Request.Type == ResourceTypes.Mod || Request.Type == ResourceTypes.DataPack); // 目前仅对 Mod 和数据包进行中文搜索，注意整合包的名称可能已经有中文了
             string CurseForgeAltSearchText = null;
@@ -272,10 +270,10 @@ namespace PCL
                     }
                     if (Result.Item.ChineseName is not null)
                     {
-                        Candidates.Add(Result.Item.ChineseName.AfterLast(" (").TrimEnd(Conversions.ToChar(") ")).BeforeFirst(" - ").Replace("-", " ").Replace("/", " ").Replace(":", " ").Replace("(", " ").Replace(")", ""));
+                        Candidates.Add(Result.Item.ChineseName.AfterLast(" (").TrimEnd(Coerce.ToChar(") ")).BeforeFirst(" - ").Replace("-", " ").Replace("/", " ").Replace(":", " ").Replace("(", " ").Replace(")", ""));
                     }
                     // 分词、清洗、去重
-                    Candidates = Candidates.SelectMany(c => c.Split(" ")).Select(w => w.TrimStart(Conversions.ToChar("{[(")).TrimEnd(Conversions.ToChar("}])")).Lower()).Where(w =>
+                    Candidates = Candidates.SelectMany(c => c.Split(" ")).Select(w => w.TrimStart(Coerce.ToChar("{[(")).TrimEnd(Coerce.ToChar("}])")).Lower()).Where(w =>
 {
 if (w.Length <= 1)
 return false; // 单字或空白
@@ -293,7 +291,7 @@ return true;
                     Candidates = Candidates.Where(w => !Candidates.Any(c => c.Length < w.Length && w.StartsWith(c) && CanForm(w.Substring(c.Length)))).ToList();
                     return Candidates;
                 };
-                IEnumerable<ModBase.SearchEntry<WikiEntry>> GetSearchEntries(ResourcePlatforms Source) { foreach (var Entry in WikiEntry.All.Value) { if (!Entry.Slugs.ContainsKey(Source)) continue; if (Entry.ChineseName is not null) { yield return new ModBase.SearchEntry<WikiEntry>() { Item = Entry, SearchSource = new List<ModBase.SearchSource>() { new ModBase.SearchSource(Strings.StrConv(Entry.ChineseName.BeforeFirst(" ("), VbStrConv.SimplifiedChinese).Split('/', true), 1d), new ModBase.SearchSource(Strings.StrConv(Entry.ChineseName.AfterFirst(" ("), VbStrConv.SimplifiedChinese) + Entry.Slugs[Source], 0.5d) } }; } else { yield return new ModBase.SearchEntry<WikiEntry>() { Item = Entry, SearchSource = new List<ModBase.SearchSource>() { new ModBase.SearchSource(Entry.Slugs[Source], 0.5d) } }; } } }; // 部分 Mod 有别名
+                IEnumerable<ModBase.SearchEntry<WikiEntry>> GetSearchEntries(ResourcePlatforms Source) { foreach (var Entry in WikiEntry.All.Value) { if (!Entry.Slugs.ContainsKey(Source)) continue; if (Entry.ChineseName is not null) { yield return new ModBase.SearchEntry<WikiEntry>() { Item = Entry, SearchSource = new List<ModBase.SearchSource>() { new ModBase.SearchSource(Coerce.ToSimplifiedChinese(Entry.ChineseName.BeforeFirst(" (")).Split('/', true), 1d), new ModBase.SearchSource(Coerce.ToSimplifiedChinese(Entry.ChineseName.AfterFirst(" (")) + Entry.Slugs[Source], 0.5d) } }; } else { yield return new ModBase.SearchEntry<WikiEntry>() { Item = Entry, SearchSource = new List<ModBase.SearchSource>() { new ModBase.SearchSource(Entry.Slugs[Source], 0.5d) } }; } } }; // 部分 Mod 有别名
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           // CurseForge
                 if (Request.Sources.HasFlagF(ResourcePlatforms.CurseForge))
                 {
@@ -524,11 +522,11 @@ return true;
                     // 有结果但是有错误
                     if (Errors.Any(e => e.Source == ResourcePlatforms.CurseForge))
                     {
-                        Storage.ErrorMessage = $"无法连接到 CurseForge，所以目前仅显示了来自 Modrinth 的内容，搜索结果可能不全。{Constants.vbCrLf}请稍后再试，或使用 VPN 改善网络环境。";
+                        Storage.ErrorMessage = $"无法连接到 CurseForge，所以目前仅显示了来自 Modrinth 的内容，搜索结果可能不全。{ModBase.CrLf}请稍后再试，或使用 VPN 改善网络环境。";
                     }
                     else
                     {
-                        Storage.ErrorMessage = $"无法连接到 Modrinth，所以目前仅显示了来自 CurseForge 的内容，搜索结果可能不全。{Constants.vbCrLf}请稍后再试，或使用 VPN 改善网络环境。";
+                        Storage.ErrorMessage = $"无法连接到 Modrinth，所以目前仅显示了来自 CurseForge 的内容，搜索结果可能不全。{ModBase.CrLf}请稍后再试，或使用 VPN 改善网络环境。";
                     }
                 }
             }

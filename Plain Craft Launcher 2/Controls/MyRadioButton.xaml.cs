@@ -7,7 +7,6 @@ using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Media;
 using MeloongCore;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -186,14 +185,14 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(this.GetValue(TextProperty));
+                return Coerce.ToStr(this.GetValue(TextProperty));
             }
             set
             {
                 this.SetValue(TextProperty, value);
             }
         } // 内容
-        public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyRadioButton), new PropertyMetadata(ModBase.DpCallback<MyRadioButton>((sender, e) => { if (sender is not null) ((MyRadioButton)sender).LabText.Text = Conversions.ToString(e.NewValue); })));
+        public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(MyRadioButton), new PropertyMetadata(ModBase.DpCallback<MyRadioButton>((sender, e) => { if (sender is not null) ((MyRadioButton)sender).LabText.Text = Coerce.ToStr(e.NewValue); })));
         public enum ColorState
         {
             White,

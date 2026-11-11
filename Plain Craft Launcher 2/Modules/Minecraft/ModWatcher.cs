@@ -9,8 +9,6 @@ using System.Threading;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 
 namespace PCL
 {
@@ -219,7 +217,7 @@ namespace PCL
                 // 预处理
                 if (Text is null)
                     return;
-                Text = Text.ReplaceLineEndings(Constants.vbCrLf);
+                Text = Text.ReplaceLineEndings(ModBase.CrLf);
                 // If Text.Contains("�����") Then Hint("检测到错误的日志编码：" & Text)
                 // 加入预存储
                 LatestLog.Enqueue(Text);

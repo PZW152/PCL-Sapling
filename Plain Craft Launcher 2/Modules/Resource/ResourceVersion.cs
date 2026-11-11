@@ -4,8 +4,6 @@ using System.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -163,7 +161,7 @@ namespace PCL
                 // DownloadAddress
                 string Url = Data["downloadUrl"].ToString();
                 if (string.IsNullOrEmpty(Url))
-                    Url = $"https://edge.forgecdn.net/files/{Conversions.ToInteger(Result.Id.ToString().Substring(0, 4))}/{Conversions.ToInteger(Result.Id.ToString().Substring(4))}/{Result.FileName}";
+                    Url = $"https://edge.forgecdn.net/files/{Coerce.ToInt(Result.Id.ToString().Substring(0, 4))}/{Coerce.ToInt(Result.Id.ToString().Substring(4))}/{Result.FileName}";
                 Result.DownloadUrls = ParseCurseForgeDownloadUrls(Url.Replace(Result.FileName, StringUtils.UrlEscape(Result.FileName))); // 对脑残 CurseForge 的下载地址进行多种修正
                 Result.DownloadUrls = Result.DownloadUrls.Distinct().ToList(); // 最终去重
                 // Dependencies
@@ -303,11 +301,11 @@ namespace PCL
                         else if (RetryCount < 2)
                         {
                             Logger.Warn($"CurseForge 返回的资源版本列表存在缺失，即将进行第 {RetryCount + 1} 次重试"); // #6224
-                            Logger.Info($"返回的原始内容如下：{Constants.vbCrLf}{ResultJson}");
+                            Logger.Info($"返回的原始内容如下：{ModBase.CrLf}{ResultJson}");
                         }
                         else
                         {
-                            Logger.Info($"CurseForge 返回的资源版本列表存在缺失，返回的原始内容如下：{Constants.vbCrLf}{ResultJson}");
+                            Logger.Info($"CurseForge 返回的资源版本列表存在缺失，返回的原始内容如下：{ModBase.CrLf}{ResultJson}");
                             throw new Exception("CurseForge 返回的资源版本列表存在缺失");
                         }
                     }

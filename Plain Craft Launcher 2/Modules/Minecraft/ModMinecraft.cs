@@ -12,8 +12,6 @@ using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 using PCLCS;
 
@@ -162,7 +160,7 @@ namespace PCL
                     }
                     catch (Exception ex)
                     {
-                        ModMain.MyMsgBox("失效的 Minecraft 文件夹：" + Constants.vbCrLf + FolderPath + Constants.vbCrLf + Constants.vbCrLf + ex.GetDisplay(false), "Minecraft 文件夹失效", IsWarn: true);
+                        ModMain.MyMsgBox("失效的 Minecraft 文件夹：" + ModBase.CrLf + FolderPath + ModBase.CrLf + ModBase.CrLf + ex.GetDisplay(false), "Minecraft 文件夹失效", IsWarn: true);
                         Logger.Warn(ex, $"无法访问 Minecraft 文件夹 {FolderPath}");
                     }
                 }
@@ -579,7 +577,7 @@ namespace PCL
                                 try
                                 {
                                     InstanceNameInheritFrom = _JsonObject["inheritsFrom"] is null ? "" : _JsonObject["inheritsFrom"].ToString();
-                                    if (Operators.ConditionalCompareObjectEqual(InstanceNameInheritFrom, Name, false))
+                                    if (Coerce.Equal(InstanceNameInheritFrom, Name))
                                     {
                                         Logger.Warn($"自引用的继承版本：{Name}");
                                         InstanceNameInheritFrom = "";
@@ -589,12 +587,12 @@ namespace PCL
                                 Recheck:
                                     ;
 
-                                    if (Operators.ConditionalCompareObjectNotEqual(InstanceNameInheritFrom, "", false))
+                                    if (Coerce.NotEqual(InstanceNameInheritFrom, ""))
                                     {
-                                        var InheritInstance = new McInstance(Conversions.ToString(InstanceNameInheritFrom));
+                                        var InheritInstance = new McInstance(Coerce.ToStr(InstanceNameInheritFrom));
                                         // 继续循环
-                                        if (Operators.ConditionalCompareObjectEqual(InheritInstance.InheritName, InstanceNameInheritFrom, false))
-                                            throw new Exception(Conversions.ToString(Operators.ConcatenateObject("版本依赖项出现嵌套：", InstanceNameInheritFrom)));
+                                        if (Coerce.Equal(InheritInstance.InheritName, InstanceNameInheritFrom))
+                                            throw new Exception(Coerce.ToStr(Coerce.Concat("版本依赖项出现嵌套：", InstanceNameInheritFrom)));
                                         InstanceNameInheritFrom = InheritInstance.InheritName;
                                         // 合并 Libraries 项：子版本放在前面，父版本放在后面（5978#：如果多个 jar 包中含有相同的类，Java 8 和之前的版本按照 -cp 指定的顺序选择第一个）
                                         JArray CurrentLib = (JArray)_JsonObject["libraries"].DeepClone();
@@ -865,7 +863,7 @@ namespace PCL
 
                     // 确定版本图标
                     Logo = ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "Logo", "");
-                    if (string.IsNullOrEmpty(Logo) || !Conversions.ToBoolean(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "LogoCustom", false.ToString())))
+                    if (string.IsNullOrEmpty(Logo) || !Coerce.ToBool(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "LogoCustom", false.ToString())))
                     {
                         switch (State)
                         {
@@ -925,9 +923,9 @@ namespace PCL
                     // 确定版本描述
                     RefreshInfo();
                     // 确定版本收藏状态
-                    IsStar = Conversions.ToBoolean(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "IsStar", false.ToString()));
+                    IsStar = Coerce.ToBool(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "IsStar", false.ToString()));
                     // 确定版本显示种类
-                    DisplayType = (McInstanceCardType)Conversions.ToInteger(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "DisplayType", ((int)McInstanceCardType.Auto).ToString()));
+                    DisplayType = (McInstanceCardType)Coerce.ToInt(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "DisplayType", ((int)McInstanceCardType.Auto).ToString()));
                     // 写入缓存
                     if (DirectoryUtils.Exists(PathVersion))
                     {
@@ -1409,12 +1407,12 @@ namespace PCL
             var Results = new Dictionary<McInstanceCardType, List<McInstance>>();
             try
             {
-                int CardCount = Conversions.ToInteger(ModBase.ReadIni(Folder + "PCL.ini", "CardCount", (-1).ToString()));
+                int CardCount = Coerce.ToInt(ModBase.ReadIni(Folder + "PCL.ini", "CardCount", (-1).ToString()));
                 if (CardCount == -1)
                     return null;
                 for (int i = 0, loopTo = CardCount - 1; i <= loopTo; i++)
                 {
-                    McInstanceCardType CardType = (McInstanceCardType)Conversions.ToInteger(ModBase.ReadIni(Folder + "PCL.ini", "CardKey" + (i + 1), ":"));
+                    McInstanceCardType CardType = (McInstanceCardType)Coerce.ToInt(ModBase.ReadIni(Folder + "PCL.ini", "CardKey" + (i + 1), ":"));
                     var InstanceList = new List<McInstance>();
 
                     // 循环读取版本
@@ -1446,9 +1444,9 @@ namespace PCL
                             if (string.IsNullOrEmpty(Instance.Info))
                                 Instance.Info = ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "Info", Instance.Info);
                             Instance.Logo = ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "Logo", Instance.Logo);
-                            Instance.State = (McInstance.McInstanceState)Conversions.ToInteger(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "State", ((int)Instance.State).ToString()));
-                            Instance.IsStar = Conversions.ToBoolean(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "IsStar", false.ToString()));
-                            Instance.DisplayType = (McInstanceCardType)Conversions.ToInteger(ModBase.ReadIni(Folder + @"PCL\Setup.ini", "DisplayType", ((int)McInstanceCardType.Auto).ToString()));
+                            Instance.State = (McInstance.McInstanceState)Coerce.ToInt(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "State", ((int)Instance.State).ToString()));
+                            Instance.IsStar = Coerce.ToBool(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "IsStar", false.ToString()));
+                            Instance.DisplayType = (McInstanceCardType)Coerce.ToInt(ModBase.ReadIni(Folder + @"PCL\Setup.ini", "DisplayType", ((int)McInstanceCardType.Auto).ToString()));
                             var Manifest = Instance.State == McInstance.McInstanceState.Error ? null : Configs.McInstallManifest.Get(Instance.Config);
                             // 检查 manifest 是否有过期文件，并进行更新
                             if (Manifest is not null && Manifest.SchemaVersion <= Versions.McInstallManifestVersion && Manifest.ManagedFiles.Any(File => File.Component is not null))
@@ -1485,10 +1483,10 @@ namespace PCL
                                         if (CachedVersion is not null)
                                             Version.ModLoaderVersions[Loader] = CachedVersion;
                                     }
-                                    if (Conversions.ToBoolean(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "VersionLiteLoader", false.ToString())))
+                                    if (Coerce.ToBool(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "VersionLiteLoader", false.ToString())))
                                         Version.ModLoaderVersions[ModLoaders.LiteLoader] = "未知版本";
                                 }
-                                Version.ReleaseTime = Conversions.ToDate(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "ReleaseTime", Conversions.ToString(new DateTime(1970, 1, 1, 15, 0, 0))));
+                                Version.ReleaseTime = Coerce.ToDate(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "ReleaseTime", Coerce.ToStr(new DateTime(1970, 1, 1, 15, 0, 0))));
                                 Version.IsFool = Version.IsFool || Instance.State == McInstance.McInstanceState.Fool;
                                 Version.IsSnapshot = Version.IsSnapshot || Instance.State == McInstance.McInstanceState.Snapshot || Instance.Name.ContainsIgnoreCase("combat");
                                 Instance.Version = Version;
@@ -1750,7 +1748,7 @@ namespace PCL
             if (GetComponentCode(Left) != GetComponentCode(Right))
                 return GetComponentCode(Left) > GetComponentCode(Right);
             // 名称
-            return Operators.CompareString(Left.Name, Right.Name, false) > 0;
+            return Coerce.CompareStr(Left.Name, Right.Name) > 0;
         });
             }
 
@@ -2346,7 +2344,7 @@ namespace PCL
             Result.AddRange(McLibNetFilesFromTokens(McLibListGet(Instance, false)));
 
             // 跳过校验
-            if (Conversions.ToBoolean(ShouldIgnoreFileCheck(Instance)))
+            if (Coerce.ToBool(ShouldIgnoreFileCheck(Instance)))
             {
                 Logger.Warn("设置要求尽量忽略文件检查，这可能会保留有误的文件");
                 Result = Result.Where(f => { if (FileUtils.Exists(f.LocalPath)) { Logger.Warn($"跳过下载的支持库文件：{f.LocalPath}"); return false; } else { return true; } }).ToList();
@@ -2575,14 +2573,14 @@ namespace PCL
                     else
                     {
                         // 正常
-                        LocalPath = $@"{McFolderSelected}assets\objects\{Strings.Left(File.Value["hash"].ToString(), 2)}\{File.Value["hash"]}";
+                        LocalPath = $@"{McFolderSelected}assets\objects\{Coerce.Left(File.Value["hash"].ToString(), 2)}\{File.Value["hash"]}";
                     }
                     Result.Add(new McAssetsToken()
                     {
                         LocalPath = LocalPath.Replace("/", @"\"),
                         SourcePath = File.Name,
                         Hash = File.Value["hash"].ToString(),
-                        Size = Conversions.ToLong(File.Value["size"].ToString())
+                        Size = Coerce.ToLong(File.Value["size"].ToString())
                     });
                 }
                 return Result;
@@ -2603,7 +2601,7 @@ namespace PCL
             // 如果需要检查 Hash，则留到下载时处理，以借助多线程加快检查速度
             if (CheckHash)
             {
-                return McAssetsListGet(Instance).Select((Token) => new ModNet.NetFile(ModDownload.DlSourceAssetsGet($"https://resources.download.minecraft.net/{Strings.Left(Token.Hash, 2)}/{Token.Hash}"), LocalPath: Token.LocalPath, Checker: new FileChecker() { ActualSize = Token.Size == 0L ? -1 : Token.Size, Hash = Token.Hash })).ToList();
+                return McAssetsListGet(Instance).Select((Token) => new ModNet.NetFile(ModDownload.DlSourceAssetsGet($"https://resources.download.minecraft.net/{Coerce.Left(Token.Hash, 2)}/{Token.Hash}"), LocalPath: Token.LocalPath, Checker: new FileChecker() { ActualSize = Token.Size == 0L ? -1 : Token.Size, Hash = Token.Hash })).ToList();
             }
             // 如果不检查 Hash，则立即处理
             var Result = new List<ModNet.NetFile>();
@@ -2625,7 +2623,7 @@ namespace PCL
                     if (File.Exists && (Token.Size == 0L || Token.Size == File.Length))
                         continue;
                     // 文件不存在，添加下载
-                    Result.Add(new ModNet.NetFile(ModDownload.DlSourceAssetsGet($"https://resources.download.minecraft.net/{Strings.Left(Token.Hash, 2)}/{Token.Hash}"), Token.LocalPath, new FileChecker() { ActualSize = Token.Size == 0L ? -1 : Token.Size, Hash = Token.Hash }));
+                    Result.Add(new ModNet.NetFile(ModDownload.DlSourceAssetsGet($"https://resources.download.minecraft.net/{Coerce.Left(Token.Hash, 2)}/{Token.Hash}"), Token.LocalPath, new FileChecker() { ActualSize = Token.Size == 0L ? -1 : Token.Size, Hash = Token.Hash }));
                 }
             }
             catch (Exception ex)
@@ -2661,7 +2659,7 @@ namespace PCL
                 if (Version is null)
                     return;
                 DateTime Time = (DateTime)Version["releaseTime"];
-                string MsgBoxText = $"新版本：{VersionName}{Constants.vbCrLf}" + ((DateTime.Now - Time).TotalDays > 1d ? "更新时间：" + Time.ToString() : "更新于：" + StringUtils.FormatTimeSpan(Time - DateTime.Now, false));
+                string MsgBoxText = $"新版本：{VersionName}{ModBase.CrLf}" + ((DateTime.Now - Time).TotalDays > 1d ? "更新时间：" + Time.ToString() : "更新于：" + StringUtils.FormatTimeSpan(Time - DateTime.Now, false));
                 int MsgResult = ModMain.MyMsgBox(MsgBoxText, "Minecraft 更新提示", "确定", "下载", (DateTime.Now - Time).TotalHours > 3d ? "更新日志" : "", Button3Action: () => ModDownloadLib.McUpdateLogShow(Version));
                 // 弹窗结果
                 if (MsgResult == 2)
@@ -2696,7 +2694,7 @@ namespace PCL
             string AccessToken = ModLaunch.McLoginLoader.Output.AccessToken;
             if (AccessToken is not null && AccessToken.Length >= 10 && Raw.ContainsIgnoreCase(AccessToken) && (ModLaunch.McLoginLoader.Output.Uuid ?? "") != (ModLaunch.McLoginLoader.Output.AccessToken ?? "")) // UUID 和 AccessToken 一样则不打码
             {
-                Raw = Raw.Replace(AccessToken, Strings.Left(AccessToken, 5) + new string(FilterChar, AccessToken.Length - 10) + Strings.Right(AccessToken, 5));
+                Raw = Raw.Replace(AccessToken, Coerce.Left(AccessToken, 5) + new string(FilterChar, AccessToken.Length - 10) + Coerce.Right(AccessToken, 5));
             }
             return Raw;
         }

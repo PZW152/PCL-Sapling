@@ -3,10 +3,16 @@ on:
   push:
     paths:
       - 'Plain Craft Launcher 2/**'
+      - 'PCLCS/**'
+      - 'MeloongCore/**'
+      - 'PCL.Tests/**'
       - '.github/workflows/**'
   pull_request:
     paths:
       - 'Plain Craft Launcher 2/**'
+      - 'PCLCS/**'
+      - 'MeloongCore/**'
+      - 'PCL.Tests/**'
       - '.github/workflows/**'
   workflow_dispatch:
 
@@ -32,18 +38,11 @@ jobs:
           describe=`git describe --tags --always`
           echo "describe=$describe" >> $GITHUB_ENV
 
-    - name: Update Help
-      run:  |
-        Set-Location ..
-        git clone https://github.com/LTCatt/PCL2Help.git -b master --single-branch --depth 1
-        Set-Location PCL2Help
-        Remove-Item -Path *.* -Recurse -Force
-        Compress-Archive -Path .\* -DestinationPath .\Help.zip
-        Copy-Item -Path .\Help.zip -Destination "${{ GITHUB.WORKSPACE }}\Plain Craft Launcher 2\Resources\Help.zip" -Force
-        Set-Location ..
-        Remove-Item PCL2Help -Recurse -Force
-        Set-Location ${{ GITHUB.WORKSPACE }}
-
+    - name: Test
+      if: matrix.configuration == 'Debug'
+      run: |
+        dotnet run --project "PCL.Tests\PCL.Tests.csproj" -c Debug
+        dotnet run --project "MeloongCore\Tests\MeloongCore.Tests.csproj" -c Debug
 
     - name: Build
       env:

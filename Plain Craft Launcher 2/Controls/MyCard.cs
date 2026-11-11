@@ -10,7 +10,6 @@ using System.Windows.Media;
 using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -85,7 +84,7 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToString(GetValue(TitleProperty));
+                return Coerce.ToStr(GetValue(TitleProperty));
             }
             set
             {
@@ -348,14 +347,14 @@ namespace PCL
         {
             get
             {
-                return Conversions.ToBoolean(GetValue(IsSwapedProperty));
+                return Coerce.ToBool(GetValue(IsSwapedProperty));
             }
             set
             {
                 SetValue(IsSwapedProperty, value);
             }
         }
-        public static readonly DependencyProperty IsSwapedProperty = DependencyProperty.Register("IsSwaped", typeof(bool), typeof(MyCard), new PropertyMetadata(false, (sender, e) => { if (sender is not null && sender is MyCard) ((MyCard)sender).IsSwapped = Conversions.ToBoolean(e.NewValue); }));
+        public static readonly DependencyProperty IsSwapedProperty = DependencyProperty.Register("IsSwaped", typeof(bool), typeof(MyCard), new PropertyMetadata(false, (sender, e) => { if (sender is not null && sender is MyCard) ((MyCard)sender).IsSwapped = Coerce.ToBool(e.NewValue); }));
 
         public bool SwapLogoRight { get; set; } = false;
         private bool IsSwapMouseDown = false; // 用于触发卡片展开/折叠的 MouseDown

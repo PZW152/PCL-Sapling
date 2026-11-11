@@ -16,8 +16,6 @@ using System.Xml.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -57,7 +55,7 @@ namespace PCL
                 // 检查 .NET Framework 版本
                 try
                 {
-                    if (Conversions.ToInteger(RegistryUtils.TryRead(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full", "Release", 999999)) < 528040)
+                    if (Coerce.ToInt(RegistryUtils.TryRead(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full", "Release", 999999)) < 528040)
                         OldEnvironmentAssert();
                 }
                 catch (Exception ex)
@@ -99,7 +97,7 @@ namespace PCL
                 }
                 catch (Exception)
                 {
-                    Interaction.MsgBox($@"PCL 没有对当前文件夹的权限（{Paths.Base}PCL\），请尝试：" + Constants.vbCrLf + "1. 将 PCL 移动到其他文件夹" + (PathUtils.GetDiskName(Paths.Base) is { } arg1 && arg1 == 'C' ? "，例如 C 盘和桌面以外的其他位置。" : "。") + Constants.vbCrLf + "2. 删除当前目录中的 PCL 文件夹，然后再试。" + Constants.vbCrLf + "3. 右键 PCL 选择属性，打开 兼容性 中的 以管理员身份运行此程序。", MsgBoxStyle.Critical, "运行环境错误");
+                    MessageBox.Show($@"PCL 没有对当前文件夹的权限（{Paths.Base}PCL\），请尝试：" + ModBase.CrLf + "1. 将 PCL 移动到其他文件夹" + (PathUtils.GetDiskName(Paths.Base) is { } arg1 && arg1 == 'C' ? "，例如 C 盘和桌面以外的其他位置。" : "。") + ModBase.CrLf + "2. 删除当前目录中的 PCL 文件夹，然后再试。" + ModBase.CrLf + "3. 右键 PCL 选择属性，打开 兼容性 中的 以管理员身份运行此程序。", "运行环境错误", MessageBoxButton.OK, MessageBoxImage.Error);
                     Environment.Exit((int)ModBase.ProcessReturnValues.Cancel);
                 }
 
@@ -115,11 +113,11 @@ namespace PCL
                 {
                     if (PathUtils.IsSame(ModBase.PathTemp, Path.GetTempPath() + @"PCL\"))
                     {
-                        ModMain.MyMsgBox("PCL 无法访问缓存文件夹，可能导致程序出错或无法正常使用！" + Constants.vbCrLf + Constants.vbCrLf + "错误原因：" + ex.GetDisplay(true), "缓存文件夹不可用");
+                        ModMain.MyMsgBox("PCL 无法访问缓存文件夹，可能导致程序出错或无法正常使用！" + ModBase.CrLf + ModBase.CrLf + "错误原因：" + ex.GetDisplay(true), "缓存文件夹不可用");
                     }
                     else
                     {
-                        ModMain.MyMsgBox("手动设置的缓存文件夹不可用，PCL 将使用默认缓存文件夹。" + Constants.vbCrLf + Constants.vbCrLf + "错误原因：" + ex.GetDisplay(true), "缓存文件夹不可用");
+                        ModMain.MyMsgBox("手动设置的缓存文件夹不可用，PCL 将使用默认缓存文件夹。" + ModBase.CrLf + ModBase.CrLf + "错误原因：" + ex.GetDisplay(true), "缓存文件夹不可用");
                         Settings.Set("SystemSystemCache", "");
                         ModBase.PathTemp = Path.GetTempPath() + @"PCL\";
                         goto RetryCacheCheck;
@@ -154,7 +152,7 @@ namespace PCL
                 // 检测异常环境
                 if (Paths.Base.Contains(Path.GetTempPath()) || Paths.Base.Contains(@"AppData\Local\Temp\"))
                 {
-                    ModMain.MyMsgBox("请将 PCL 从压缩包中解压后再使用！" + Constants.vbCrLf + "如果不会解压，可以在网上寻找教程。", "需要解压！", "我知道了", IsWarn: true, ForceWait: true);
+                    ModMain.MyMsgBox("请将 PCL 从压缩包中解压后再使用！" + ModBase.CrLf + "如果不会解压，可以在网上寻找教程。", "需要解压！", "我知道了", IsWarn: true, ForceWait: true);
                     FormMain.EndProgramForce(ModBase.ProcessReturnValues.Cancel);
                 }
                 if (!Environment.Is64BitOperatingSystem)
@@ -177,7 +175,7 @@ namespace PCL
                 catch
                 {
                 }
-                Interaction.MsgBox(ex.GetDisplay(true) + Constants.vbCrLf + "PCL 所在路径：" + (string.IsNullOrEmpty(FilePath) ? "获取失败" : FilePath), MsgBoxStyle.Critical, "PCL 初始化错误");
+                MessageBox.Show(ex.GetDisplay(true) + ModBase.CrLf + "PCL 所在路径：" + (string.IsNullOrEmpty(FilePath) ? "获取失败" : FilePath), "PCL 初始化错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 FormMain.EndProgramForce(ModBase.ProcessReturnValues.Exception);
             }
         }
@@ -222,7 +220,7 @@ namespace PCL
                 if (WindowHwnd != IntPtr.Zero)
                     ModMain.ShowWindowToTop(WindowHwnd);
                 // 播放提示音并退出
-                Interaction.Beep();
+                System.Media.SystemSounds.Beep.Play();
                 Environment.Exit((int)ModBase.ProcessReturnValues.Cancel);
             }
             catch (Exception ex)
@@ -271,11 +269,11 @@ namespace PCL
             ModBase.OpenWebsite("https://dotnet.microsoft.com/zh-cn/download/dotnet-framework/thank-you/net48-offline-installer");
             if (ex is null)
             {
-                Logger.Error($"你的 .NET Framework 版本过低或损坏，请下载并重新安装 .NET Framework 4.8！{Constants.vbCrLf}若安装失败，可以先卸载高版本的 .NET Framework 然后再试。", LogBehavior.AlertThenCrash);
+                Logger.Error($"你的 .NET Framework 版本过低或损坏，请下载并重新安装 .NET Framework 4.8！{ModBase.CrLf}若安装失败，可以先卸载高版本的 .NET Framework 然后再试。", LogBehavior.AlertThenCrash);
             }
             else
             {
-                Logger.Error(ex, $"你的 .NET Framework 版本过低或损坏，请下载并重新安装 .NET Framework 4.8！{Constants.vbCrLf}若安装失败，可以先卸载高版本的 .NET Framework 然后再试。", LogBehavior.AlertThenCrash);
+                Logger.Error(ex, $"你的 .NET Framework 版本过低或损坏，请下载并重新安装 .NET Framework 4.8！{ModBase.CrLf}若安装失败，可以先卸载高版本的 .NET Framework 然后再试。", LogBehavior.AlertThenCrash);
             }
         }
         private string[] _Prefixes = new[] { "Newtonsoft.Json", "Ookii.Dialogs.Wpf", "Imazen.WebP", "ThrottleDebounce", "Microsoft.Win32.Registry", "PCLCS", "MeloongCore.Wpf", "MeloongCore" };
@@ -327,7 +325,7 @@ namespace PCL
                     {
                         // 微软
                         JObject MsJson = (JObject)Settings.Get<string>("LoginMsJson").DeserializeJson();
-                        MsJson.Remove(Conversions.ToString(sender.Fe().Tag));
+                        MsJson.Remove(Coerce.ToStr(sender.Fe().Tag));
                         Settings.Set("LoginMsJson", MsJson.ToString(Formatting.None));
                         if (object.ReferenceEquals(ModMain.FrmLoginMs.ComboAccounts.SelectedItem, sender.ParentFe()))
                             ModMain.FrmLoginMs.ComboAccounts.SelectedIndex = 0;
@@ -339,7 +337,7 @@ namespace PCL
                         // 离线
                         var Names = new List<string>();
                         Names.AddRange(Settings.Get<string>("LoginLegacyName").ToString().Split("¨"));
-                        Names.Remove(Conversions.ToString(sender.Fe().Tag));
+                        Names.Remove(Coerce.ToStr(sender.Fe().Tag));
                         Settings.Set("LoginLegacyName", Names.Join('¨'));
                         ModMain.FrmLoginLegacy.ComboName.ItemsSource = Names;
                         ModMain.FrmLoginLegacy.ComboName.Text = Names.Any() ? Names[0] : "";

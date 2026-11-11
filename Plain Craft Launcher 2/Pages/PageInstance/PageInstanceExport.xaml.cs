@@ -11,8 +11,6 @@ using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PCLCS;
@@ -170,7 +168,7 @@ namespace PCL
                               // 检查前两级
             try
             {
-                if (AllEntries.Any(Entry => LikeOperator.LikeString(Entry.Lower(), Rule.Lower(), CompareMethod.Binary)))
+                if (AllEntries.Any(Entry => Coerce.Like(Entry.Lower(), Rule.Lower())))
                     return true;
             }
             catch (Exception ex)
@@ -459,7 +457,7 @@ namespace PCL
                 ConfigLines.Add(Sperator);
                 ConfigLines.AddRange(GetExtraFileLines());
                 // 结束
-                FileUtils.Write(ConfigPath, ConfigLines.Join(Constants.vbCrLf));
+                FileUtils.Write(ConfigPath, ConfigLines.Join(ModBase.CrLf));
                 ModMain.Hint("已保存配置文件：" + ConfigPath, ModMain.HintType.Green);
                 ModBase.OpenExplorer(ConfigPath);
             }
@@ -491,12 +489,12 @@ namespace PCL
                 }
                 this.TextExportName.Text = Ini.GetOrDefault("Name", "");
                 this.TextExportVersion.Text = Ini.GetOrDefault("Version", "");
-                this.CheckOptionsJava.Checked = Conversions.ToBoolean(Ini.GetOrDefault("IncludeJava", true.ToString()));
-                this.CheckOptionsPcl.Checked = Conversions.ToBoolean(Ini.GetOrDefault("IncludeLauncher", true.ToString()));
-                this.CheckOptionsPclCustom.Checked = Conversions.ToBoolean(Ini.GetOrDefault("IncludeLauncherCustom", true.ToString()));
-                this.CheckAdvancedInclude.Checked = Conversions.ToBoolean(Ini.GetOrDefault("DontCheckHostedAssets", false.ToString()));
+                this.CheckOptionsJava.Checked = Coerce.ToBool(Ini.GetOrDefault("IncludeJava", true.ToString()));
+                this.CheckOptionsPcl.Checked = Coerce.ToBool(Ini.GetOrDefault("IncludeLauncher", true.ToString()));
+                this.CheckOptionsPclCustom.Checked = Coerce.ToBool(Ini.GetOrDefault("IncludeLauncherCustom", true.ToString()));
+                this.CheckAdvancedInclude.Checked = Coerce.ToBool(Ini.GetOrDefault("DontCheckHostedAssets", false.ToString()));
                 if (!this.CheckAdvancedInclude.Checked)
-                    this.CheckAdvancedModrinth.Checked = Conversions.ToBoolean(Ini.GetOrDefault("ModrinthUploadMode", false.ToString())); // #7979，加个特判
+                    this.CheckAdvancedModrinth.Checked = Coerce.ToBool(Ini.GetOrDefault("ModrinthUploadMode", false.ToString())); // #7979，加个特判
                 ConfigPackPath = Ini.GetOrDefault("PackPath", null);
                 // 导出内容段
                 RulesOverrides = Segments[1].SplitLines(true).ToList();
@@ -558,7 +556,7 @@ namespace PCL
                 catch (Exception ex)
                 {
                     Logger.Warn(ex, $"无法使用配置文件中指定的导出路径（{ConfigPackPath}）");
-                    if (ModMain.MyMsgBox($"指定的路径：{ConfigPackPath}{Constants.vbCrLf}{Constants.vbCrLf}{ex.GetDisplay(true)}", "无法使用配置文件中指定的导出路径", "确定", "取消") == 2)
+                    if (ModMain.MyMsgBox($"指定的路径：{ConfigPackPath}{ModBase.CrLf}{ModBase.CrLf}{ex.GetDisplay(true)}", "无法使用配置文件中指定的导出路径", "确定", "取消") == 2)
                         return;
                 }
             }
@@ -622,7 +620,7 @@ namespace PCL
                     foreach (var Rule in AllRules)
                     {
                         bool Revert = Rule.StartsWithF("!");
-                        if (LikeOperator.LikeString(RelativePath.Lower(), Rule.TrimStart('!').Lower(), CompareMethod.Binary))
+                        if (Coerce.Like(RelativePath.Lower(), Rule.TrimStart('!').Lower()))
                             ShouldKeep = !Revert;
                     }
                     if (!ShouldKeep)
@@ -755,12 +753,12 @@ namespace PCL
             // 若失败，确认是否继续
             if (FailedExceptions.Count == 1)
             {
-                if (ModMain.MyMsgBox("联网获取部分文件信息失败，是否继续导出？" + Constants.vbCrLf + Constants.vbCrLf + "若继续，无法获取信息的文件将被直接打包。" + Constants.vbCrLf + "由于二次分发可能违反使用协议，请尽量不要公开发布导出的整合包！", "部分文件信息获取失败", "继续", "取消") == 2)
+                if (ModMain.MyMsgBox("联网获取部分文件信息失败，是否继续导出？" + ModBase.CrLf + ModBase.CrLf + "若继续，无法获取信息的文件将被直接打包。" + ModBase.CrLf + "由于二次分发可能违反使用协议，请尽量不要公开发布导出的整合包！", "部分文件信息获取失败", "继续", "取消") == 2)
                     throw FailedExceptions.First();
             }
             else if (FailedExceptions.Count > 1)
             {
-                if (ModMain.MyMsgBox("联网获取文件信息失败，是否继续导出？" + Constants.vbCrLf + Constants.vbCrLf + "若继续，所有文件都将被直接打包。" + Constants.vbCrLf + "由于二次分发可能违反使用协议，请尽量不要公开发布导出的整合包！", "文件信息获取失败", "继续", "取消") == 2)
+                if (ModMain.MyMsgBox("联网获取文件信息失败，是否继续导出？" + ModBase.CrLf + ModBase.CrLf + "若继续，所有文件都将被直接打包。" + ModBase.CrLf + "由于二次分发可能违反使用协议，请尽量不要公开发布导出的整合包！", "文件信息获取失败", "继续", "取消") == 2)
                     throw FailedExceptions.First();
             }
         })

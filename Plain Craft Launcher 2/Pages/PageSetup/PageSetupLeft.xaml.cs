@@ -2,7 +2,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using MeloongCore;
-using Microsoft.VisualBasic;
 
 namespace PCL
 {
@@ -240,7 +239,7 @@ namespace PCL
                     }
                 case (double)FormMain.PageSubType.SetupUI:
                     {
-                        if (ModMain.MyMsgBox("是否要初始化 个性化 页面的所有设置？该操作不可撤销。" + Constants.vbCrLf + "（背景图片与音乐、主页等外部文件不会被删除）", "初始化确认", Button2: "取消", IsWarn: true) == 1)
+                        if (ModMain.MyMsgBox("是否要初始化 个性化 页面的所有设置？该操作不可撤销。" + ModBase.CrLf + "（背景图片与音乐、主页等外部文件不会被删除）", "初始化确认", Button2: "取消", IsWarn: true) == 1)
                         {
                             if (ModMain.FrmSetupUI == null)
                                 ModMain.FrmSetupUI = new PageSetupUI();

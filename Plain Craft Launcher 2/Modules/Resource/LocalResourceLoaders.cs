@@ -8,7 +8,6 @@ using System.Threading;
 using MeloongCore;
 using MeloongCore.Extensions;
 using MeloongCore.Wpf.Extensions;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PCLCS;
@@ -310,7 +309,7 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
                             continue;
                         if (ResourceProject.Cache.ContainsKey(ProjectId) && Entry.Project is null)
                             Entry.Project = ResourceProject.Cache[ProjectId]; // 读取已加载的缓存，加快结果出现速度
-                        ProjectIdToLocalFiles.AddIntoValueCollection(Conversions.ToInteger(ProjectId), Entry);
+                        ProjectIdToLocalFiles.AddIntoValueCollection(Coerce.ToInt(ProjectId), Entry);
                         // 记录对应的 ProjectVersion
                         var File = ResourceVersion.FromPlatformJson((JObject)Project["file"], ResourceTypes.Mod);
                         CurseForgeLoaders[Entry] = File.ModLoaders;
@@ -334,7 +333,7 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
                         continue;
                     // 设置 Entry 中的工程信息
                     var Project = new ResourceProject((JObject)ProjectJson);
-                    foreach (var LocalFile in ProjectIdToLocalFiles[Conversions.ToInteger(Project.Id)]) // 倒查防止 CurseForge 返回的内容有漏
+                    foreach (var LocalFile in ProjectIdToLocalFiles[Coerce.ToInt(Project.Id)]) // 倒查防止 CurseForge 返回的内容有漏
                     {
                         if ((LocalFile.Project?.Platform) is { } arg1 && arg1 == ResourcePlatforms.Modrinth)
                         {
@@ -384,7 +383,7 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
                     var File = ResourceVersion.FromPlatformJson((JObject)FileJson, ResourceTypes.Mod);
                     if (!File.DownloadAvailable)
                         continue;
-                    foreach (LocalResourceFile Entry in UpdateFileIds[Conversions.ToInteger(File.Id)])
+                    foreach (LocalResourceFile Entry in UpdateFileIds[Coerce.ToInt(File.Id)])
                     {
                         if (File.ModLoaders != CurseForgeLoaders[Entry])
                         {
@@ -406,12 +405,12 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
                     // 设置更新日志与更新文件
                     if (Entry.UpdateFile is not null && (UpdateFile.Hash ?? "") == (Entry.UpdateFile.Hash ?? "")) // 合并
                     {
-                        Entry.ChangelogUrls.Add($"https://www.curseforge.com/minecraft/mc-mods/{FileIdToProjectSlug[Conversions.ToInteger(UpdateFile.Id)]}/files/{UpdateFile.Id}");
+                        Entry.ChangelogUrls.Add($"https://www.curseforge.com/minecraft/mc-mods/{FileIdToProjectSlug[Coerce.ToInt(UpdateFile.Id)]}/files/{UpdateFile.Id}");
                         Entry.UpdateFile.DownloadUrls.AddRange(UpdateFile.DownloadUrls); // 合并下载源
                     }
                     else if (Entry.UpdateFile is null || UpdateFile.ReleaseDate > Entry.UpdateFile.ReleaseDate) // 替换
                     {
-                        Entry.ChangelogUrls = new List<string>() { $"https://www.curseforge.com/minecraft/mc-mods/{FileIdToProjectSlug[Conversions.ToInteger(UpdateFile.Id)]}/files/{UpdateFile.Id}" };
+                        Entry.ChangelogUrls = new List<string>() { $"https://www.curseforge.com/minecraft/mc-mods/{FileIdToProjectSlug[Coerce.ToInt(UpdateFile.Id)]}/files/{UpdateFile.Id}" };
                         Entry.UpdateFile = UpdateFile;
                     }
                 }
