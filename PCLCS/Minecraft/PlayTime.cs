@@ -26,7 +26,7 @@ public static class PlayTime {
         if (days <= 0) return "今天";
         if (days == 1) return "昨天";
         if (days < 30) return $"{days} 天前";
-        return lastPlayed.ToString("yyyy/M/d");
+        return lastPlayed.ToString("yyyy/M/d", System.Globalization.CultureInfo.InvariantCulture); // 固定用公历，不随系统日历（如民国历）变化
     }
 
     /// <summary>
