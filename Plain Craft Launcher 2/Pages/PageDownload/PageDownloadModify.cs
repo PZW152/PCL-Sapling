@@ -115,7 +115,7 @@ namespace PCL
             if (Manifest is not null && Manifest.SchemaVersion > Versions.McInstallManifestVersion)
             {
                 Logger.Warn($"安装清单由更新版本的 PCL 创建（清单版本：{Manifest.SchemaVersion}，当前版本：{Versions.McInstallManifestVersion}）");
-                throw new Exception($"更新 PCL 后才能修改它！点击【设置 → 其他 → 检查更新】以更新。");
+                throw new Exception($"该版本由更新的 PCL 安装，当前版本无法修改它。");
             }
             if (Manifest is not null)
             {

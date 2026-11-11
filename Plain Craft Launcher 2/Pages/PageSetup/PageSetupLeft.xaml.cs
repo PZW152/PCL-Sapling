@@ -123,6 +123,12 @@ namespace PCL
                             ModMain.FrmSetupSystem = new PageSetupSystem();
                         return ModMain.FrmSetupSystem;
                     }
+                case FormMain.PageSubType.SetupAbout:
+                    {
+                        if (ModMain.FrmSetupAbout is null)
+                            ModMain.FrmSetupAbout = new PageSetupAbout();
+                        return ModMain.FrmSetupAbout;
+                    }
 
                 default:
                     {
@@ -164,6 +170,13 @@ namespace PCL
                             if (ModMain.FrmSetupSystem == null)
                                 ModMain.FrmSetupSystem = new PageSetupSystem();
                             PageSetupLeft.PageChangeRun(ModMain.FrmSetupSystem);
+                            break;
+                        }
+                    case FormMain.PageSubType.SetupAbout:
+                        {
+                            if (ModMain.FrmSetupAbout == null)
+                                ModMain.FrmSetupAbout = new PageSetupAbout();
+                            PageSetupLeft.PageChangeRun(ModMain.FrmSetupAbout);
                             break;
                         }
 

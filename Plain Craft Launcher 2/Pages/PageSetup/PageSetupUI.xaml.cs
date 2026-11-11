@@ -445,7 +445,7 @@ namespace PCL
             try
             {
                 // 顶部栏
-                if (!HiddenForceShow && Settings.Get<bool>("UiHiddenPageDownload") && Settings.Get<bool>("UiHiddenPageSetup") && Settings.Get<bool>("UiHiddenPageOther"))
+                if (!HiddenForceShow && Settings.Get<bool>("UiHiddenPageDownload") && Settings.Get<bool>("UiHiddenPageSetup"))
                 {
                     // 顶部栏已被全部隐藏
                     ModMain.FrmMain.PanTitleSelect.Visibility = Visibility.Collapsed;
@@ -456,7 +456,6 @@ namespace PCL
                     ModMain.FrmMain.PanTitleSelect.Visibility = Visibility.Visible;
                     ModMain.FrmMain.BtnTitleSelect1.Visibility = !HiddenForceShow && Settings.Get<bool>("UiHiddenPageDownload") ? Visibility.Collapsed : Visibility.Visible;
                     ModMain.FrmMain.BtnTitleSelect3.Visibility = !HiddenForceShow && Settings.Get<bool>("UiHiddenPageSetup") ? Visibility.Collapsed : Visibility.Visible;
-                    ModMain.FrmMain.BtnTitleSelect4.Visibility = !HiddenForceShow && Settings.Get<bool>("UiHiddenPageOther") ? Visibility.Collapsed : Visibility.Visible;
                 }
                 // 功能
                 ModMain.FrmLaunchLeft.RefreshButtonsUI();
@@ -483,39 +482,8 @@ namespace PCL
                         AvaliableCount += 1;
                     if (!Settings.Get<bool>("UiHiddenSetupSystem"))
                         AvaliableCount += 1;
+                    AvaliableCount += 1; // “关于”始终显示
                     ModMain.FrmSetupLeft.PanItem.Visibility = AvaliableCount < 2 && !HiddenForceShow ? Visibility.Collapsed : Visibility.Visible;
-                }
-                // 更多子页面
-                int OtherAvaliableCount = 0;
-                if (!Settings.Get<bool>("UiHiddenOtherHelp"))
-                    OtherAvaliableCount += 1;
-                if (!Settings.Get<bool>("UiHiddenOtherAbout"))
-                    OtherAvaliableCount += 1;
-                if (ModMain.FrmOtherLeft is not null)
-                {
-                    ModMain.FrmOtherLeft.ItemHelp.Visibility = !HiddenForceShow && Settings.Get<bool>("UiHiddenOtherHelp") ? Visibility.Collapsed : Visibility.Visible;
-                    ModMain.FrmOtherLeft.ItemAbout.Visibility = !HiddenForceShow && Settings.Get<bool>("UiHiddenOtherAbout") ? Visibility.Collapsed : Visibility.Visible;
-                    // 隐藏左边选择卡
-                    ModMain.FrmOtherLeft.PanItem.Visibility = OtherAvaliableCount < 2 && !HiddenForceShow ? Visibility.Collapsed : Visibility.Visible;
-                }
-                if (OtherAvaliableCount == 1 && !HiddenForceShow)
-                {
-                    if (!Settings.Get<bool>("UiHiddenOtherHelp"))
-                    {
-                        ModMain.FrmMain.BtnTitleSelect4.Text = "帮助";
-                    }
-                    else if (!Settings.Get<bool>("UiHiddenOtherAbout"))
-                    {
-                        ModMain.FrmMain.BtnTitleSelect4.Text = "关于";
-                    }
-                    else
-                    {
-                        ModMain.FrmMain.BtnTitleSelect4.Text = "百宝箱";
-                    }
-                }
-                else
-                {
-                    ModMain.FrmMain.BtnTitleSelect4.Text = "更多";
                 }
                 // 各个页面的入口
                 if (ModMain.FrmMain.PageCurrent == (FormMain.PageStackData)FormMain.PageType.InstanceSelect)
@@ -567,28 +535,6 @@ namespace PCL
                 this.CheckHiddenPageSetup.Checked = false;
             }
         }
-        private void HiddenOtherMain()
-        {
-            // 更多主页面
-            if (this.CheckHiddenPageOther.Checked)
-            {
-                // 开启
-                this.CheckHiddenOtherAbout.Checked = true;
-                this.CheckHiddenOtherHelp.Checked = true;
-            }
-            // 关闭
-            else if (Settings.Get<bool>("UiHiddenOtherHelp") && Settings.Get<bool>("UiHiddenOtherAbout"))
-            {
-                this.CheckHiddenOtherAbout.Checked = false;
-                this.CheckHiddenOtherHelp.Checked = false;
-            }
-        }
-        private void HiddenOtherSub(object sender, bool user)
-        {
-            // 更多子页面：全部隐藏时，连同主页面一起隐藏
-            this.CheckHiddenPageOther.Checked = Settings.Get<bool>("UiHiddenOtherHelp") && Settings.Get<bool>("UiHiddenOtherAbout");
-        }
-
         // 警告提示
         private void HiddenHint(object sender, bool user)
         {

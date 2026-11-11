@@ -148,7 +148,6 @@ namespace PCL
                         Thread.Sleep(500);
                         ModBase.RunInUi(() => ModMain.FrmMain.PageChange((FormMain.PageStackData)FormMain.PageType.Setup));
                         Thread.Sleep(500);
-                        ModBase.RunInUi(() => ModMain.FrmMain.PageChange((FormMain.PageStackData)FormMain.PageType.Other));
                         Thread.Sleep(500);
                         ModBase.RunInUi(() => BtnVersion_Click());
                         Thread.Sleep(500);

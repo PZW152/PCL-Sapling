@@ -31,10 +31,6 @@ namespace PCL
         {
             this.BtnTitleSelect_Click((global::PCL.MyRadioButton)p0, p1);
         }
-        private void __On_BtnTitleSelect4_Check(object p0, bool p1)
-        {
-            this.BtnTitleSelect_Click((global::PCL.MyRadioButton)p0, p1);
-        }
         private void __On_BtnTitleInner_Click(object p0, global::System.EventArgs p1)
         {
             this.PageBack();

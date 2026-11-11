@@ -11,6 +11,10 @@ namespace PCL
         {
             this.PageCheck((global::PCL.MyListItem)p0, p1);
         }
+        private void __On_ItemAbout_Check(object p0, global::PCL.ModBase.RouteEventArgs p1)
+        {
+            this.PageCheck((global::PCL.MyListItem)p0, p1);
+        }
         private void __On_ItemUI_Check(object p0, global::PCL.ModBase.RouteEventArgs p1)
         {
             this.PageCheck((global::PCL.MyListItem)p0, p1);

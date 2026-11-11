@@ -57,7 +57,6 @@ namespace PCL
             ModAnimation.AniControlEnabled += 1;
             if (!PathUtils.IsSame(CurrentInstance, PageInstanceLeft.Instance.PathVersion))
                 RefreshAll(); // 切换到了另一个版本，重置页面
-            CustomEventService.SetEventData(this.BtnAdvancedHelp, ModBase.BuildType == ModBase.BuildTypes.Release ? "指南/整合包制作 - Public.json" : "指南/整合包制作 - Snapshot.json");
             ModAnimation.AniControlEnabled -= 1;
         }
         public void RefreshAll()
@@ -699,8 +698,6 @@ namespace PCL
             {
                 if (DirectoryUtils.Exists(Paths.Base + @"PCL\Pictures\"))
                     DirectoryUtils.Copy(Paths.Base + @"PCL\Pictures\", CacheFolder + @"PCL\Pictures\");
-                if (DirectoryUtils.Exists(Paths.Base + @"PCL\Help\"))
-                    DirectoryUtils.Copy(Paths.Base + @"PCL\Help\", CacheFolder + @"PCL\Help\");
                 if (FileUtils.Exists(Paths.Base + @"PCL\Custom.xaml"))
                     FileUtils.Copy(Paths.Base + @"PCL\Custom.xaml", CacheFolder + @"PCL\Custom.xaml");
                 if (FileUtils.Exists(Paths.Base + @"PCL\Setup.ini"))

@@ -4,18 +4,18 @@ using MeloongCore.Extensions;
 
 namespace PCL
 {
-    public partial class PageOtherAbout
+    public partial class PageSetupAbout
     {
 
         private new bool IsLoaded = false;
 
-        public PageOtherAbout()
+        public PageSetupAbout()
         {
-            this.Loaded += PageOtherAbout_Loaded;
+            this.Loaded += PageSetupAbout_Loaded;
             this.InitializeComponent();
 
         }
-        private void PageOtherAbout_Loaded(object sender, RoutedEventArgs e)
+        private void PageSetupAbout_Loaded(object sender, RoutedEventArgs e)
         {
 
             // 重复加载部分

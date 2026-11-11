@@ -870,20 +870,6 @@ namespace PCL
                 this.SetResourceReference(ForegroundProperty, "ColorBrush1");
             }
             this.ColumnPaddingRight.Width = new GridLength(MinPaddingRight);
-            if (CustomEventService.GetEventType(this) == CustomEvent.EventType.打开帮助 && !(!string.IsNullOrEmpty(Title) && !string.IsNullOrEmpty(Info))) // #3266
-            {
-                try
-                {
-                    var Entry = new ModMain.HelpEntry(CustomEvent.GetAbsoluteUrls(CustomEventService.GetEventData(this), CustomEventService.GetEventType(this))[0]);
-                    Entry.SetToListItem(this);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex, "设置帮助 MyListItem 失败", LogBehavior.Alert);
-                    CustomEventService.SetEventType(this, CustomEvent.EventType.None);
-                    CustomEventService.SetEventData(this, "");
-                }
-            }
         }
         public override string ToString()
         {

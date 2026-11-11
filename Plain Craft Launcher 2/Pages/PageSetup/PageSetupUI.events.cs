@@ -81,18 +81,6 @@ namespace PCL
             this.HiddenSetupSub();
             this.HiddenHint(p0, p1);
         }
-        private void __On_CheckHiddenPageOther_Change(object p0, bool p1)
-        {
-            this.HiddenOtherMain();
-        }
-        private void __On_CheckHiddenOtherHelp_Change(object p0, bool p1)
-        {
-            this.HiddenOtherSub(p0, p1);
-        }
-        private void __On_CheckHiddenOtherAbout_Change(object p0, bool p1)
-        {
-            this.HiddenOtherSub(p0, p1);
-        }
         private void __On_CheckHiddenFunctionHidden_Change(object p0, bool p1)
         {
             this.HiddenHint(p0, p1);

@@ -605,12 +605,6 @@ namespace PCL
                 FileUtils.Copy(ModBase.PathTemp + "CustomSkin.png", Paths.AppDataThenName + "CustomSkin.png");
                 Logger.Info("已移动离线自定义皮肤 (264)");
             }
-            // 解除帮助页面的隐藏
-            if (LastVersionCode <= 205)
-            {
-                Settings.Set("UiHiddenOtherHelp", false);
-                Logger.Info("已解除帮助页面的隐藏");
-            }
             // 单向迁移微软登录结果（#4836）
             if (!Settings.Get<bool>("CacheMsV2Migrated"))
             {
@@ -1438,11 +1432,7 @@ namespace PCL
             /// <summary>
         /// 社区资源详情。这是一个副页面。
         /// </summary>
-            ResourceDetail = 8,
-            /// <summary>
-        /// 帮助详情。这是一个副页面。
-        /// </summary>
-            HelpDetail = 9
+            ResourceDetail = 8
         }
         /// <summary>
     /// 次要页面种类。其数值必须与 StackPanel 中的下标一致。
@@ -1460,8 +1450,7 @@ namespace PCL
             SetupLaunch = 0,
             SetupUI = 2,
             SetupSystem = 3,
-            OtherHelp = 0,
-            OtherAbout = 1,
+            SetupAbout = 4,
             InstanceOverall = 0,
             InstanceSetup = 1,
             InstanceModify = 2,
@@ -1491,10 +1480,6 @@ namespace PCL
                 case PageType.ResourceDetail:
                     {
                         return ((ResourceProject)Stack.Additional.Args()[0]).TranslatedName;
-                    }
-                case PageType.HelpDetail:
-                    {
-                        return ((ModMain.HelpEntry)Stack.Additional.Args()[0]).Title;
                     }
 
                 default:
@@ -1548,13 +1533,6 @@ namespace PCL
                             if (ModMain.FrmSetupLeft is null)
                                 ModMain.FrmSetupLeft = new PageSetupLeft();
                             return ModMain.FrmSetupLeft.PageID;
-                        }
-
-                    case 4:
-                        {
-                            if (ModMain.FrmOtherLeft is null)
-                                ModMain.FrmOtherLeft = new PageOtherLeft();
-                            return ModMain.FrmOtherLeft.PageID;
                         }
 
                     case 7:
@@ -1668,13 +1646,6 @@ namespace PCL
                             if (ModMain.FrmSetupLeft is null)
                                 ModMain.FrmSetupLeft = new PageSetupLeft();
                             FindNavItem(ModMain.FrmSetupLeft.PanItem, SubType).SetChecked(true, true, Stack == PageCurrent);
-                            break;
-                        }
-                    case PageType.Other:
-                        {
-                            if (ModMain.FrmOtherLeft is null)
-                                ModMain.FrmOtherLeft = new PageOtherLeft();
-                            FindNavItem(ModMain.FrmOtherLeft.PanItem, SubType).SetChecked(true, true, Stack == PageCurrent);
                             break;
                         }
                 }
@@ -1798,13 +1769,6 @@ namespace PCL
                             this.PageChangeAnim(ModMain.FrmSetupLeft, (FrameworkElement)ModMain.FrmSetupLeft.PageGet(SubType));
                             break;
                         }
-                    case PageType.Other: // 更多
-                        {
-                            if (ModMain.FrmOtherLeft is null)
-                                ModMain.FrmOtherLeft = new PageOtherLeft();
-                            this.PageChangeAnim(ModMain.FrmOtherLeft, (FrameworkElement)ModMain.FrmOtherLeft.PageGet(SubType));
-                            break;
-                        }
                     case PageType.InstanceSelect: // 版本选择
                         {
                             if (ModMain.FrmSelectLeft is null)
@@ -1835,11 +1799,6 @@ namespace PCL
                             if (ModMain.FrmDownloadResourceDetail is null)
                                 ModMain.FrmDownloadResourceDetail = new PageDownloadResourceDetail();
                             this.PageChangeAnim(new MyPageLeft(), ModMain.FrmDownloadResourceDetail);
-                            break;
-                        }
-                    case PageType.HelpDetail: // 帮助详情
-                        {
-                            PageChangeAnim(new MyPageLeft(), (FrameworkElement)Stack.Additional.Args()[1]);
                             break;
                         }
                 }
