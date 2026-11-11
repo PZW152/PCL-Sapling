@@ -1,22 +1,17 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Net;
+#nullable disable
 using System.Net.Http;
 using System.Security.Cryptography;
-using System.Text;
-using MeloongCore;
-using Newtonsoft.Json;
 
-namespace PCL
+namespace PCLCS
 {
     /// <summary>
     /// 简单的 HTTP 磁盘缓存，取代原先的 CacheCow。
     /// 只缓存不带 Authorization 的 GET 请求：
     /// 在 Cache-Control max-age 内直接使用缓存；过期后带上 ETag / Last-Modified 做条件请求，服务器返回 304 时复用缓存内容。
     /// 带登录凭据的响应（如正版登录）不会写入磁盘。
+    /// 网络不可用时，可以用 <see cref="TryReadStale"/> 取回上一次成功的内容（即使已过期）。
     /// </summary>
-    internal static class HttpDiskCache
+    public static class HttpDiskCache
     {
         private sealed class Meta
         {
@@ -28,7 +23,9 @@ namespace PCL
         }
 
         private static readonly object Lock = new object();
-        private static string Folder => ModBase.PathTemp + @"Cache\HttpV2\";
+        /// <summary>缓存文件夹，以 \ 结尾。由宿主程序在启动时设置；未设置时不进行任何缓存。</summary>
+        public static string Folder { get; set; }
+        private static bool Enabled => !string.IsNullOrEmpty(Folder);
 
         private static string KeyOf(string Url)
         {
@@ -62,6 +59,7 @@ namespace PCL
         /// </summary>
         public static byte[] TryUseOrPrepare(HttpRequestMessage Request, string Url)
         {
+            if (!Enabled) return null;
             lock (Lock)
             {
                 var Info = ReadMeta(Url, out string BodyPath);
@@ -88,6 +86,7 @@ namespace PCL
         /// </summary>
         public static byte[] ReadNotModified(HttpResponseMessage Response, string Url)
         {
+            if (!Enabled) return null;
             lock (Lock)
             {
                 var Info = ReadMeta(Url, out string BodyPath);
@@ -112,7 +111,7 @@ namespace PCL
         /// </summary>
         public static void Store(HttpResponseMessage Response, string Url, byte[] Body)
         {
-            if (Response.StatusCode != HttpStatusCode.OK) return;
+            if (!Enabled || Response.StatusCode != HttpStatusCode.OK) return;
             var Control = Response.Headers.CacheControl;
             if (Control is not null && Control.NoStore) return;
             string ETag = Response.Headers.ETag?.ToString();
@@ -136,6 +135,27 @@ namespace PCL
                 catch (Exception ex)
                 {
                     Logger.Warn(ex, "写入 HTTP 缓存失败");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 取回上一次成功保存的内容，不论是否已过期。用于网络不可用时的后备；没有缓存时返回 null。
+        /// </summary>
+        public static byte[] TryReadStale(string Url)
+        {
+            if (!Enabled) return null;
+            lock (Lock)
+            {
+                if (ReadMeta(Url, out string BodyPath) is null) return null;
+                try
+                {
+                    return File.ReadAllBytes(BodyPath);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, "读取 HTTP 缓存失败");
+                    return null;
                 }
             }
         }

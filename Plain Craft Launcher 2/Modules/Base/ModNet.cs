@@ -298,6 +298,7 @@ namespace PCL
             HttpRequestMessage Request = null;
             CancellationTokenSource CancelToken = null;
             HttpResponseMessage Response = null;
+            bool Cacheable = false;
             try
             {
                 // 构建请求
@@ -331,7 +332,8 @@ namespace PCL
                 }
                 ModSecret.SecretHeadersSign(Url, ref Request, SimulateBrowserHeaders);
                 // 磁盘缓存：有效期内直接返回；否则附加条件请求头
-                bool Cacheable = HttpDiskCache.IsCacheable(Request);
+                HttpDiskCache.Folder ??= ModBase.PathTemp + @"Cache\HttpV2\";
+                Cacheable = HttpDiskCache.IsCacheable(Request);
                 if (Cacheable)
                 {
                     var Fresh = HttpDiskCache.TryUseOrPrepare(Request, Url);
@@ -378,12 +380,17 @@ namespace PCL
                     HttpDiskCache.Store(Response, Url, ResponseBytes);
                 return ResponseBytes;
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
+                // 连接失败（而不是服务器返回了错误码）时，沿用上一次成功的内容
+                if (ex is not HttpRequestCodeException && TryUseStale(Cacheable, Url, out var Stale))
+                    return Stale;
                 throw;
             }
             catch (TimeoutException)
             {
+                if (TryUseStale(Cacheable, Url, out var Stale))
+                    return Stale;
                 throw new WebException($"连接服务器超时，请稍后再试，或使用 VPN 改善网络环境（{Method}, {Url}）", WebExceptionStatus.Timeout);
             }
             catch (Exception ex)
@@ -392,6 +399,8 @@ namespace PCL
                     ex.ThrowIfCanceled(); // GetResultWithTimeout 会抛出 TaskCanceledException
                 if (ex.IsBadNetwork())
                 {
+                    if (TryUseStale(Cacheable, Url, out var Stale))
+                        return Stale;
                     throw new WebException($"网络请求失败，请稍后再试，或使用 VPN 改善网络环境（{Method}, {Url}）", WebExceptionStatus.Timeout);
                 }
                 else
@@ -405,6 +414,17 @@ namespace PCL
                 CancelToken?.Dispose();
                 Response?.Dispose();
             }
+        }
+        /// <summary>
+        /// 网络不可用时，尝试取回该地址上一次成功获取的内容（版本列表等），让下载页等界面在离线时仍可使用。
+        /// </summary>
+        private static bool TryUseStale(bool Cacheable, string Url, out byte[] Body)
+        {
+            Body = Cacheable ? HttpDiskCache.TryReadStale(Url) : null;
+            if (Body is null)
+                return false;
+            Logger.Warn($"网络不可用，改用上一次获取的内容：{Url}");
+            return true;
         }
         private static readonly HttpClient RequestClient = new HttpClient(new HttpClientHandler()
         {

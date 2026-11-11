@@ -22,6 +22,7 @@
 	<!-- 对照测试用：各工程已不引用 Microsoft.VisualBasic，这里引用它只是为了证明 Coerce 的行为与其一致 -->
 	<ItemGroup>
 		<Reference Include="Microsoft.VisualBasic" />
+		<Reference Include="System.Net.Http" />
 	</ItemGroup>
 
 	<ItemGroup>
