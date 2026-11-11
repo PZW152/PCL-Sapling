@@ -51,10 +51,6 @@ namespace PCL
         {
             this.BtnExtraDownload_Click(p0, p1);
         }
-        private void __On_BtnExtraApril_Click(object p0, global::System.Windows.Input.MouseButtonEventArgs p1)
-        {
-            this.AprilGiveup();
-        }
         private void __On_BtnExtraShutdown_Click(object p0, global::System.Windows.Input.MouseButtonEventArgs p1)
         {
             this.BtnExtraShutdown_Click();

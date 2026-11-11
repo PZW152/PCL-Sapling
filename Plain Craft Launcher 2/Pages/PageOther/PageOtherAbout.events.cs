@@ -3,9 +3,5 @@ namespace PCL
 {
     public partial class PageOtherAbout
     {
-        private void __On_BtnAboutUpdate_Click(object p0, global::System.Windows.Input.MouseButtonEventArgs p1)
-        {
-            this.BtnAboutUpdate_Click(p0, p1);
-        }
     }
 }

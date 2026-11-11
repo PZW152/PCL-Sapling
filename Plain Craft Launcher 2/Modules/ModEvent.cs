@@ -333,20 +333,13 @@ namespace PCL
                         }
 
                     case EventType.今日人品:
-                        {
-                            PageOtherTest.Jrrp();
-                            break;
-                        }
-
                     case EventType.内存优化:
-                        {
-                            ModBase.RunInThread(() => PageOtherTest.MemoryOptimize(true));
-                            break;
-                        }
-
                     case EventType.清理垃圾:
+                    case EventType.下载文件:
+                    case EventType.检查更新:
                         {
-                            ModBase.RunInThread(() => PageOtherTest.RubbishClear());
+                            // 这些事件对应的功能已被移除；保留名称是为了让仍在使用它们的主页、帮助页面可以正常加载
+                            ModMain.Hint($"此版本已移除该功能（{Type}）");
                             break;
                         }
 
@@ -395,20 +388,6 @@ namespace PCL
                             break;
                         }
 
-                    case EventType.下载文件:
-                        {
-                            Arg0 = Arg0.Replace(@"\", "/");
-                            if (!(Arg0.StartsWithF("http://", true) || Arg0.StartsWithF("https://", true)))
-                            {
-                                ModMain.MyMsgBox("EventData 必须为以 http:// 或 https:// 开头的网址。" + Constants.vbCrLf + "PCL 不支持其他乱七八糟的下载协议。", "事件执行失败");
-                                return;
-                            }
-                            if (!EventSafetyConfirm("即将从该网址下载文件：" + Constants.vbCrLf + Arg0))
-                                return;
-                            ModBase.RunInUi(() => { try { switch (Args.Length) { case 1: { PageOtherTest.StartCustomDownload(Arg0, PathUtils.GetLastPart(Arg0)); break; } case 2: { PageOtherTest.StartCustomDownload(Arg0, Arg1); break; } default: { PageOtherTest.StartCustomDownload(Arg0, Args[1], Args[2]); break; } } } catch { PageOtherTest.StartCustomDownload(Arg0, "未知"); } });
-                            break;
-                        }
-
                     case EventType.修改设置:
                     case EventType.写入设置:
                         {
@@ -436,12 +415,6 @@ namespace PCL
                                 Logger.Warn(ex, $"写入变量失败：{Arg0} → {Args[1]}", LogBehavior.Toast);
                             }
 
-                            break;
-                        }
-
-                    case EventType.检查更新:
-                        {
-                            ModSecret.UpdateCheckByButton();
                             break;
                         }
 

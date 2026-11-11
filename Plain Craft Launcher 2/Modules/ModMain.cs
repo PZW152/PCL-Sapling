@@ -185,15 +185,6 @@ namespace PCL
                 Logger.Info(ex, "显示弹出提示失败");
             }
         }
-        private static void HideAllHint()
-        {
-            foreach (Border Control in FrmMain.PanHint.Children)
-            {
-                Control.IsHitTestVisible = false;
-                ModAnimation.AniStart(new[] { ModAnimation.AaX(Control, -50, 200, Ease: new ModAnimation.AniEaseInFluent()), ModAnimation.AaOpacity(Control, -1, 150, Ease: new ModAnimation.AniEaseInFluent()), ModAnimation.AaCode(() => Control.Tag.Args()[0] = false), ModAnimation.AaHeight(Control, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true), ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(Control), After: true) }, Conversions.ToString(Operators.ConcatenateObject("Hint Hide ", Control.Tag.Args()[1])));
-            }
-        }
-
         #endregion
 
         #region 弹窗
@@ -493,7 +484,6 @@ namespace PCL
         public static PageOtherLeft FrmOtherLeft;
         public static PageOtherHelp FrmOtherHelp;
         public static PageOtherAbout FrmOtherAbout;
-        public static PageOtherTest FrmOtherTest;
 
         // 登录页面声明
         public static PageLoginLegacy FrmLoginLegacy;
@@ -786,7 +776,8 @@ namespace PCL
     /// </summary>
         public static void HelpTryExtract()
         {
-            if (Settings.Get<int>("SystemHelpVersion") != ModBase.VersionCode || !FileUtils.Exists(ModBase.PathTemp + @"Help\启动器\备份设置.xaml"))
+            if (Settings.Get<int>("SystemHelpVersion") != ModBase.VersionCode || !FileUtils.Exists(ModBase.PathTemp + @"Help\启动器\备份设置.xaml")
+                || FileUtils.Exists(ModBase.PathTemp + @"Help\启动器\指定登录方式.json")) // 旧版解压出的、已移除的帮助文章
             {
                 DirectoryUtils.Delete(ModBase.PathTemp + "Help");
                 ModBase.ExtractResources(ModBase.PathTemp + @"Cache\Help.zip", "Help");
@@ -798,177 +789,6 @@ namespace PCL
 
         #endregion
 
-        #region 愚人节
-
-        private static bool? _IsAprilEnabled = default;
-        public static bool IsAprilEnabled
-        {
-            get
-            {
-                if (_IsAprilEnabled is null)
-                {
-                    _IsAprilEnabled = DateTime.Now.Month == 4 && DateTime.Now.Day == 1 && Settings.Get<int>("AprilYear") != DateTime.Now.Year; // 成功后同年内则不再触发
-                }
-                return _IsAprilEnabled.Value;
-            }
-        }
-        public static bool IsAprilGiveup = false;
-        private static int AprilDifficultiedDistance = 0;
-        private static int _TimerFool_IdieCount = 0;
-        private static Point _TimerFool_MousePosLast = new Point(0d, 0d);
-        // 回到边界
-        private static Vector _TimerFool_Speed = new Vector(0d, 0d);
-        // 放弃提示
-        private static double _TimerFool_GiveUpDistance = -1500;
-        private static void TimerFool()
-        {
-            try
-            {
-                if (FrmLaunchLeft is null || FrmLaunchLeft.AprilPosTrans is null || FrmMain.lastMouseArg is null)
-                    return;
-                if (IsAprilGiveup || FrmMain.PageCurrent != (FormMain.PageStackData)FormMain.PageType.Launch || ModAnimation.AniControlEnabled != 0 || !FrmLaunchLeft.BtnLaunch.IsLoaded)
-                    return;
-
-                // 计算是否空闲
-                var MousePos = FrmMain.lastMouseArg.GetPosition(FrmMain);
-                if (MousePos == _TimerFool_MousePosLast)
-                {
-                    _TimerFool_IdieCount += 1;
-                }
-                else
-                {
-                    _TimerFool_MousePosLast = MousePos;
-                    _TimerFool_IdieCount = 0;
-                }
-                // 计算躲避移动
-                Vector Direction;
-                double Distance;
-                double ButtonWidth = FrmLaunchLeft.BtnLaunch.ActualWidth / 2d;
-                double ButtonHeight = FrmLaunchLeft.BtnLaunch.ActualHeight / 2d;
-                Vector Vec = (Vector)(FrmMain.lastMouseArg.GetPosition(FrmLaunchLeft.BtnLaunch) - new Vector(ButtonWidth, ButtonHeight));
-                var Dir = new Vector(Vec.X, Vec.Y);
-                Dir.Normalize();
-                Direction = -Dir;
-                Distance = new Vector(Math.Max(0d, Math.Abs(Vec.X) - ButtonWidth), Math.Max(0d, Math.Abs(Vec.Y) - ButtonHeight)).Length;
-                double BreathScale = Math.Sin(Timer150Count / 37.5d * Math.PI);
-                double Difficulty = 1d / (1d + Math.Pow(AprilDifficultiedDistance / 6000d, 2d)) + 0.25d; // 难度，初始为 1.25x，6000 距离为 0.75x，12000 为 0.5x，24000 为 0.256x，最低 0.25x
-                var Acc = Math.Max(0d, -0.65d - Math.Log((Distance / Difficulty + 0.4d) / 200d)) * Direction * Difficulty; // 加速度
-                                                                                                                           // FrmMain.Title = CInt(AprilTotalDistance) & " - " & Difficulty
-                                                                                                                           // 5s 不动时回到起始点
-                if (_TimerFool_IdieCount >= 64 * 5)
-                {
-                    Vector SafeDist = (Vector)(FrmMain.lastMouseArg.GetPosition(FrmMain.PanMain) - new Vector(ButtonWidth, FrmMain.PanMain.ActualHeight - ButtonHeight * 3d));
-                    var Back = new Vector(FrmLaunchLeft.AprilPosTrans.X, FrmLaunchLeft.AprilPosTrans.Y);
-                    if (SafeDist.Length > 250d && Back.Length > 0.4d)
-                    {
-                        Acc -= Back * 0.0005d;
-                        Back.Normalize();
-                        Acc -= Back * 0.15d;
-                    }
-                }
-                var Relative = FrmLaunchLeft.BtnLaunch.TranslatePoint(new Point(0d, 0d), FrmMain.PanForm);
-                if (Relative.X < -ButtonWidth * 2d)
-                {
-                    FrmLaunchLeft.AprilPosTrans.X += FrmMain.PanForm.ActualWidth + ButtonWidth * 2d; // 离开左边界
-                    _TimerFool_Speed.X -= 80d;
-                    if (Relative.Y < 0d)
-                    {
-                        FrmLaunchLeft.AprilPosTrans.Y += ButtonHeight * 2.5d;
-                    }
-                    else if (Relative.Y > FrmMain.PanForm.ActualHeight - ButtonHeight * 2d)
-                    {
-                        FrmLaunchLeft.AprilPosTrans.Y -= ButtonHeight * 2.5d;
-                    }
-                }
-                else if (Relative.X > FrmMain.PanForm.ActualWidth)
-                {
-                    FrmLaunchLeft.AprilPosTrans.X -= FrmMain.PanForm.ActualWidth + ButtonWidth * 2d; // 离开右边界
-                    _TimerFool_Speed.X += 80d;
-                    if (Relative.Y < 0d)
-                    {
-                        FrmLaunchLeft.AprilPosTrans.Y += ButtonHeight * 2.5d;
-                    }
-                    else if (Relative.Y > FrmMain.PanForm.ActualHeight - ButtonHeight * 2d)
-                    {
-                        FrmLaunchLeft.AprilPosTrans.Y -= ButtonHeight * 2.5d;
-                    }
-                }
-                else if (Relative.Y < -ButtonHeight * 2d)
-                {
-                    FrmLaunchLeft.AprilPosTrans.Y += FrmMain.PanForm.ActualHeight + ButtonHeight * 2d; // 离开上边界
-                    _TimerFool_Speed.Y -= 25d;
-                    if (Relative.X < 0d)
-                    {
-                        FrmLaunchLeft.AprilPosTrans.X += ButtonWidth * 2d;
-                    }
-                    else if (Relative.X > FrmMain.PanForm.ActualWidth - ButtonWidth * 2d)
-                    {
-                        FrmLaunchLeft.AprilPosTrans.X -= ButtonWidth * 2d;
-                    }
-                }
-                else if (Relative.Y > FrmMain.PanForm.ActualHeight)
-                {
-                    FrmLaunchLeft.AprilPosTrans.Y -= FrmMain.PanForm.ActualHeight + ButtonHeight * 2d; // 离开下边界
-                    _TimerFool_Speed.Y += 25d;
-                    if (Relative.X < 0d)
-                    {
-                        FrmLaunchLeft.AprilPosTrans.X += ButtonWidth * 2d;
-                    }
-                    else if (Relative.X > FrmMain.PanForm.ActualWidth - ButtonWidth * 2d)
-                    {
-                        FrmLaunchLeft.AprilPosTrans.X -= ButtonWidth * 2d;
-                    }
-                }
-                // 移动
-                _TimerFool_Speed = _TimerFool_Speed * 0.8d + Acc;
-                double SpeedValue = Math.Min(60d, _TimerFool_Speed.Length);
-                if (SpeedValue < 0.01d)
-                    return;
-                _TimerFool_Speed.Normalize();
-                _TimerFool_Speed *= SpeedValue;
-                AprilDifficultiedDistance = (int)Math.Round(AprilDifficultiedDistance + SpeedValue);
-                FrmLaunchLeft.AprilPosTrans.X += _TimerFool_Speed.X;
-                FrmLaunchLeft.AprilPosTrans.Y += _TimerFool_Speed.Y;
-                // 大小改变
-                FrmLaunchLeft.AprilScaleTrans.ScaleX = (1d - (Math.Abs(Direction.X) - Math.Abs(Direction.Y)) * (SpeedValue / 160d)).Clamp(0.2d, 1.8d);
-                FrmLaunchLeft.AprilScaleTrans.ScaleY = (1d - (Math.Abs(Direction.Y) - Math.Abs(Direction.X)) * (SpeedValue / 100d)).Clamp(0.2d, 1.8d);
-                _TimerFool_GiveUpDistance += SpeedValue;
-                if (_TimerFool_GiveUpDistance > 2500d)
-                {
-                    _TimerFool_GiveUpDistance = 0d;
-                    switch (ModBase.RandomInteger(0, 3))
-                    {
-                        case 0:
-                            {
-                                Hint("放弃吧！只需要点一下右下角的小白旗……", HintType.Red);
-                                break;
-                            }
-                        case 1:
-                            {
-                                Hint("看到右下角的那面小白旗了吗？", HintType.Red);
-                                break;
-                            }
-                        case 2:
-                            {
-                                Hint("这里建议点一下右下角的小白旗投降呢.jpg", HintType.Red);
-                                break;
-                            }
-                        case 3:
-                            {
-                                Hint("右下角的小白旗永远等着你……", HintType.Red);
-                                break;
-                            }
-                    }
-                }
-            }
-
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "愚人节移动出错");
-            }
-        }
-
-        #endregion
 
         #region 系统
 
@@ -1117,8 +937,6 @@ namespace PCL
                 Text = Text.Replace("{login}", _ArgumentReplace_Replacer(null));
             }
             // 高级
-            Text = Text.RegexReplace(@"\{hint\}", _ => _ArgumentReplace_Replacer(PageOtherTest.GetRandomHint()));
-            Text = Text.RegexReplace(@"\{cave\}", _ => _ArgumentReplace_Replacer(PageOtherTest.GetRandomCave()));
             Text = Text.RegexReplace(@"\{setup:([a-zA-Z0-9]+)\}", m => _ArgumentReplace_Replacer(Conversions.ToString(Settings.GetSafe(m.Groups[1].Value, ModMinecraft.McInstanceSelected))));
             Text = Text.RegexReplace(@"\{varible:([^:\}]+)(?::([^\}]+))?\}", m => _ArgumentReplace_Replacer(Conversions.ToString(RegistryUtils.TryRead($@"HKEY_CURRENT_USER\Software\{ModSecret.RegFolder}", $"CustomEvent{m.Groups[1].Value}", m.Groups[2].Value))));
             Text = Text.RegexReplace(@"\{variable:([^:\}]+)(?::([^\}]+))?\}", m => _ArgumentReplace_Replacer(Conversions.ToString(RegistryUtils.TryRead($@"HKEY_CURRENT_USER\Software\{ModSecret.RegFolder}", $"CustomEvent{m.Groups[1].Value}", m.Groups[2].Value))));
@@ -1202,17 +1020,6 @@ namespace PCL
 
         #region 反馈
 
-        // 反馈
-        public static void Feedback(bool ShowMsgbox = true, bool ForceOpenLog = false)
-        {
-            // 原 VB 為 On Error Resume Next：出錯即跳過該語句
-            try { FeedbackInfo(); } catch { }
-            if (ForceOpenLog || ShowMsgbox && MyMsgBox("若你在汇报一个 Bug，请点击 打开文件夹 按钮，并上传 Log(1~5).txt 中包含错误信息的文件。" + Constants.vbCrLf + "游戏崩溃一般与启动器无关，请不要因为游戏崩溃而提交反馈。", "反馈提交提醒", "打开文件夹", "不需要") == 1)
-            {
-                ModBase.OpenExplorer(Paths.Base + @"PCL\Log1.txt");
-            }
-            ModBase.OpenWebsite("https://github.com/Meloong-Git/PCL/issues/");
-        }
         /// <summary>
     /// 在日志中输出系统诊断信息。
     /// </summary>
@@ -1263,8 +1070,6 @@ namespace PCL
                 try
                 {
                     #region 每 7.5s 执行一次的代码
-                    if (FrmMain.BtnExtraApril_ShowCheck() && AprilDifficultiedDistance != 0)
-                        FrmMain.BtnExtraApril.Ribble();
                     // 以未知原因窗口被丢到一边去的修复（Top、Left = -25600），还有 #745
                     ModBase.RunInUi(() => { if (!FrmMain.Hidden) { if (FrmMain.Top < (double)-9000) FrmMain.Top = 100d; if (FrmMain.Left < (double)-9000) FrmMain.Left = 100d; } }); // 窗口拉至最大时 Left = -18.8
                 }
@@ -1277,7 +1082,6 @@ namespace PCL
         }
         // 主时钟：原为一条每 49ms 同步调度一次 UI 线程的专用线程，现改为 UI 线程上的 DispatcherTimer
         private static DispatcherTimer TimerMainTimer;
-        private static DispatcherTimer TimerFoolTimer;
         public static void TimerMainStart()
         {
             var UiDispatcher = System.Windows.Application.Current.Dispatcher;
@@ -1287,15 +1091,6 @@ namespace PCL
                 catch (Exception ex) { Logger.Error(ex, "程序主时钟出错"); }
             }, UiDispatcher);
             TimerMainTimer.Start();
-            if (!IsAprilEnabled)
-                return;
-            // 愚人节时钟：原为每 1ms 轮询系统时钟变化（约 15.6ms 一次），等效为约 16ms 的定时器
-            TimerFoolTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Normal, (_, __) =>
-            {
-                try { TimerFool(); }
-                catch (Exception ex) { Logger.Error(ex, "愚人节主时钟出错"); }
-            }, UiDispatcher);
-            TimerFoolTimer.Start();
         }
 
     }

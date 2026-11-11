@@ -94,7 +94,6 @@ namespace PCL
                 ModMain.Hint($"版本 {ModMinecraft.McInstanceSelected.Name} 正在被修改，请稍后再启动！", ModMain.HintType.Red);
                 return false;
             }
-            ModMain.FrmMain.AprilGiveup();
             // 禁止进入版本选择页面（否则就可以在启动中切换 McInstanceSelected 了）
             ModMain.FrmMain.PageStack = ModMain.FrmMain.PageStack.Where(p => p.Page != FormMain.PageType.InstanceSelect).ToList();
             // 实际启动加载器
@@ -170,29 +169,6 @@ namespace PCL
                 // 构造主加载器
                 var Loaders = new List<ModLoader.LoaderBase>() { new ModLoader.LoaderTask<int, int>("获取 Java", McLaunchJava) { ProgressWeight = 4d, Block = false }, McLoginLoader, new ModLoader.LoaderCombo<string>("补全文件", ModDownload.DlClientFix(ModMinecraft.McInstanceSelected, false, true)) { ProgressWeight = 15d, Show = false }, new ModLoader.LoaderTask<string, int>("获取启动参数", McLaunchArgumentMain) { ProgressWeight = 2d }, new ModLoader.LoaderTask<int, int>("解压文件", McLaunchNatives) { ProgressWeight = 2d }, new ModLoader.LoaderTask<int, int>("预启动处理", (_) => McLaunchPrerun()) { ProgressWeight = 1d }, new ModLoader.LoaderTask<int, int>("执行自定义命令", McLaunchCustom) { ProgressWeight = 1d }, new ModLoader.LoaderTask<int, Process>("启动进程", McLaunchRun) { ProgressWeight = 2d }, new ModLoader.LoaderTask<Process, int>("等待游戏窗口出现", McLaunchWait) { ProgressWeight = 1d }, new ModLoader.LoaderTask<int, int>("结束处理", (_) => McLaunchEnd()) { ProgressWeight = 1d } }; // .ProgressWeight = 15, .Block = False
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  // 内存优化
-                switch (Settings.Get<int>("VersionRamOptimize", Instance: ModMinecraft.McInstanceSelected))
-                {
-                    case 0: // 全局
-                        {
-                            if (Settings.Get<bool>("LaunchArgumentRam")) // 使用全局设置
-                            {
-                                ((ModLoader.LoaderCombo<string>)Loaders[2]).Block = false;
-                                Loaders.Insert(3, new ModLoader.LoaderTask<int, int>("内存优化", McLaunchMemoryOptimize) { ProgressWeight = 30d });
-                            }
-
-                            break;
-                        }
-                    case 1: // 开启
-                        {
-                            ((ModLoader.LoaderCombo<string>)Loaders[2]).Block = false;
-                            Loaders.Insert(3, new ModLoader.LoaderTask<int, int>("内存优化", McLaunchMemoryOptimize) { ProgressWeight = 30d });
-                            break;
-                        }
-                    case 2: // 关闭
-                        {
-                            break;
-                        }
-                }
                 var LaunchLoader = new ModLoader.LoaderCombo<object>("Minecraft 启动", Loaders) { Show = false };
                 if (McLoginLoader.State == ModBase.LoadState.Finished)
                     McLoginLoader.State = ModBase.LoadState.Waiting; // 要求重启登录主加载器，它会自行决定是否启动副加载器
@@ -271,32 +247,7 @@ namespace PCL
 
         #endregion
 
-        #region 内存优化
 
-        private static void McLaunchMemoryOptimize(ModLoader.LoaderTask<int, int> Loader)
-        {
-            McLaunchLog("内存优化开始");
-            bool Finished = false;
-            ModBase.RunInNewThread(() =>
-        {
-            PageOtherTest.MemoryOptimize(false);
-            Finished = true;
-        }, "Launch Memory Optimize");
-            while (!Finished && !Loader.IsCanceled)
-            {
-                if (Loader.Progress < 0.7d)
-                {
-                    Loader.Progress += 0.007d; // 10s
-                }
-                else
-                {
-                    Loader.Progress += (0.95d - Loader.Progress) * 0.02d;
-                } // 最快 += 0.005
-                Thread.Sleep(100);
-            }
-        }
-
-        #endregion
 
         #region 预检测
 
@@ -434,34 +385,6 @@ namespace PCL
             public string ProfileJson;
         }
 
-        /// <summary>
-    /// 根据登录信息获取玩家的 MC 用户名。如果无法获取则返回 Nothing。
-    /// </summary>
-        public static string McLoginName()
-        {
-            // 根据当前登录方式优先返回
-            switch (Settings.Get<McLoginType>("LoginType"))
-            {
-                case McLoginType.Ms:
-                    {
-                        if (!string.IsNullOrEmpty(Settings.Get<string>("CacheMsV2Name")))
-                            return Settings.Get<string>("CacheMsV2Name");
-                        break;
-                    }
-                case McLoginType.Legacy:
-                    {
-                        if (!string.IsNullOrEmpty(Settings.Get<string>("LoginLegacyName")))
-                            return Settings.Get<string>("LoginLegacyName").ToString().BeforeFirst("¨");
-                        break;
-                    }
-            }
-            // 查找所有可能的项
-            if (!string.IsNullOrEmpty(Settings.Get<string>("CacheMsV2Name")))
-                return Settings.Get<string>("CacheMsV2Name");
-            if (!string.IsNullOrEmpty(Settings.Get<string>("LoginLegacyName")))
-                return Settings.Get<string>("LoginLegacyName").ToString().BeforeFirst("¨");
-            return null;
-        }
         /// <summary>
     /// 当前是否可以进行登录。若不可以则会返回错误原因。
     /// </summary>

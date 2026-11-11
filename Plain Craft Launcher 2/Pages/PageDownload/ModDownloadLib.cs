@@ -1970,33 +1970,6 @@ pause";
         }
         private static bool IsForgeRecommendedRefreshed = false;
 
-        /// <summary>
-    /// 尝试获取某个 MC 版本对应的 Forge 推荐版本。如果不可用会返回 Nothing。
-    /// </summary>
-        public static string McDownloadForgeRecommendedGet(string McVersionName)
-        {
-            try
-            {
-                if (McVersionName is null)
-                    return null;
-                string List = FileUtils.TryReadAsString(ModBase.PathTemp + @"Cache\ForgeRecommendedList.json");
-                if (string.IsNullOrEmpty(List))
-                {
-                    Logger.Info("没有 Forge 推荐版本缓存文件");
-                    return null;
-                }
-                JObject Json = (JObject)List.DeserializeJson();
-                if (Json is null || !(McVersionName ?? "").Contains(".") || !Json.ContainsKey(McVersionName))
-                    return null;
-                return (Json[McVersionName] ?? "").ToString();
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, $"获取 Forge 推荐版本失败（{McVersionName ?? "null"}）");
-                return null;
-            }
-        }
-
         #endregion
 
         #region NeoForge 下载菜单
@@ -2128,47 +2101,6 @@ pause";
         #endregion
 
         #region Fabric 下载
-
-        public static void McDownloadFabricLoaderSave(JObject DownloadInfo)
-        {
-            try
-            {
-                string Url = DownloadInfo["url"].ToString();
-                string FileName = PathUtils.GetLastPart(Url);
-                string Version = PathUtils.GetLastPart(DownloadInfo["version"].ToString());
-                string Target = Dialogs.SaveFile("选择保存位置", FileName, filter: new[] { ("jar", "Fabric 安装器") });
-                if (Target is null)
-                    return;
-
-                // 重复任务检查
-                foreach (var OngoingLoader in ModLoader.LoaderTaskbar.ToList())
-                {
-                    if ((OngoingLoader.Name ?? "") != ($"Fabric {Version} 安装器下载" ?? ""))
-                        continue;
-                    ModMain.Hint("该版本正在下载中！", ModMain.HintType.Red);
-                    return;
-                }
-
-                // 构造步骤加载器
-                var Loaders = new List<ModLoader.LoaderBase>();
-                // 下载
-                // BMCLAPI 不支持 Fabric Installer 下载
-                var Address = new List<string>();
-                Address.Add(Url);
-                Loaders.Add(new ModNet.LoaderDownload("下载主文件", new List<ModNet.NetFile>() { new ModNet.NetFile(Address.ToArray(), Target, new FileChecker() { MinSize = 1024 * 64 }) }) { ProgressWeight = 15d });
-                // 启动
-                var Loader = new ModLoader.LoaderCombo<JObject>("Fabric " + Version + " 安装器下载", Loaders) { OnStateChanged = LoaderStateChangedHintOnly };
-                Loader.Start(DownloadInfo);
-                ModLoader.LoaderTaskbarAdd(Loader);
-                ModMain.FrmMain.BtnExtraDownload.ShowRefresh();
-                ModMain.FrmMain.BtnExtraDownload.Ribble();
-            }
-
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "开始 Fabric 安装器下载失败");
-            }
-        }
 
         /// <summary>
     /// 获取下载某个 Fabric 版本的加载器列表。

@@ -59,10 +59,6 @@ namespace PCL
         {
             this.ComboArgumentVisibie_SizeChanged(p0, p1);
         }
-        private void __On_CheckArgumentRam_Change(object p0, bool p1)
-        {
-            this.CheckArgumentRam_Change();
-        }
         private void __On_ComboArgumentIndieV2_SelectionChanged(object p0, global::System.Windows.Controls.SelectionChangedEventArgs p1)
         {
             this.ComboArgumentIndie_SelectionChanged(p0, p1);

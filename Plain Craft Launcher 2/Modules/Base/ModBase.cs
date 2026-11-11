@@ -1184,26 +1184,6 @@ namespace PCL
         }
 
         /// <summary>
-    /// 获取程序启动参数。
-    /// </summary>
-    /// <param name="Name">参数名。</param>
-    /// <param name="DefaultValue">默认值。</param>
-        public static object GetProgramArgument(string Name, string DefaultValue = "")
-        {
-            string[] AllArguments = Interaction.Command().Split(" ");
-            for (int i = 0, loopTo = AllArguments.Length - 1; i <= loopTo; i++)
-            {
-                if ((AllArguments[i] ?? "") == ("-" + Name ?? ""))
-                {
-                    if (AllArguments.Length == i + 1 || AllArguments[i + 1].StartsWithF("-"))
-                        return true;
-                    return AllArguments[i + 1];
-                }
-            }
-            return DefaultValue;
-        }
-
-        /// <summary>
     /// 打开网页。
     /// </summary>
         public static void OpenWebsite(string Url)
@@ -1273,16 +1253,6 @@ namespace PCL
             }
         });
         }
-        /// <summary>
-    /// 获取剪贴板文本。将在 UI 线程运行，且不会抛出异常。
-    /// </summary>
-        public static string ClipboardGetText()
-        {
-            string Result = null;
-            RunInUiWait(() => { try { if (VbCompat.Computer.Clipboard.ContainsText()) Result = VbCompat.Computer.Clipboard.GetText(); } catch (Exception ex) { Logger.Warn(ex, "获取剪贴板文本失败"); } });
-            return Result;
-        }
-
         /// <summary>
     /// 将程序中的资源释放到文件。
     /// </summary>
@@ -1439,20 +1409,6 @@ namespace PCL
         public static int RandomInteger(int min, int max)
         {
             return (int)Math.Round(Math.Floor((max - min + 1) * Random.NextDouble()) + min);
-        }
-
-        /// <summary>
-    /// 将数组随机打乱。
-    /// </summary>
-        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> Raw)
-        {
-            var RawCopy = new List<T>(Raw);
-            while (RawCopy.Any())
-            {
-                int i = RandomInteger(0, RawCopy.Count - 1);
-                yield return RawCopy[i];
-                RawCopy.RemoveAt(i);
-            }
         }
 
         #endregion

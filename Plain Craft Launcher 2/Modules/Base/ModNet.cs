@@ -2225,77 +2225,7 @@ namespace PCL
 
         #region 端口
 
-        /// <summary>
-    /// 随机获取单个可用的端口。
-    /// </summary>
-        public static int FindFreePort()
-        {
-            var Listener = new TcpListener(IPAddress.Loopback, 0);
-            Listener.Start();
-            int port = ((IPEndPoint)Listener.LocalEndpoint).Port;
-            Listener.Stop();
-            return port;
-        }
-
-        /// <summary>
-    /// 获取当前已被占用的端口列表。
-    /// </summary>
-        public static List<int> GetUsedPorts()
-        {
-            var IPProperties = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties();
-            var UsedPorts = new List<int>();
-            UsedPorts.AddRange(IPProperties.GetActiveTcpListeners().Select(ep => ep.Port));
-            UsedPorts.AddRange(IPProperties.GetActiveUdpListeners().Select(ep => ep.Port));
-            UsedPorts.AddRange(IPProperties.GetActiveTcpConnections().Select(conn => conn.LocalEndPoint.Port));
-            return UsedPorts.Distinct().ToList();
-        }
-
-        /// <summary>
-    /// 寻找数个连续编号的可用端口。
-    /// </summary>
-        public static List<int> FindFreePorts(int ConsecutiveCount, params int[] ExtraBlackLists)
-        {
-            var UsedPorts = GetUsedPorts().Concat(ExtraBlackLists);
-            for (int port = 12000 + ModBase.RandomInteger(0, 1000), loopTo = 65000 - ConsecutiveCount; port <= loopTo; port++)
-            {
-                var Range = Enumerable.Range(port, ConsecutiveCount);
-                if (!Range.Any(p => UsedPorts.Contains(p)))
-                    return Range.ToList();
-            }
-            throw new Exception("未能找到可用的端口！");
-        }
-
         #endregion
-
-        /// <summary>
-    /// 测试 Ping。失败则返回 -1。
-    /// </summary>
-        public static int Ping(string Ip, int Timeout = 10000, bool MakeLog = true)
-        {
-            System.Net.NetworkInformation.PingReply PingResult;
-            try
-            {
-                PingResult = new System.Net.NetworkInformation.Ping().Send(Ip);
-            }
-            catch (Exception ex)
-            {
-                if (MakeLog)
-                    Logger.Info($"Ping {Ip} 失败：{ex.Message}");
-                return -1;
-            }
-            if (PingResult.Status == System.Net.NetworkInformation.IPStatus.Success)
-            {
-                if (MakeLog)
-                    Logger.Info($"Ping {Ip} 结束：{PingResult.RoundtripTime}ms");
-                return (int)PingResult.RoundtripTime;
-            }
-            else
-            {
-                if (MakeLog)
-                    Logger.Info($"Ping {Ip} 失败");
-                return -1;
-            }
-        }
 
         /// <summary>
     /// 设置是否应当在正版登录时校验 SSL 证书。

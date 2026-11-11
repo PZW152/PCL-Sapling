@@ -446,7 +446,6 @@ namespace PCL
             this.MouseDown += FormMain_MouseDown;
             this.Activated += (_, __) => FormMain_Activated();
             this.Drop += FrmMain_Drop;
-            this.MouseMove += FormMain_MouseMove;
         }
         private void FormMain_Loaded(object sender, RoutedEventArgs e)
         {
@@ -459,9 +458,7 @@ namespace PCL
             // 扩展按钮
             this.BtnExtraDownload.ShowCheck = this.BtnExtraDownload_ShowCheck;
             this.BtnExtraBack.ShowCheck = this.BtnExtraBack_ShowCheck;
-            this.BtnExtraApril.ShowCheck = this.BtnExtraApril_ShowCheck;
             this.BtnExtraShutdown.ShowCheck = this.BtnExtraShutdown_ShowCheck;
-            this.BtnExtraApril.ShowRefresh();
             // 初始化尺寸改变
             var Resizer = new MyResizer(this);
             Resizer.addResizerDown(this.ResizerB);
@@ -545,7 +542,6 @@ namespace PCL
                 Thread.Sleep(100);
                 ModDownload.DlClientListMojangLoader.Start(1); // PCL 会同时根据这里的加载结果决定是否使用官方源进行下载
                 RunCountSub();
-                ModSecret.ServerLoader.Start();
                 ModBase.RunInNewThread(ModMain.TryClearTaskTemp, "TryClearTaskTemp", ThreadPriority.BelowNormal);
             }
             catch (Exception ex)
@@ -720,7 +716,6 @@ namespace PCL
             // 原 VB 為 On Error Resume Next：出錯即跳過該語句
             ModBase.IsProgramEnding = true;
             ModAnimation.AniControlEnabled += 1;
-            try { if (ModSecret.IsUpdateWaitingRestart) ModSecret.UpdateRestart(false); } catch { }
             if (ReturnCode == ModBase.ProcessReturnValues.Exception)
             {
                 if (!IsLogShown)
@@ -1074,14 +1069,7 @@ namespace PCL
             // 调用启动游戏
             if (e.Key == Key.Enter && PageCurrent == (PageStackData)PageType.Launch)
             {
-                if (ModMain.IsAprilEnabled && !ModMain.IsAprilGiveup)
-                {
-                    ModMain.Hint("木大！");
-                }
-                else
-                {
-                    ModMain.FrmLaunchLeft.LaunchButtonClick();
-                }
+                ModMain.FrmLaunchLeft.LaunchButtonClick();
             }
         }
         private void FormMain_MouseDown(object sender, MouseButtonEventArgs e)
@@ -1474,7 +1462,6 @@ namespace PCL
             SetupSystem = 3,
             OtherHelp = 0,
             OtherAbout = 1,
-            OtherTest = 2,
             InstanceOverall = 0,
             InstanceSetup = 1,
             InstanceModify = 2,
@@ -1860,7 +1847,6 @@ namespace PCL
 
                 #region 设置为最新状态
                 this.BtnExtraDownload.ShowRefresh();
-                this.BtnExtraApril.ShowRefresh();
                 #endregion
 
                 Logger.Info($"切换主要页面：{Stack.Page}, {SubType}");
@@ -2037,23 +2023,6 @@ namespace PCL
             return ModNet.HasDownloadingTask() && !(PageCurrent == (PageStackData)PageType.TaskManager);
         }
 
-        // 投降
-        public void AprilGiveup()
-        {
-            if (ModMain.IsAprilEnabled && !ModMain.IsAprilGiveup)
-            {
-                ModMain.Hint("=D", ModMain.HintType.Green);
-                ModMain.IsAprilGiveup = true;
-                ModMain.FrmLaunchLeft.AprilScaleTrans.ScaleX = 1d;
-                ModMain.FrmLaunchLeft.AprilScaleTrans.ScaleY = 1d;
-                this.BtnExtraApril.ShowRefresh();
-            }
-        }
-        public bool BtnExtraApril_ShowCheck()
-        {
-            return ModMain.IsAprilEnabled && !ModMain.IsAprilGiveup && PageCurrent == (PageStackData)PageType.Launch;
-        }
-
         // 关闭 Minecraft
         public void BtnExtraShutdown_Click()
         {
@@ -2105,12 +2074,6 @@ namespace PCL
 
         #endregion
 
-        // 愚人节鼠标位置
-        public MouseEventArgs lastMouseArg = null;
-        private void FormMain_MouseMove(object sender, MouseEventArgs e)
-        {
-            lastMouseArg = e;
-        }
 
     }
 }

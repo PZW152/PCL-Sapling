@@ -335,104 +335,6 @@ namespace PCL
             };
         }
         /// <summary>
-    /// 改变对象的Value属性的动画。
-    /// </summary>
-    /// <param name="Obj">动画的对象。</param>
-    /// <param name="Value">Value属性改变的值。</param>
-    /// <param name="Time">动画长度（毫秒）。</param>
-    /// <param name="Delay">动画延迟执行的时间（毫秒）。</param>
-    /// <param name="Ease">插值器类型。</param>
-    /// <param name="After">是否等到以前的动画完成后才继续本动画。</param>
-    /// <returns></returns>
-    /// <remarks></remarks>
-        public static AniData AaValue(object Obj, double Value, int Time = 400, int Delay = 0, AniEase Ease = null, bool After = false)
-        {
-            return new AniData()
-            {
-                TypeMain = AniType.Number,
-                TypeSub = AniTypeSub.Value,
-                TimeTotal = Time,
-                Ease = Ease ?? new AniEaseLinear(),
-                Obj = Obj,
-                Value = Value,
-                IsAfter = After,
-                TimeFinished = -Delay
-            };
-        }
-        /// <summary>
-    /// 改变对象的Radius属性的动画。
-    /// </summary>
-    /// <param name="Obj">动画的对象。</param>
-    /// <param name="Value">Radius属性改变的值。</param>
-    /// <param name="Time">动画长度（毫秒）。</param>
-    /// <param name="Delay">动画延迟执行的时间（毫秒）。</param>
-    /// <param name="Ease">插值器类型。</param>
-    /// <param name="After">是否等到以前的动画完成后才继续本动画。</param>
-    /// <returns></returns>
-    /// <remarks></remarks>
-        public static AniData AaRadius(object Obj, double Value, int Time = 400, int Delay = 0, AniEase Ease = null, bool After = false)
-        {
-            return new AniData()
-            {
-                TypeMain = AniType.Number,
-                TypeSub = AniTypeSub.Radius,
-                TimeTotal = Time,
-                Ease = Ease ?? new AniEaseLinear(),
-                Obj = Obj,
-                Value = Value,
-                IsAfter = After,
-                TimeFinished = -Delay
-            };
-        }
-        /// <summary>
-    /// 改变对象的BorderThickness属性的动画。
-    /// </summary>
-    /// <param name="Obj">动画的对象。</param>
-    /// <param name="Value">BorderThickness属性改变的值。</param>
-    /// <param name="Time">动画长度（毫秒）。</param>
-    /// <param name="Delay">动画延迟执行的时间（毫秒）。</param>
-    /// <param name="Ease">插值器类型。</param>
-    /// <param name="After">是否等到以前的动画完成后才继续本动画。</param>
-    /// <returns></returns>
-    /// <remarks></remarks>
-        public static AniData AaBorderThickness(object Obj, double Value, int Time = 400, int Delay = 0, AniEase Ease = null, bool After = false)
-        {
-            return new AniData()
-            {
-                TypeMain = AniType.Number,
-                TypeSub = AniTypeSub.BorderThickness,
-                TimeTotal = Time,
-                Ease = Ease ?? new AniEaseLinear(),
-                Obj = Obj,
-                Value = Value,
-                IsAfter = After,
-                TimeFinished = -Delay
-            };
-        }
-        /// <summary>
-    /// 改变对象的StrokeThickness属性的动画。
-    /// </summary>
-    /// <param name="Obj">动画的对象。</param>
-    /// <param name="Value">StrokeThickness属性改变的值。</param>
-    /// <param name="Time">动画长度（毫秒）。</param>
-    /// <param name="Delay">动画延迟执行的时间（毫秒）。</param>
-    /// <param name="Ease">插值器类型。</param>
-    /// <param name="After">是否等到以前的动画完成后才继续本动画。</param>
-        public static AniData AaStrokeThickness(object Obj, double Value, int Time = 400, int Delay = 0, AniEase Ease = null, bool After = false)
-        {
-            return new AniData()
-            {
-                TypeMain = AniType.Number,
-                TypeSub = AniTypeSub.StrokeThickness,
-                TimeTotal = Time,
-                Ease = Ease ?? new AniEaseLinear(),
-                Obj = Obj,
-                Value = Value,
-                IsAfter = After,
-                TimeFinished = -Delay
-            };
-        }
-        /// <summary>
     /// 改变 Width 的 GridLength 属性的动画。必须为 Star。
     /// </summary>
     /// <param name="Obj">动画的对象。</param>
@@ -566,13 +468,6 @@ namespace PCL
     /// <param name="After">是否等到以前的动画完成后才继续本动画。</param>
     /// <returns></returns>
     /// <remarks></remarks>
-        private static string GetAnimatedText(object Obj) => Obj is TextBlock Block ? Block.Text : (((ContentControl)Obj).Content?.ToString() ?? "");
-        public static AniData AaTextAppear(object Obj, bool Hide = false, bool TimePerText = true, int Time = 70, int Delay = 0, AniEase Ease = null, bool After = false)
-        {
-            // Are we cool yet？
-            return new AniData() { TypeMain = AniType.TextAppear, Ease = Ease ?? new AniEaseLinear(), TimeTotal = TimePerText ? Time * GetAnimatedText(Obj).Length : Time, Obj = Obj, Value = new object[] { GetAnimatedText(Obj), Hide }, IsAfter = After, TimeFinished = -Delay };
-        }
-
         // Code
 
         /// <summary>
@@ -681,23 +576,6 @@ namespace PCL
         }
 
         // 特殊
-
-        /// <summary>
-    /// 将一个StackPanel中的各个项目依次显示。
-    /// </summary>
-    /// <remarks></remarks>
-        public static List<AniData> AaStack(StackPanel Stack, int Time = 100, int Delay = 25)
-        {
-            var Result = new List<AniData>();
-            int AniDelay = 0;
-            foreach (var Item in Stack.Children)
-            {
-                ((UIElement)Item).Opacity = 0;
-                Result.Add(AaOpacity(Item, 1d, Time, AniDelay));
-                AniDelay += Delay;
-            }
-            return Result;
-        }
 
         #endregion
 

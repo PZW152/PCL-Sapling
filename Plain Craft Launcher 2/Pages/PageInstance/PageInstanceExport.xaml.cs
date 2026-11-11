@@ -594,23 +594,6 @@ namespace PCL
             // 构造步骤加载器
             var Loaders = new List<ModLoader.LoaderBase>();
 
-            #region 准备 PCL 文件
-
-            if (ModBase.BuildType != ModBase.BuildTypes.Release && IncludePCL)
-            {
-                Loaders.Add(new ModLoader.LoaderTask<int, int>("下载 PCL 正式版", (Loader) =>
-        {
-            ModSecret.DownloadLatestPCL(Loader);
-            FileUtils.Copy(ModBase.PathTemp + "Latest.exe", CacheFolder + "Plain Craft Launcher.exe");
-        })
-                {
-                    ProgressWeight = 0.5d,
-                    Block = false
-                });
-            }
-
-            #endregion
-
             #region 复制文件
 
             Loaders.Add(new ModLoader.LoaderTask<int, List<LocalResourceFile>>("复制导出内容", (Loader) =>
@@ -709,7 +692,7 @@ namespace PCL
                 DirectoryUtils.Copy(TargetInstance.PathVersion + @"PCL\", OverridesFolder + @"PCL\");
             ModBase.WriteIni(OverridesFolder + @"PCL\Setup.ini", "IsStar", false.ToString());
             // 复制 PCL 本体（正式版）
-            if (ModBase.BuildType == ModBase.BuildTypes.Release && IncludePCL)
+            if (IncludePCL)
                 FileUtils.Copy(ModBase.PathExe, CacheFolder + "Plain Craft Launcher.exe");
             // 复制 PCL 个性化内容
             if (IncludePCLCustom)

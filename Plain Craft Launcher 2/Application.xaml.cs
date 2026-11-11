@@ -77,13 +77,7 @@ namespace PCL
                 // 检查参数调用
                 if (e.Args.Length > 0)
                 {
-                    if (e.Args[0] == "--update")
-                    {
-                        // 自动更新
-                        ModSecret.UpdateReplace(Conversions.ToInteger(e.Args[1]), e.Args[2].Trim('"'), e.Args[3].Trim('"'), Conversions.ToBoolean(e.Args[4]));
-                        Environment.Exit((int)ModBase.ProcessReturnValues.TaskDone);
-                    }
-                    else if (e.Args[0] == "--gpu")
+                    if (e.Args[0] == "--gpu")
                     {
                         // 调整显卡设置
                         try
@@ -95,28 +89,6 @@ namespace PCL
                         {
                             Environment.Exit((int)ModBase.ProcessReturnValues.Fail);
                         }
-                    }
-                    else if (e.Args[0] == "--memory")
-                    {
-                        // 内存优化
-                        ulong Ram = VbCompat.Computer.Info.AvailablePhysicalMemory;
-                        try
-                        {
-                            PageOtherTest.MemoryOptimizeInternal(false);
-                        }
-                        catch (Exception ex)
-                        {
-                            Interaction.MsgBox(ex.Message, MsgBoxStyle.Critical, "内存优化失败");
-                            Environment.Exit(-1);
-                        }
-                        if (VbCompat.Computer.Info.AvailablePhysicalMemory < Ram) // 避免 ULong 相减出现负数
-                        {
-                            Environment.Exit(0);
-                        }
-                        else
-                        {
-                            Environment.Exit((int)Math.Round((VbCompat.Computer.Info.AvailablePhysicalMemory - Ram) / 1024d));
-                        } // 返回清理的内存量（K）
                     }
                 }
                 // 初始化文件结构

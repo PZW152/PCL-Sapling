@@ -171,38 +171,6 @@ namespace PCL
 
         #endregion
 
-        #region 更新
-
-        internal static void UpdateCheckByButton()
-        {
-            ModMain.Hint("该版本中不包含更新功能……");
-        }
-
-        internal static bool IsUpdateWaitingRestart = false;
-        public static void UpdateRestart(bool TriggerRestartAndByEnd)
-        {
-        }
-        public static void UpdateReplace(int ProcessId, string OldFileName, string NewFileName, bool TriggerRestart)
-        {
-        }
-
-        /// <summary>
-    /// 确保 PathTemp/Latest.exe 是最新正式版的 PCL，它会被用于整合包打包。
-    /// 如果不是，则下载一个。
-    /// </summary>
-        internal static void DownloadLatestPCL(ModLoader.LoaderBase LoaderToSyncProgress = null)
-        {
-            // 注意：如果要自行实现这个功能，请换用另一个文件路径，以免与官方版本冲突
-        }
-
-        #endregion
-
-        #region 联网配置
-
-        public static ModLoader.LoaderTask<int, int> ServerLoader = new ModLoader.LoaderTask<int, int>("PCL 配置更新", _ => Logger.Info("该版本中不包含更新通知功能……"), Priority: ThreadPriority.BelowNormal) { ReloadTimeout = 1000 * 60 * 60 }; // 超时 1 小时
-
-        #endregion
-
         #region 识别码
 
         /// <summary>

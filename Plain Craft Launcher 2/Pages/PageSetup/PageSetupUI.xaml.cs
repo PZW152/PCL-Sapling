@@ -335,7 +335,6 @@ namespace PCL
             {
                 case 0: // 无
                     {
-                        ModMain.FrmSetupUI.PanCustomPreset.Visibility = Visibility.Collapsed;
                         ModMain.FrmSetupUI.PanCustomLocal.Visibility = Visibility.Collapsed;
                         ModMain.FrmSetupUI.PanCustomNet.Visibility = Visibility.Collapsed;
                         ModMain.FrmSetupUI.HintCustom.Visibility = Visibility.Collapsed;
@@ -344,7 +343,6 @@ namespace PCL
                     }
                 case 1: // 本地
                     {
-                        ModMain.FrmSetupUI.PanCustomPreset.Visibility = Visibility.Collapsed;
                         ModMain.FrmSetupUI.PanCustomLocal.Visibility = Visibility.Visible;
                         ModMain.FrmSetupUI.PanCustomNet.Visibility = Visibility.Collapsed;
                         ModMain.FrmSetupUI.HintCustom.Visibility = Visibility.Visible;
@@ -355,23 +353,12 @@ namespace PCL
                     }
                 case 2: // 联网
                     {
-                        ModMain.FrmSetupUI.PanCustomPreset.Visibility = Visibility.Collapsed;
                         ModMain.FrmSetupUI.PanCustomLocal.Visibility = Visibility.Collapsed;
                         ModMain.FrmSetupUI.PanCustomNet.Visibility = Visibility.Visible;
                         ModMain.FrmSetupUI.HintCustom.Visibility = Visibility.Visible;
                         ModMain.FrmSetupUI.HintCustomWarn.Visibility = Settings.Get<bool>("HintCustomWarn") ? Visibility.Collapsed : Visibility.Visible;
-                        ModMain.FrmSetupUI.HintCustom.Text = $"从指定网址联网获取主页内容。服主也可以用于动态更新服务器公告。{Constants.vbCrLf}如果你制作了稳定运行的联网主页，可以点击这条提示投稿，若合格即可加入预设！";
-                        CustomEventService.SetEventType(ModMain.FrmSetupUI.HintCustom, CustomEvent.EventType.打开网页);
-                        CustomEventService.SetEventData(ModMain.FrmSetupUI.HintCustom, "https://github.com/Meloong-Git/PCL/discussions/2528");
-                        break;
-                    }
-                case 3: // 预设
-                    {
-                        ModMain.FrmSetupUI.PanCustomPreset.Visibility = Visibility.Visible;
-                        ModMain.FrmSetupUI.PanCustomLocal.Visibility = Visibility.Collapsed;
-                        ModMain.FrmSetupUI.PanCustomNet.Visibility = Visibility.Collapsed;
-                        ModMain.FrmSetupUI.HintCustom.Visibility = Visibility.Collapsed;
-                        ModMain.FrmSetupUI.HintCustomWarn.Visibility = Visibility.Collapsed;
+                        ModMain.FrmSetupUI.HintCustom.Text = $"从指定网址联网获取主页内容。服主也可以用于动态更新服务器公告。{Constants.vbCrLf}请只使用你信任的网址。";
+                        CustomEventService.SetEventType(ModMain.FrmSetupUI.HintCustom, CustomEvent.EventType.None);
                         break;
                     }
             }
@@ -504,19 +491,10 @@ namespace PCL
                     OtherAvaliableCount += 1;
                 if (!Settings.Get<bool>("UiHiddenOtherAbout"))
                     OtherAvaliableCount += 1;
-                if (!Settings.Get<bool>("UiHiddenOtherTest"))
-                    OtherAvaliableCount += 1;
-                if (!Settings.Get<bool>("UiHiddenOtherFeedback"))
-                    OtherAvaliableCount += 1;
-                if (!Settings.Get<bool>("UiHiddenOtherVote"))
-                    OtherAvaliableCount += 1;
                 if (ModMain.FrmOtherLeft is not null)
                 {
                     ModMain.FrmOtherLeft.ItemHelp.Visibility = !HiddenForceShow && Settings.Get<bool>("UiHiddenOtherHelp") ? Visibility.Collapsed : Visibility.Visible;
-                    ModMain.FrmOtherLeft.ItemFeedback.Visibility = !HiddenForceShow && Settings.Get<bool>("UiHiddenOtherFeedback") ? Visibility.Collapsed : Visibility.Visible;
-                    ModMain.FrmOtherLeft.ItemVote.Visibility = !HiddenForceShow && Settings.Get<bool>("UiHiddenOtherVote") ? Visibility.Collapsed : Visibility.Visible;
                     ModMain.FrmOtherLeft.ItemAbout.Visibility = !HiddenForceShow && Settings.Get<bool>("UiHiddenOtherAbout") ? Visibility.Collapsed : Visibility.Visible;
-                    ModMain.FrmOtherLeft.ItemTest.Visibility = !HiddenForceShow && Settings.Get<bool>("UiHiddenOtherTest") ? Visibility.Collapsed : Visibility.Visible;
                     // 隐藏左边选择卡
                     ModMain.FrmOtherLeft.PanItem.Visibility = OtherAvaliableCount < 2 && !HiddenForceShow ? Visibility.Collapsed : Visibility.Visible;
                 }
@@ -596,54 +574,19 @@ namespace PCL
             {
                 // 开启
                 this.CheckHiddenOtherAbout.Checked = true;
-                this.CheckHiddenOtherTest.Checked = true;
-                this.CheckHiddenOtherFeedback.Checked = true;
-                this.CheckHiddenOtherVote.Checked = true;
                 this.CheckHiddenOtherHelp.Checked = true;
             }
             // 关闭
-            else if (Settings.Get<bool>("UiHiddenOtherHelp") && Settings.Get<bool>("UiHiddenOtherAbout") && Settings.Get<bool>("UiHiddenOtherTest") && Settings.Get<bool>("UiHiddenOtherVote") && Settings.Get<bool>("UiHiddenOtherFeedback"))
+            else if (Settings.Get<bool>("UiHiddenOtherHelp") && Settings.Get<bool>("UiHiddenOtherAbout"))
             {
                 this.CheckHiddenOtherAbout.Checked = false;
-                this.CheckHiddenOtherTest.Checked = false;
-                this.CheckHiddenOtherFeedback.Checked = false;
-                this.CheckHiddenOtherVote.Checked = false;
                 this.CheckHiddenOtherHelp.Checked = false;
             }
         }
         private void HiddenOtherSub(object sender, bool user)
         {
-            // 更多子页面（有具体内容的）
-            if (Settings.Get<bool>("UiHiddenOtherHelp") && Settings.Get<bool>("UiHiddenOtherAbout") && Settings.Get<bool>("UiHiddenOtherTest"))
-            {
-                // 已被全部隐藏
-                this.CheckHiddenPageOther.Checked = true;
-            }
-            else
-            {
-                // 未被全部隐藏
-                this.CheckHiddenPageOther.Checked = false;
-            }
-            // 修改无具体内容的项
-            if (!user)
-                return;
-            if (Settings.Get<bool>("UiHiddenOtherHelp") && Settings.Get<bool>("UiHiddenOtherAbout") && Settings.Get<bool>("UiHiddenOtherTest"))
-            {
-                this.CheckHiddenOtherFeedback.Checked = true;
-                this.CheckHiddenOtherVote.Checked = true;
-            }
-        }
-        private void HiddenOtherNet(object sender, bool user)
-        {
-            // 更多子页面（无具体内容的）
-            if (!user)
-                return;
-            if (Settings.Get<bool>("UiHiddenOtherHelp") && Settings.Get<bool>("UiHiddenOtherAbout") && Settings.Get<bool>("UiHiddenOtherTest") && (!Settings.Get<bool>("UiHiddenOtherFeedback") || !Settings.Get<bool>("UiHiddenOtherVote")))
-            {
-                this.CheckHiddenOtherAbout.Checked = false;
-                this.CheckHiddenOtherTest.Checked = false;
-                this.CheckHiddenOtherHelp.Checked = false;
-            }
+            // 更多子页面：全部隐藏时，连同主页面一起隐藏
+            this.CheckHiddenPageOther.Checked = Settings.Get<bool>("UiHiddenOtherHelp") && Settings.Get<bool>("UiHiddenOtherAbout");
         }
 
         // 警告提示

@@ -11,17 +11,5 @@ namespace PCL
         {
             this.PageCheck((global::System.Windows.FrameworkElement)p0, p1);
         }
-        private void __On_ItemTest_Check(object p0, global::PCL.ModBase.RouteEventArgs p1)
-        {
-            this.PageCheck((global::System.Windows.FrameworkElement)p0, p1);
-        }
-        private void __On_ItemFeedback_Changed(object p0, global::PCL.ModBase.RouteEventArgs p1)
-        {
-            this.TryFeedback(p0, p1);
-        }
-        private void __On_ItemVote_Changed(object p0, global::PCL.ModBase.RouteEventArgs p1)
-        {
-            this.TryVote(p0, p1);
-        }
     }
 }

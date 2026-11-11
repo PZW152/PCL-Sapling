@@ -93,18 +93,6 @@ namespace PCL
         {
             this.HiddenOtherSub(p0, p1);
         }
-        private void __On_CheckHiddenOtherTest_Change(object p0, bool p1)
-        {
-            this.HiddenOtherSub(p0, p1);
-        }
-        private void __On_CheckHiddenOtherFeedback_Change(object p0, bool p1)
-        {
-            this.HiddenOtherNet(p0, p1);
-        }
-        private void __On_CheckHiddenOtherVote_Change(object p0, bool p1)
-        {
-            this.HiddenOtherNet(p0, p1);
-        }
         private void __On_CheckHiddenFunctionHidden_Change(object p0, bool p1)
         {
             this.HiddenHint(p0, p1);

@@ -11,18 +11,6 @@ namespace PCL
         {
             this.CheckDebugMode_Change();
         }
-        private void __On_ComboSystemActivity_SelectionChanged(object p0, global::System.Windows.Controls.SelectionChangedEventArgs p1)
-        {
-            this.ComboSystemActivity_SelectionChanged(p0, p1);
-        }
-        private void __On_ComboSystemUpdate_SelectionChanged(object p0, global::System.Windows.Controls.SelectionChangedEventArgs p1)
-        {
-            this.ComboSystemUpdate_SelectionChanged(p0, p1);
-        }
-        private void __On_BtnSystemUpdate_Click(object p0, global::System.Windows.Input.MouseButtonEventArgs p1)
-        {
-            this.BtnSystemUpdate_Click(p0, p1);
-        }
         private void __On_BtnSystemSettingExp_Click(object p0, global::System.Windows.Input.MouseButtonEventArgs p1)
         {
             this.BtnSystemSettingExp_Click(p0, p1);

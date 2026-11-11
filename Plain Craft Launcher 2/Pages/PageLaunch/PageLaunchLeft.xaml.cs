@@ -40,9 +40,6 @@ namespace PCL
             if (IsLoad)
                 RefreshPage(true, false);
 
-            this.AprilPosTrans.X = 0d;
-            this.AprilPosTrans.Y = 0d;
-
             if (IsLoad)
                 return;
             IsLoad = true;
@@ -209,13 +206,9 @@ namespace PCL
             this.LabLaunchingDownloadLeft.Visibility = Visibility.Collapsed;
             this.ProgressLaunchingFinished.Width = new GridLength(0d, GridUnitType.Star);
             this.ProgressLaunchingUnfinished.Width = new GridLength(1d, GridUnitType.Star);
-            this.PanLaunchingHint.Opacity = 0d;
-            this.PanLaunchingHint.Visibility = Visibility.Collapsed;
             this.PanLaunchingInfo.Width = double.NaN; // 重置宽度改变动画
             ModLaunch.McLaunchProcess = null;
             ModLaunch.McLaunchWatcher = null;
-            // 获取 “你知道吗” 提示
-            this.LabLaunchingHint.Text = PageOtherTest.GetRandomHint();
             // 初始化其他页面
             this.PanInput.IsHitTestVisible = false;
             this.PanLaunching.IsHitTestVisible = false;
@@ -653,17 +646,6 @@ namespace PCL
         {
             if (ModLaunch.McLaunchLoader.State == ModBase.LoadState.Loading || !this.BtnLaunch.IsEnabled || ModMain.FrmMain.PageRight is not null && ModMain.FrmMain.PageRight.PageState != MyPageRight.PageStates.ContentStay && ModMain.FrmMain.PageRight.PageState != MyPageRight.PageStates.ContentEnter)
                 return;
-            // 愚人节处理
-            if (ModMain.IsAprilEnabled && !ModMain.IsAprilGiveup)
-            {
-                ModMain.IsAprilGiveup = true;
-                Settings.Set("AprilYear", DateTime.Now.Year);
-                ModMain.FrmLaunchLeft.AprilScaleTrans.ScaleX = 1d;
-                ModMain.FrmLaunchLeft.AprilScaleTrans.ScaleY = 1d;
-                ModMain.FrmLaunchLeft.AprilPosTrans.X = 0d;
-                ModMain.FrmLaunchLeft.AprilPosTrans.Y = 0d;
-                ModMain.FrmMain.BtnExtraApril.ShowRefresh();
-            }
             // 实际的启动
             if (this.BtnLaunch.Text == "启动游戏")
             {
@@ -887,9 +869,7 @@ namespace PCL
                 {
                     this.LabLaunchingProgress.Visibility = Visibility.Visible;
                     this.LabLaunchingProgressLeft.Visibility = Visibility.Visible;
-                    if (IsLaunched)
-                        this.PanLaunchingHint.Visibility = Visibility.Visible;
-                    AnimList.AddRange(new[] { ModAnimation.AaOpacity(this.LabLaunchingProgress, (double)(!IsLaunched ? 1 : 0) - this.LabLaunchingProgress.Opacity, 90), ModAnimation.AaOpacity(this.LabLaunchingProgressLeft, (!IsLaunched ? 0.5d : 0d) - this.LabLaunchingProgressLeft.Opacity, 90), ModAnimation.AaOpacity(this.PanLaunchingHint, (double)(IsLaunched ? 1 : 0) - this.PanLaunchingHint.Opacity, 90) });
+                    AnimList.AddRange(new[] { ModAnimation.AaOpacity(this.LabLaunchingProgress, (double)(!IsLaunched ? 1 : 0) - this.LabLaunchingProgress.Opacity, 90), ModAnimation.AaOpacity(this.LabLaunchingProgressLeft, (!IsLaunched ? 0.5d : 0d) - this.LabLaunchingProgressLeft.Opacity, 90) });
                 }
                 ModAnimation.AniStart(AnimList, "Launching Progress");
             }

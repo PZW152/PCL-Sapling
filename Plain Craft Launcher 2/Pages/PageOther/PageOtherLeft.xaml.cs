@@ -19,8 +19,6 @@ namespace PCL
                 IsHiddenPage = true;
             if (this.ItemAbout.Checked && Settings.Get<bool>("UiHiddenOtherAbout"))
                 IsHiddenPage = true;
-            if (this.ItemTest.Checked && Settings.Get<bool>("UiHiddenOtherTest"))
-                IsHiddenPage = true;
             if (PageSetupUI.HiddenForceShow)
                 IsHiddenPage = false;
             // 若页面错误，或尚未加载，则继续
@@ -36,13 +34,9 @@ namespace PCL
             {
                 this.ItemHelp.SetChecked(true, false, false);
             }
-            else if (!Settings.Get<bool>("UiHiddenOtherAbout"))
-            {
-                this.ItemAbout.SetChecked(true, false, false);
-            }
             else
             {
-                this.ItemTest.SetChecked(true, false, false);
+                this.ItemAbout.SetChecked(true, false, false);
             }
         }
         private void PageOtherLeft_Unloaded(object sender, RoutedEventArgs e)
@@ -64,13 +58,9 @@ namespace PCL
             {
                 PageID = FormMain.PageSubType.OtherHelp;
             }
-            else if (!Settings.Get<bool>("UiHiddenOtherAbout"))
-            {
-                PageID = FormMain.PageSubType.OtherAbout;
-            }
             else
             {
-                PageID = FormMain.PageSubType.OtherTest;
+                PageID = FormMain.PageSubType.OtherAbout;
             }
 
             this.Loaded += PageOtherLeft_Loaded;
@@ -105,12 +95,6 @@ namespace PCL
                         if (ModMain.FrmOtherAbout is null)
                             ModMain.FrmOtherAbout = new PageOtherAbout();
                         return ModMain.FrmOtherAbout;
-                    }
-                case FormMain.PageSubType.OtherTest:
-                    {
-                        if (ModMain.FrmOtherTest is null)
-                            ModMain.FrmOtherTest = new PageOtherTest();
-                        return ModMain.FrmOtherTest;
                     }
 
                 default:
@@ -189,51 +173,6 @@ namespace PCL
             ModMain.FrmOtherHelp.SearchBox.Text = "";
         }
 
-        // 打开网页
-        private void TryFeedback(object sender, ModBase.RouteEventArgs e)
-        {
-            if (!this.ItemFeedback.Checked)
-                return;
-            TryFeedback();
-            e.Handled = true;
-        }
-        public static void TryFeedback()
-        {
-            if (false.Equals(PageSetupSystem.IsLauncherNewest()))
-            {
-                if (ModMain.MyMsgBox($"你的 PCL 不是最新版，因此无法提交反馈。{Constants.vbCrLf}请在更新后，确认该问题在最新版中依然存在，然后再提交反馈。", "无法提交反馈", "更新", "取消") == 1)
-                {
-                    ModSecret.UpdateCheckByButton();
-                }
-                return;
-            }
-            switch (ModMain.MyMsgBox("在提交新反馈前，建议先搜索反馈列表，以避免重复提交。" + Constants.vbCrLf + "如果无法打开该网页，请使用 VPN 改善网络环境。", "反馈", "提交新反馈", "查看反馈列表", "取消"))
-            {
-                case 1:
-                    {
-                        ModMain.Feedback(true, false);
-                        break;
-                    }
-                case 2:
-                    {
-                        ModBase.OpenWebsite("https://github.com/Meloong-Git/PCL/issues/");
-                        break;
-                    }
-            }
-        }
-        private void TryVote(object sender, ModBase.RouteEventArgs e)
-        {
-            if (!this.ItemVote.Checked)
-                return;
-            TryVote();
-            e.Handled = true;
-        }
-        public static void TryVote()
-        {
-            if (ModMain.MyMsgBox("是否要打开新功能投票网页？" + Constants.vbCrLf + "如果无法打开该网页，请使用 VPN 改善网络环境。", "新功能投票", "打开", "取消") == 2)
-                return;
-            ModBase.OpenWebsite("https://github.com/Meloong-Git/PCL/discussions/categories/%E5%8A%9F%E8%83%BD%E6%8A%95%E7%A5%A8?discussions_q=category%3A%E5%8A%9F%E8%83%BD%E6%8A%95%E7%A5%A8+sort%3Adate_created");
-        }
 
     }
 }

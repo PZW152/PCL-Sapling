@@ -30,10 +30,5 @@ namespace PCL
 
         }
 
-        private void BtnAboutUpdate_Click(object sender, MouseButtonEventArgs e)
-        {
-            ModSecret.UpdateCheckByButton();
-        }
-
     }
 }
