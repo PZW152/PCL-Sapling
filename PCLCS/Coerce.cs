@@ -1,14 +1,13 @@
-using System;
+#nullable disable // 弱类型转换本身就以 null 为合法输入与输出
 using System.Globalization;
-using System.Text;
 
-namespace PCL
+namespace PCLCS
 {
     /// <summary>
     /// 弱类型值的转换与比较。
     /// 设置项、控件 Tag、INI / 注册表读取到的值在运行时可能是字符串、数字或布尔值；
     /// 本类以确定的规则在它们之间转换，规则与原先使用的 VB 运行库逐项一致（由 PCL.Tests 中的对照测试保证），
-    /// 因此主程序不再需要引用 Microsoft.VisualBasic。
+    /// 因此各工程不再需要引用 Microsoft.VisualBasic。
     /// </summary>
     public static class Coerce
     {

@@ -1121,7 +1121,7 @@ namespace PCL
                 CustomArg = ModMain.ArgumentReplace(CustomArg);
 
             // 重新分割字符串并去重
-            Args = DeduplicateJavaArguments(SplitJavaArguments(Args.Join(' ').Replace("McEmu= ", "McEmu=") + " " + CustomArg).ToList(), true);
+            Args = JavaArguments.Deduplicate(JavaArguments.Split(Args.Join(' ').Replace("McEmu= ", "McEmu=") + " " + CustomArg).ToList(), true, Text => McLaunchLog(Text));
 
             // JLW
             // 非 GBK 编码下命令行参数乱码的问题（JDK-8272352）
@@ -1256,7 +1256,7 @@ namespace PCL
             }
 
             // 再次去重并输出
-            return DeduplicateJavaArguments(Args, true);
+            return JavaArguments.Deduplicate(Args, true, Text => McLaunchLog(Text));
         }
         // 游戏参数部分
         private static List<string> McLaunchArgumentsGame()
@@ -1353,7 +1353,7 @@ namespace PCL
             }
 
             // 重新分割字符串并去重
-            var Args = DeduplicateJavaArguments(SplitJavaArguments(Arg).ToList(), false);
+            var Args = JavaArguments.Deduplicate(JavaArguments.Split(Arg).ToList(), false, Text => McLaunchLog(Text));
 
             // 额外传入的参数
             Args.AddRange(CurrentLaunchOptions.ExtraGameArgs);
@@ -1397,7 +1397,7 @@ namespace PCL
             }
 
             // 再次去重并输出
-            return DeduplicateJavaArguments(Args, false);
+            return JavaArguments.Deduplicate(Args, false, Text => McLaunchLog(Text));
         }
         // 获取替换标记
         private static IEnumerable<(string Key, string Value)> McLaunchArgumentsReplace(List<string> Arguments)
@@ -1497,111 +1497,6 @@ namespace PCL
             if (OptiFineCp is not null)
                 Cps.Insert(Cps.Count - 2, OptiFineCp); // OptiFine 的总是需要放到倒数第二位
             yield return ("${classpath}", Enumerable.Select<string, string>((IEnumerable<string>)Cps, c => PathUtils.ToShortPath(c)).Join(';'));
-        }
-
-        /// <summary>
-    /// 分割 Java 参数字符串。
-    /// </summary>
-        private static IEnumerable<string> SplitJavaArguments(string Arg)
-        {
-            Arg = Arg.ReplaceLineEndings(" ", mergeMultiple: true).Trim(); // 预处理换行符
-            if (string.IsNullOrWhiteSpace(Arg))
-                yield break;
-            var Current = new StringBuilder();
-            bool InQuotes = false;
-            int i = 0;
-            while (i < Arg.Length)
-            {
-                char c = Arg[i];
-                if (c == '\\' && i + 1 < Arg.Length && Arg[i + 1] == '"') // 检测 \"
-                {
-                    // 转义的双引号：保留反斜杠和引号，不切换 InQuotes
-                    Current.Append(@"\""");
-                    i += 1; // 额外跳过下一个字符（双引号）
-                }
-                else if (c == '"')
-                {
-                    // 未转义的双引号：切换 InQuotes
-                    InQuotes = !InQuotes;
-                    Current.Append(c);
-                }
-                else if (c == ' ' && !InQuotes)
-                {
-                    // 不在双引号内的空格：一个参数结束
-                    if (Current.Length > 0)
-                    {
-                        yield return Current.ToString();
-                        Current.Clear();
-                    }
-                }
-                else
-                {
-                    // 普通字符，直接添加
-                    Current.Append(c);
-                }
-                i += 1;
-            }
-            if (Current.Length > 0)
-                yield return Current.ToString(); // 添加剩余的
-        }
-        /// <summary>
-    /// 对 Java 参数进行去重。
-    /// </summary>
-        private static List<string> DeduplicateJavaArguments(List<string> Args, bool IsJVMArgs)
-        {
-            var Result = new List<string>();
-            int i = 0;
-            while (i < Args.Count)
-            {
-                string Key = Args[i];
-                if (!Key.StartsWithF("-") || i + 1 >= Args.Count || Args[i + 1].StartsWithF("-") && ModBase.Val(Args[i + 1].AfterFirst("-")) == 0d) // 避免 -xPos 23 -xPos -50 中后面的 -50 被识别为参数
-                {
-                    // 单参数
-                    i += 1;
-                    if (Result.Contains(Key))
-                    {
-                        McLaunchLog($"已去重单个{(IsJVMArgs ? " JVM " : "游戏")}参数：{Key}");
-                        continue;
-                    }
-                    Result.Add(Key);
-                }
-                else
-                {
-                    // 以空格间隔的键值对（例如 --width 233）
-                    string Value = Args[i + 1];
-                    i += 2;
-                    bool continueWhile = false;
-                    for (int j = 0, loopTo = Result.Count - 2; j <= loopTo; j++) // 向前寻找相同的键
-                    {
-                        if ((Result[j] ?? "") != (Key ?? ""))
-                            continue;
-                        // 仅当是游戏参数且不是 tweakClass 时，用新的值覆盖旧的值
-                        // 据测试，如果包含多个相同 --width 或 --uuid 等参数，两个都会直接失效，如果这发生在关键参数上会导致崩溃
-                        if (!IsJVMArgs && Key != "--tweakClass")
-                        {
-                            McLaunchLog($"已覆盖重复的{(IsJVMArgs ? " JVM " : "游戏")}参数：{Key} {Result[j + 1]} → {Key} {Value}");
-                            Result[j + 1] = Value;
-                            continueWhile = true;
-                            break;
-                        }
-                        // 键和值完全相同，直接抛弃
-                        if ((Result[j + 1] ?? "") == (Value ?? ""))
-                        {
-                            McLaunchLog($"已去重{(IsJVMArgs ? " JVM " : "游戏")}参数对：{Key} {Value}");
-                            continueWhile = true;
-                            break;
-                        }
-                    }
-
-                    if (continueWhile)
-                    {
-                        continue;
-                    }
-                    Result.Add(Key);
-                    Result.Add(Value);
-                }
-            }
-            return Result;
         }
 
         #endregion

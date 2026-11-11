@@ -19,14 +19,17 @@
 		</PackageReference>
 	</ItemGroup>
 
-	<!-- 对照测试用：主程序已不引用 Microsoft.VisualBasic，这里引用它只是为了证明 Coerce 的行为与其一致 -->
+	<!-- 对照测试用：各工程已不引用 Microsoft.VisualBasic，这里引用它只是为了证明 Coerce 的行为与其一致 -->
 	<ItemGroup>
 		<Reference Include="Microsoft.VisualBasic" />
 	</ItemGroup>
 
-	<!-- 直接编译主程序中不依赖界面的源文件 -->
 	<ItemGroup>
-		<Compile Include="..\Plain Craft Launcher 2\Modules\Base\Coerce.cs" Link="Linked\Coerce.cs" />
+		<ProjectReference Include="..\PCLCS\PCLCS.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="PCLCS" />
 	</ItemGroup>
 
 </Project>
