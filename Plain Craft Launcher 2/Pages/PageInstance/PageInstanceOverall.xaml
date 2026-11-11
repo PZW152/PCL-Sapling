@@ -10,6 +10,13 @@
             <local:MyCard Margin="0,15" Title="">
                 <Grid Margin="10,7" Name="PanDisplayItem" />
             </local:MyCard>
+            <local:MyCard Margin="0,0,0,15" Title="存档与服务器" x:Name="CardSaves" Visibility="Collapsed">
+                <StackPanel Margin="20,38,18,12">
+                    <StackPanel x:Name="PanSaves" />
+                    <TextBlock x:Name="LabSavesHint" Margin="5,4,0,2" FontSize="12" Foreground="{StaticResource ColorBrushGray1}" TextWrapping="Wrap"
+                               Text="1.20 以前的版本不支持直接进入世界，点击后会正常启动游戏。" Visibility="Collapsed" />
+                </StackPanel>
+            </local:MyCard>
             <local:MyCard Margin="0,0,0,15" Title="个性化" x:Name="PanDisplay">
                 <StackPanel Margin="25,40,25,15">
                     <Grid x:Name="PanDisplayIcon" HorizontalAlignment="Stretch">

@@ -71,6 +71,7 @@ namespace PCL
                 Logger.Warn(ex, "读取游玩时间失败");
             }
             this.PanDisplayItem.Children.Add(InstanceHeaderItem);
+            RefreshSaves();
             ModMain.FrmMain.PageNameRefresh();
             // 刷新版本图标
             this.ComboDisplayLogo.SelectedIndex = 0;
@@ -408,6 +409,89 @@ namespace PCL
             {
                 Logger.Error(ex, $"删除版本 {PageInstanceLeft.Instance.Name} 失败", LogBehavior.Alert);
             }
+        }
+
+        #endregion
+
+
+        #region 存档与服务器
+
+        /// <summary>
+        /// 列出最近的单人世界与游戏里保存的服务器：点击直接进入，世界可以一键备份。
+        /// </summary>
+        private void RefreshSaves()
+        {
+            this.PanSaves.Children.Clear();
+            var Instance = PageInstanceLeft.Instance;
+            List<SavedWorld> Worlds;
+            List<SavedServer> Servers;
+            try
+            {
+                Worlds = SavedGames.RecentWorlds(Instance.PathIndie, 5);
+                Servers = SavedGames.ReadServers(Instance.PathIndie).Take(5).ToList();
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "读取存档与服务器失败");
+                this.CardSaves.Visibility = Visibility.Collapsed;
+                return;
+            }
+            bool CanQuickPlay = Instance.ReleaseTime > new DateTime(2023, 4, 4);
+            foreach (var World in Worlds)
+            {
+                var Item = new MyListItem
+                {
+                    Title = World.Folder,
+                    Info = "单人世界，上次游玩：" + PlayTime.FormatLastPlayed(World.LastPlayed, DateTime.Now),
+                    Logo = "pack://application:,,,/images/Blocks/Grass.png",
+                    Type = MyListItem.CheckType.Clickable,
+                    Height = 42d,
+                    Tag = World.Folder
+                };
+                Item.Click += (sender, e) => LaunchInto(Instance, World.Folder, null);
+                var BtnBackup = new MyIconButton { Logo = ModBase.Logo.IconButtonSave, LogoScale = 1.05d, ToolTip = "备份这个世界" };
+                BtnBackup.Click += (sender, e) => BackupWorld(Instance, World.Folder);
+                Item.Buttons = new[] { BtnBackup };
+                this.PanSaves.Children.Add(Item);
+            }
+            foreach (var Server in Servers)
+            {
+                var Item = new MyListItem
+                {
+                    Title = string.IsNullOrWhiteSpace(Server.Name) ? Server.Address : Server.Name,
+                    Info = "服务器：" + Server.Address,
+                    Logo = "pack://application:,,,/images/Blocks/CommandBlock.png",
+                    Type = MyListItem.CheckType.Clickable,
+                    Height = 42d
+                };
+                Item.Click += (sender, e) => LaunchInto(Instance, null, Server.Address);
+                this.PanSaves.Children.Add(Item);
+            }
+            this.LabSavesHint.Visibility = Worlds.Any() && !CanQuickPlay ? Visibility.Visible : Visibility.Collapsed;
+            this.CardSaves.Visibility = Worlds.Any() || Servers.Any() ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private static void LaunchInto(ModMinecraft.McInstance Instance, string WorldFolder, string ServerAddress)
+        {
+            ModLaunch.McLaunchStart(new ModLaunch.McLaunchOptions { Instance = Instance, WorldFolder = WorldFolder, ServerIp = ServerAddress });
+        }
+
+        private void BackupWorld(ModMinecraft.McInstance Instance, string Folder)
+        {
+            ModMain.Hint("正在备份世界 " + Folder + "……");
+            ModBase.RunInNewThread(() =>
+            {
+                try
+                {
+                    string Name = SavedGames.BackupWorld(Instance.PathIndie, Folder, DateTime.Now);
+                    ModMain.Hint("已备份为 " + Name + "。要还原时，在游戏里打开这个世界即可。", ModMain.HintType.Green);
+                    ModBase.RunInUi(() => { if (PageInstanceLeft.Instance == Instance) RefreshSaves(); });
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "备份世界失败", LogBehavior.Alert);
+                }
+            }, "Backup World");
         }
 
         #endregion

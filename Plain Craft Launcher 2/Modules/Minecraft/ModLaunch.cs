@@ -32,6 +32,11 @@ namespace PCL
         /// </summary>
             public string ServerIp = null;
             /// <summary>
+        /// 启动后直接进入的单人世界（saves 中的文件夹名）。仅 1.20 及以上版本支持。
+        /// 默认值：Nothing。
+        /// </summary>
+            public string WorldFolder = null;
+            /// <summary>
         /// 将启动脚本保存到该地址，然后取消启动。这同时会改变启动时的提示等。
         /// 默认值：Nothing。不保存。
         /// </summary>
@@ -1369,6 +1374,13 @@ namespace PCL
             if (Settings.Get<int>("LaunchArgumentWindowType") == 0)
                 Args.Add("--fullscreen");
 
+            // 直接进入单人世界
+            if (!string.IsNullOrEmpty(CurrentLaunchOptions.WorldFolder) && ModMinecraft.McInstanceSelected.ReleaseTime > new DateTime(2023, 4, 4))
+            {
+                Args.Add("--quickPlaySingleplayer");
+                Args.Add(CurrentLaunchOptions.WorldFolder);
+                return JavaArguments.Deduplicate(Args, false, Text => McLaunchLog(Text));
+            }
             // 自动进入服务器
             string Server = string.IsNullOrEmpty(CurrentLaunchOptions.ServerIp) ? Settings.Get<string>("VersionServerEnter", ModMinecraft.McInstanceSelected) : CurrentLaunchOptions.ServerIp;
             if (Server.Any())
