@@ -56,6 +56,20 @@ namespace PCL
             this.PanDisplayItem.Children.Clear();
             InstanceHeaderItem = PageInstanceLeft.Instance.ToListItem().Init();
             InstanceHeaderItem.IsHitTestVisible = false;
+            // 在版本描述后附上游玩时间
+            try
+            {
+                string IniPath = PageInstanceLeft.Instance.PathVersion + @"PCL\Setup.ini";
+                long Seconds = Coerce.ToLong(ModBase.ReadIni(IniPath, "PlayTimeSeconds", "0"));
+                long LastTicks = Coerce.ToLong(ModBase.ReadIni(IniPath, "LastPlayed", "0"));
+                string Played = PlayTime.Describe(TimeSpan.FromSeconds(Seconds), LastTicks > 0 ? new DateTime(LastTicks) : null, DateTime.Now);
+                if (Played != "")
+                    InstanceHeaderItem.Info = string.IsNullOrEmpty(InstanceHeaderItem.Info) ? Played : InstanceHeaderItem.Info + "；" + Played;
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "读取游玩时间失败");
+            }
             this.PanDisplayItem.Children.Add(InstanceHeaderItem);
             ModMain.FrmMain.PageNameRefresh();
             // 刷新版本图标

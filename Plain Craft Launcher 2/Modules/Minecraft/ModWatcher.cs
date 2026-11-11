@@ -93,6 +93,7 @@ namespace PCL
             public ModMinecraft.McInstance Instance;
             private string WindowTitle = "";
             private int PID;
+            private readonly DateTime StartedAt = DateTime.Now;
             public ModLoader.LoaderTask<Process, int> Loader;
             public Watcher(ModLoader.LoaderTask<Process, int> Loader, ModMinecraft.McInstance Instance, string WindowTitle)
             {
@@ -183,6 +184,7 @@ namespace PCL
                     {
                         WatcherLog("Minecraft 已退出，返回值：" + GameProcess.ExitCode);
                         ScrubTokenFromGameLogs();
+                        RecordPlayTime();
                         // If Process.ExitCode = 1 Then
                         // '返回值为 1，考虑是任务管理器结束
                         // WatcherLog("Minecraft 返回值为 1，考虑为任务管理器结束") '并不，崩了照样是 1
@@ -450,6 +452,24 @@ namespace PCL
                 catch (Exception ex)
                 {
                     Logger.Warn(ex, "清理游戏日志中的登录令牌失败");
+                }
+            }
+
+            /// <summary>
+            /// 把这次游戏的时长计入该版本的累计游玩时间，并记下上次游玩的时间。
+            /// </summary>
+            private void RecordPlayTime()
+            {
+                try
+                {
+                    string IniPath = Instance.PathVersion + @"PCL\Setup.ini";
+                    long Total = Coerce.ToLong(ModBase.ReadIni(IniPath, "PlayTimeSeconds", "0"));
+                    ModBase.WriteIni(IniPath, "PlayTimeSeconds", PlayTime.AddSession(Total, DateTime.Now - StartedAt).ToString());
+                    ModBase.WriteIni(IniPath, "LastPlayed", DateTime.Now.Ticks.ToString());
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, "记录游玩时间失败");
                 }
             }
 
