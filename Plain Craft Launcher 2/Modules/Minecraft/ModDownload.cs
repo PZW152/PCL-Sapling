@@ -74,12 +74,12 @@ namespace PCL
         /// <summary>
     /// 构造补全某 Minecraft 版本的所有文件的加载器列表。失败会抛出异常。
     /// </summary>
-        public static List<ModLoader.LoaderBase> DlClientFix(ModMinecraft.McInstance Instance, bool CheckAssetsHash, bool DownloadAssetIndexInBackground)
+        public static List<ModLoader.LoaderBase> DlClientFix(ModMinecraft.McInstance Instance, bool CheckAssetsHash, bool DownloadAssetIndexInBackground, bool CheckLibraryHash = true)
         {
             var Loaders = new List<ModLoader.LoaderBase>();
 
             #region 下载支持库文件
-            var LoadersLib = new List<ModLoader.LoaderBase>() { new ModLoader.LoaderTask<string, List<ModNet.NetFile>>("分析缺失支持库文件", (Task) => Task.Output = ModMinecraft.McLibNetFilesFromInstance(Instance)) { ProgressWeight = 1d }, new ModNet.LoaderDownload("下载支持库文件", new List<ModNet.NetFile>()) { ProgressWeight = 15d } };
+            var LoadersLib = new List<ModLoader.LoaderBase>() { new ModLoader.LoaderTask<string, List<ModNet.NetFile>>("分析缺失支持库文件", (Task) => Task.Output = ModMinecraft.McLibNetFilesFromInstance(Instance, CheckLibraryHash)) { ProgressWeight = 1d }, new ModNet.LoaderDownload("下载支持库文件", new List<ModNet.NetFile>()) { ProgressWeight = 15d } };
             // 构造加载器
             Loaders.Add(new ModLoader.LoaderCombo<string>("下载支持库文件（主加载器）", LoadersLib) { Block = false, Show = false, ProgressWeight = 16d });
             #endregion

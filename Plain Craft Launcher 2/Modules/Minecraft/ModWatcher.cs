@@ -182,6 +182,7 @@ namespace PCL
                     if (GameProcess.HasExited)
                     {
                         WatcherLog("Minecraft 已退出，返回值：" + GameProcess.ExitCode);
+                        ScrubTokenFromGameLogs();
                         // If Process.ExitCode = 1 Then
                         // '返回值为 1，考虑是任务管理器结束
                         // WatcherLog("Minecraft 返回值为 1，考虑为任务管理器结束") '并不，崩了照样是 1
@@ -430,12 +431,35 @@ namespace PCL
             [DllImport("user32")]
             private static extern int GetWindowThreadProcessId(IntPtr hWnd, ref int lpdwProcessId);
 
+            /// <summary>
+            /// 游戏自己的日志会原样记录启动参数；退出后把其中的登录令牌打码，避免玩家把日志发给别人时泄露。
+            /// </summary>
+            private void ScrubTokenFromGameLogs()
+            {
+                try
+                {
+                    var Login = ModLaunch.McLoginLoader.Output;
+                    if (Login.AccessToken is null || Login.AccessToken == Login.Uuid)
+                        return; // 离线登录没有真正的令牌
+                    foreach (string Name in new[] { "latest.log", "debug.log" })
+                    {
+                        if (SecretScrubber.ScrubFile(Instance.PathIndie + @"logs\" + Name, Login.AccessToken))
+                            WatcherLog("已从游戏日志中移除登录令牌：" + Name);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, "清理游戏日志中的登录令牌失败");
+                }
+            }
+
             // 崩溃处理
             private void Crashed()
             {
                 if (State == MinecraftState.Crashed || State == MinecraftState.Ended)
                     return;
                 State = MinecraftState.Crashed;
+                ModMinecraft.SetFullVerify(Instance, true); // 下一次启动时完整校验文件
                 // 崩溃分析
                 WatcherLog("Minecraft 已崩溃，将在 2 秒后开始崩溃分析", LogLevel.Error);
                 ModMain.Hint("检测到 Minecraft 出现错误，错误分析已开始……", ModMain.HintType.Red);

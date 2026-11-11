@@ -2320,7 +2320,8 @@ namespace PCL
         /// <summary>
     /// 获取版本所需支持库文件的 NetFile。
     /// </summary>
-        public static List<ModNet.NetFile> McLibNetFilesFromInstance(McInstance Instance)
+        /// <param name="CheckHash">是否校验文件的 Hash。为 False 时只确认文件存在且大小正确，用于日常启动。</param>
+        public static List<ModNet.NetFile> McLibNetFilesFromInstance(McInstance Instance, bool CheckHash = true)
         {
             if (!Instance.IsLoaded)
                 Instance.Load();
@@ -2342,6 +2343,16 @@ namespace PCL
 
             // Library 文件
             Result.AddRange(McLibNetFilesFromTokens(McLibListGet(Instance, false)));
+
+            // 日常启动：不重新计算 Hash（文件在下载时已校验过；崩溃后会改为完整校验）
+            if (!CheckHash)
+            {
+                foreach (var File in Result)
+                {
+                    if (File.Check is not null && File.Check.ActualSize > 0)
+                        File.Check.Hash = null;
+                }
+            }
 
             // 跳过校验
             if (Coerce.ToBool(ShouldIgnoreFileCheck(Instance)))
@@ -2428,6 +2439,24 @@ namespace PCL
         /// <summary>
     /// 检查设置，是否应当忽略文件检查？
     /// </summary>
+        /// <summary>
+        /// 该版本下一次启动是否需要完整校验文件。游戏崩溃后会被置为 True，完成一次完整校验后恢复为 False。
+        /// </summary>
+        public static bool ShouldFullVerify(McInstance Instance)
+        {
+            return Coerce.ToBool(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "FullVerifyOnNextLaunch", false.ToString()));
+        }
+        public static void SetFullVerify(McInstance Instance, bool Value)
+        {
+            try
+            {
+                ModBase.WriteIni(Instance.PathVersion + @"PCL\Setup.ini", "FullVerifyOnNextLaunch", Value.ToString());
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "记录文件校验状态失败");
+            }
+        }
         public static object ShouldIgnoreFileCheck(McInstance Instance)
         {
             return Settings.Get<bool>("VersionAdvanceAssetsV2", Instance: Instance) || Settings.Get<int>("VersionAdvanceAssets", Instance: Instance) == 2;

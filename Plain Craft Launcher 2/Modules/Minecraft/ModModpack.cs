@@ -567,6 +567,33 @@ namespace PCL
             }
             if (Json["dependencies"] is null || Json["dependencies"]["minecraft"] is null)
                 throw new Exception("Modrinth 整合包未提供 Minecraft 版本信息");
+            // 安装前检查：下载来源与附带的可执行文件
+            var Review = ModpackReview.ReviewModrinth(Json, Archive.Entries.Select(e => e.FullName));
+            if (Review.HasRisk)
+            {
+                var Warning = new StringBuilder("这个整合包有需要留意的地方：" + ModBase.CrLf);
+                if (Review.UntrustedHosts.Any())
+                {
+                    Warning.Append(ModBase.CrLf + "它会从 Modrinth、GitHub、CurseForge 以外的网站下载文件：" + ModBase.CrLf);
+                    foreach (string Host in Review.UntrustedHosts.Take(8))
+                        Warning.Append(" - " + Host + ModBase.CrLf);
+                    if (Review.UntrustedHosts.Count > 8)
+                        Warning.Append($" - ……等共 {Review.UntrustedHosts.Count} 个" + ModBase.CrLf);
+                }
+                if (Review.ExecutableFiles.Any())
+                {
+                    Warning.Append(ModBase.CrLf + "它直接附带了程序或脚本文件：" + ModBase.CrLf);
+                    foreach (string Entry in Review.ExecutableFiles.Take(8))
+                        Warning.Append(" - " + Entry + ModBase.CrLf);
+                    if (Review.ExecutableFiles.Count > 8)
+                        Warning.Append($" - ……等共 {Review.ExecutableFiles.Count} 个" + ModBase.CrLf);
+                }
+                Warning.Append(ModBase.CrLf + "这些内容没有经过资源站的审核。如果你不确定这个整合包的来源是否可靠，请不要安装。");
+                Logger.Warn($"整合包安全检查：非受信下载源 {Review.UntrustedHosts.Count} 个，可执行文件 {Review.ExecutableFiles.Count} 个");
+                if (ModMain.MyMsgBox(Warning.ToString(), "整合包安全提醒", "取消", "仍然安装", IsWarn: true) != 2)
+                    throw new OperationCanceledException();
+            }
+            Logger.Info($"整合包安全检查：需下载 {Review.DownloadCount} 个文件，附带 {Review.BundledJarCount} 个 jar");
             // 获取 Mod API 版本信息
             // TODO: 改为使用类似 InstallPackMMC 中，一个版本名一个字典的方式来存储它，不要用 Unknown
             var TargetVersion = new McVersion("Unknown");
