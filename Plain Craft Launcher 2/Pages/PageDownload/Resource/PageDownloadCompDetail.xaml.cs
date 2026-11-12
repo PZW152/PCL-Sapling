@@ -158,28 +158,15 @@ namespace PCL
             List<string> Filters = null;
             void UpdateFilters() => Filters = Results.SelectMany(v => v.GameVersions).Select(v => GetGroupedVersionName(v, GroupedDrop, GroupedOld)).Distinct().OrderByDescending(s => s, Comparer<string>.Create((x, y) => McUtils.CompareVersion(x, y))).ToList();
 
-            // 确定分组方式
-            GroupedDrop = false;
-            GroupedOld = false;
-            UpdateFilters();
-            if (Filters.Count < 9)
-                goto GroupDone;
-            GroupedDrop = true;
-            GroupedOld = false;
-            UpdateFilters();
-            if (Filters.Count < 9)
-                goto GroupDone;
-            GroupedDrop = false;
-            GroupedOld = true;
-            UpdateFilters();
-            if (Filters.Count < 9)
-                goto GroupDone;
-            GroupedDrop = true;
-            GroupedOld = true;
-            UpdateFilters();
-        GroupDone:
-            ;
-
+            // 确定分组方式：依次尝试更粗的分组，直到筛选项少于 9 个
+            foreach (var (Drop, Old) in new[] { (false, false), (true, false), (false, true), (true, true) })
+            {
+                GroupedDrop = Drop;
+                GroupedOld = Old;
+                UpdateFilters();
+                if (Filters.Count < 9)
+                    break;
+            }
 
             // UI 化筛选器
             this.PanFilter.Children.Clear();

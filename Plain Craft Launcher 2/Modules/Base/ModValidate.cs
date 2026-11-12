@@ -488,21 +488,17 @@ namespace PCL
             string Match = Str.RegexSeek(@".{2,}~\d");
             if (Match is not null)
                 return $"文件夹名不能包含 {Match} 这一特殊格式！";
-            // 检查开头
-            if (Str.StartsWithF(@"\\Mac\"))
-                goto Fin;
-            foreach (var Drive in Environment.GetLogicalDrives().Where(p => DirectoryUtils.Exists(p)))
+            // 检查开头：必须是 Mac 共享文件夹或某个存在的盘符；只有盘符本身时无需继续检查
+            if (!Str.StartsWithF(@"\\Mac\"))
             {
-                string DriveName = Drive.Upper().First() + @":\";
-                if ((Str.Upper() ?? "") == (DriveName ?? ""))
+                string DriveName = Environment.GetLogicalDrives().Where(p => DirectoryUtils.Exists(p))
+                    .Select(Drive => Drive.Upper().First() + @":\")
+                    .FirstOrDefault(Name => Str.StartsWithF(Name, true));
+                if (DriveName is null)
+                    return "文件夹路径头存在错误！";
+                if (Str.Upper() == DriveName)
                     return "";
-                if (Str.StartsWithF(DriveName, true))
-                    goto Fin;
             }
-            return "文件夹路径头存在错误！";
-        Fin:
-            ;
-
             // 对首层以外的路径检查
             for (int i = Str.StartsWithF(@"\\Mac\") ? 2 : 1, loopTo = Str.Split(@"\").Count() - 1; i <= loopTo; i++)
             {

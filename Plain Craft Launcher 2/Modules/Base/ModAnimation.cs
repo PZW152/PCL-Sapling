@@ -1024,20 +1024,19 @@ namespace PCL
                                     else
                                         ((FrameworkContentElement)ColorPair[0]).SetResourceReference((DependencyProperty)ColorPair[1], ColorPair[2]);
                                 }
-                                // 删除
+                                // 删除：下一个动画移到了当前位置，下标不变
                                 Entry.Data.RemoveAt(ii);
-                                goto NextAni;
+                                continue;
                             }
                             Entry.Data[ii] = Anim;
                         }
                         else if (CanRemoveAfter) // 之后
                         {
-                            // 之后改为之前
+                            // 之后改为之前，并重新处理该动画（下标不变）
                             CanRemoveAfter = false;
                             Anim.IsAfter = false;
                             Entry.Data[ii] = Anim;
-                            // 重新循环该动画
-                            goto NextAni;
+                            continue;
                         }
                         else
                         {
@@ -1045,9 +1044,6 @@ namespace PCL
                             break;
                         }
                         ii += 1;
-                    NextAni:
-                        ;
-
                     }
 
                     // 如果当前动画组都执行完毕则删除

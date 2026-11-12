@@ -113,11 +113,8 @@ namespace PCL
             // 开始实际获取
             ModBase.RunInNewThread(() => EditSkin(SkinInfo), "Ms Skin Upload");
         }
-        private void EditSkin(ModMinecraft.McSkinInfo SkinInfo)
+        private void EditSkin(ModMinecraft.McSkinInfo SkinInfo, bool IsRetry = false)
         {
-        Retry:
-            ;
-
             try
             {
                 while (ModLaunch.McLoginMsLoader.State == ModBase.LoadState.Loading) // 等待登录结束
@@ -129,9 +126,12 @@ namespace PCL
                 string Result = ModNet.NetRequestByClientRetry("https://api.minecraftservices.com/minecraft/profile/skins", HttpMethod.Post, Content: new MultipartFormDataContent() { { new StringContent(SkinInfo.IsSlim ? "slim" : "classic"), "variant" }, { new ByteArrayContent(FileUtils.ReadAsBytes(SkinInfo.LocalFile)), "file", PathUtils.GetLastPart(SkinInfo.LocalFile) } }, Headers: new[,] { { "Authorization", "Bearer " + AccessToken }, { "Accept", "*/*" }, { "User-Agent", "MojangSharp/0.1" } });
                 if (Result.Contains("request requires user authentication"))
                 {
+                    if (IsRetry)
+                        throw new Exception("重新登录后仍然没有更改皮肤的权限");
                     ModMain.Hint("正在重新登录，将在登录后自动更改皮肤……");
                     ModLaunch.McLoginMsLoader.Start(GetLoginData(), IsForceRestart: true);
-                    goto Retry;
+                    EditSkin(SkinInfo, true);
+                    return;
                 }
                 // 获取新皮肤地址
                 Logger.Info($"皮肤修改返回值：{ModBase.CrLf}{Result}");
@@ -174,10 +174,15 @@ namespace PCL
                         case HttpStatusCode.Unauthorized:
                             {
                                 Logger.Warn(ex, "更改皮肤时遭遇 401 错误");
+                                if (IsRetry)
+                                {
+                                    ModMain.Hint("更改皮肤失败：重新登录后仍然没有权限", ModMain.HintType.Red);
+                                    return;
+                                }
                                 ModMain.Hint("正在重新登录，将在登录后自动更改皮肤……");
                                 ModLaunch.McLoginMsLoader.Start(GetLoginData(), IsForceRestart: true);
-                                goto Retry;
-                                break;
+                                EditSkin(SkinInfo, true);
+                                return;
                             }
                     }
                 }

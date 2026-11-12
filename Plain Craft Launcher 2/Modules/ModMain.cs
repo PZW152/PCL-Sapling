@@ -71,108 +71,106 @@ namespace PCL
                     // 去回车
                     CurrentHint.Text = CurrentHint.Text.ReplaceLineEndings(" ", mergeMultiple: true);
                     // 超量提示直接忽略
-                    if (FrmMain.PanHint.Children.Count >= 20)
-                        goto EndHint;
-                    // 检查是否有重复提示
-                    Border DoubleStack = null;
-                    foreach (Border stack in FrmMain.PanHint.Children)
+                    if (FrmMain.PanHint.Children.Count < 20)
                     {
-                        if (((bool)stack.Tag.Args()[0] && (((TextBlock)stack.Child).Text ?? "") == (CurrentHint.Text ?? "")))
-                            DoubleStack = stack;
-                    }
-                    // 获取渐变颜色
-                    ModBase.MyColor TargetColor0, TargetColor1;
-                    double Percent = 0.3d;
-                    switch (CurrentHint.Type)
-                    {
-                        case HintType.Blue:
-                            {
-                                TargetColor0 = new ModBase.MyColor(215d, 37d, 155d, 252d);
-                                TargetColor1 = new ModBase.MyColor(215d, 10d, 142d, 252d);
-                                break;
-                            }
-                        case HintType.Green:
-                            {
-                                TargetColor0 = new ModBase.MyColor(215d, 33d, 177d, 33d);
-                                TargetColor1 = new ModBase.MyColor(215d, 29d, 160d, 29d); // HintType.Red
-                                break;
-                            }
-
-                        default:
-                            {
-                                TargetColor0 = new ModBase.MyColor(215d, 255d, 53d, 11d);
-                                TargetColor1 = new ModBase.MyColor(215d, 255d, 43d, 0d);
-                                break;
-                            }
-                    }
-                    if (!(DoubleStack == null))
-                    {
-                        // 有重复提示，且该提示的进入动画已播放
-                        if (!ModAnimation.AniIsRun(Coerce.ToStr(Coerce.Concat("Hint Show ", DoubleStack.Tag.Args()[1]))))
+                        // 检查是否有重复提示
+                        Border DoubleStack = null;
+                        foreach (Border stack in FrmMain.PanHint.Children)
                         {
-                            ModAnimation.AniStop(Coerce.ToStr(Coerce.Concat("Hint Hide ", DoubleStack.Tag.Args()[1])));
-                            double Delay = (800 + CurrentHint.Text.Length.Clamp(5, 23) * 180) * ModAnimation.AniSpeed;
-                            ModAnimation.AniStart(new[] {
-                            ModAnimation.AaX(DoubleStack, -12 - DoubleStack.Margin.Left, 50, Ease: new ModAnimation.AniEaseOutFluent()),
-                            ModAnimation.AaX(DoubleStack, -8, 50, 50, new ModAnimation.AniEaseInFluent()),
-                            ModAnimation.AaX(DoubleStack, 8d, 50, 100, new ModAnimation.AniEaseOutFluent()),
-                            ModAnimation.AaX(DoubleStack, -8, 50, 150, new ModAnimation.AniEaseInFluent()),
-                            ModAnimation.AaDouble(i =>
-                                {
-                                         Percent = Percent + Coerce.ToDouble(i);
-                                         LinearGradientBrush Gradient = (LinearGradientBrush)DoubleStack.Background;
-                                         Gradient.GradientStops[0].Color = TargetColor0 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
-                                         Gradient.GradientStops[1].Color = TargetColor1 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
-                                     }, 0.7d, 250),
-                            ModAnimation.AaX(DoubleStack, -50, 200, (int)Math.Round(Delay), new ModAnimation.AniEaseInFluent()),
-                            ModAnimation.AaOpacity(DoubleStack, -1, 150, (int)Math.Round(Delay)),
-                            ModAnimation.AaCode(() => DoubleStack.Tag.Args()[0] = false, (int)Math.Round(Delay)),
-                            ModAnimation.AaHeight(DoubleStack, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true),
-                            ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(DoubleStack), After: true)
-                      }, Coerce.ToStr(Coerce.Concat("Hint Hide ", DoubleStack.Tag.Args()[1])));
+                            if (((bool)stack.Tag.Args()[0] && (((TextBlock)stack.Child).Text ?? "") == (CurrentHint.Text ?? "")))
+                                DoubleStack = stack;
                         }
-                    }
-                    else
-                    {
-                        // 准备控件
-                        var NewHintControl = new Border() { Tag = new object[] { true, ModBase.GetUuid() }, Margin = new Thickness(-70, 0d, 20d, 0d), Opacity = 0d, Height = 0d, HorizontalAlignment = HorizontalAlignment.Left, CornerRadius = new CornerRadius(0d, 6d, 6d, 0d) };
-                        NewHintControl.Background = new LinearGradientBrush(new GradientStopCollection(new List<GradientStop>() { new GradientStop(TargetColor0 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent), 0d), new GradientStop(TargetColor1 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent), 1d) }), 90d);
-                        NewHintControl.Child = new TextBlock() { TextTrimming = TextTrimming.CharacterEllipsis, FontSize = 13d, Text = CurrentHint.Text, Foreground = new ModBase.MyColor(255d, 255d, 255d), Margin = new Thickness(33d, 5d, 8d, 5d) };
-                        // AddHandler NewHintControl.MouseLeftButtonDown, AddressOf HideAllHint
-                        FrmMain.PanHint.Children.Add(NewHintControl);
-                        // 控件动画
-                        var Animations = new List<ModAnimation.AniData>();
-                        if (FrmMain.PanHint.Children.Count > 1)
+                        // 获取渐变颜色
+                        ModBase.MyColor TargetColor0, TargetColor1;
+                        double Percent = 0.3d;
+                        switch (CurrentHint.Type)
                         {
-                            // 已有提示
-                            Animations.Add(ModAnimation.AaHeight(NewHintControl, 26d, 150, Ease: new ModAnimation.AniEaseOutFluent()));
+                            case HintType.Blue:
+                                {
+                                    TargetColor0 = new ModBase.MyColor(215d, 37d, 155d, 252d);
+                                    TargetColor1 = new ModBase.MyColor(215d, 10d, 142d, 252d);
+                                    break;
+                                }
+                            case HintType.Green:
+                                {
+                                    TargetColor0 = new ModBase.MyColor(215d, 33d, 177d, 33d);
+                                    TargetColor1 = new ModBase.MyColor(215d, 29d, 160d, 29d); // HintType.Red
+                                    break;
+                                }
+
+                            default:
+                                {
+                                    TargetColor0 = new ModBase.MyColor(215d, 255d, 53d, 11d);
+                                    TargetColor1 = new ModBase.MyColor(215d, 255d, 43d, 0d);
+                                    break;
+                                }
+                        }
+                        if (!(DoubleStack == null))
+                        {
+                            // 有重复提示，且该提示的进入动画已播放
+                            if (!ModAnimation.AniIsRun(Coerce.ToStr(Coerce.Concat("Hint Show ", DoubleStack.Tag.Args()[1]))))
+                            {
+                                ModAnimation.AniStop(Coerce.ToStr(Coerce.Concat("Hint Hide ", DoubleStack.Tag.Args()[1])));
+                                double Delay = (800 + CurrentHint.Text.Length.Clamp(5, 23) * 180) * ModAnimation.AniSpeed;
+                                ModAnimation.AniStart(new[] {
+                                ModAnimation.AaX(DoubleStack, -12 - DoubleStack.Margin.Left, 50, Ease: new ModAnimation.AniEaseOutFluent()),
+                                ModAnimation.AaX(DoubleStack, -8, 50, 50, new ModAnimation.AniEaseInFluent()),
+                                ModAnimation.AaX(DoubleStack, 8d, 50, 100, new ModAnimation.AniEaseOutFluent()),
+                                ModAnimation.AaX(DoubleStack, -8, 50, 150, new ModAnimation.AniEaseInFluent()),
+                                ModAnimation.AaDouble(i =>
+                                    {
+                                             Percent = Percent + Coerce.ToDouble(i);
+                                             LinearGradientBrush Gradient = (LinearGradientBrush)DoubleStack.Background;
+                                             Gradient.GradientStops[0].Color = TargetColor0 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
+                                             Gradient.GradientStops[1].Color = TargetColor1 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
+                                         }, 0.7d, 250),
+                                ModAnimation.AaX(DoubleStack, -50, 200, (int)Math.Round(Delay), new ModAnimation.AniEaseInFluent()),
+                                ModAnimation.AaOpacity(DoubleStack, -1, 150, (int)Math.Round(Delay)),
+                                ModAnimation.AaCode(() => DoubleStack.Tag.Args()[0] = false, (int)Math.Round(Delay)),
+                                ModAnimation.AaHeight(DoubleStack, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true),
+                                ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(DoubleStack), After: true)
+                          }, Coerce.ToStr(Coerce.Concat("Hint Hide ", DoubleStack.Tag.Args()[1])));
+                            }
                         }
                         else
                         {
-                            // 是唯一提示
-                            NewHintControl.Height = 26d;
-                        }
-                        // 开始动画
-                        Animations.AddRange(new[] {
-                        ModAnimation.AaX(NewHintControl, 30d, 400, Ease: new ModAnimation.AniEaseOutElastic(ModAnimation.AniEasePower.Weak)),
-                        ModAnimation.AaX(NewHintControl, 20d, 200, Ease: new ModAnimation.AniEaseOutFluent()),
-                        ModAnimation.AaOpacity(NewHintControl, 1d, 100),
-                        ModAnimation.AaDouble(i =>
+                            // 准备控件
+                            var NewHintControl = new Border() { Tag = new object[] { true, ModBase.GetUuid() }, Margin = new Thickness(-70, 0d, 20d, 0d), Opacity = 0d, Height = 0d, HorizontalAlignment = HorizontalAlignment.Left, CornerRadius = new CornerRadius(0d, 6d, 6d, 0d) };
+                            NewHintControl.Background = new LinearGradientBrush(new GradientStopCollection(new List<GradientStop>() { new GradientStop(TargetColor0 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent), 0d), new GradientStop(TargetColor1 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent), 1d) }), 90d);
+                            NewHintControl.Child = new TextBlock() { TextTrimming = TextTrimming.CharacterEllipsis, FontSize = 13d, Text = CurrentHint.Text, Foreground = new ModBase.MyColor(255d, 255d, 255d), Margin = new Thickness(33d, 5d, 8d, 5d) };
+                            // AddHandler NewHintControl.MouseLeftButtonDown, AddressOf HideAllHint
+                            FrmMain.PanHint.Children.Add(NewHintControl);
+                            // 控件动画
+                            var Animations = new List<ModAnimation.AniData>();
+                            if (FrmMain.PanHint.Children.Count > 1)
                             {
-                                     Percent = Percent + Coerce.ToDouble(i);
-                                     LinearGradientBrush Gradient = (LinearGradientBrush)NewHintControl.Background;
-                                     Gradient.GradientStops[0].Color = TargetColor0 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
-                                     Gradient.GradientStops[1].Color = TargetColor1 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
-                                 }, 0.7d, 250, 100)
-                    });
-                        ModAnimation.AniStart(Animations, Coerce.ToStr(Coerce.Concat("Hint Show ", NewHintControl.Tag.Args()[1])));
-                        // 结束动画
-                        double Delay = (800 + CurrentHint.Text.Length.Clamp(5, 23) * 180) * ModAnimation.AniSpeed;
-                        ModAnimation.AniStart(new[] { ModAnimation.AaX(NewHintControl, -50, 200, (int)Math.Round(Delay), new ModAnimation.AniEaseInFluent()), ModAnimation.AaOpacity(NewHintControl, -1, 150, (int)Math.Round(Delay)), ModAnimation.AaCode(() => NewHintControl.Tag.Args()[0] = false, (int)Math.Round(Delay)), ModAnimation.AaHeight(NewHintControl, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true), ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(NewHintControl), After: true) }, Coerce.ToStr(Coerce.Concat("Hint Hide ", NewHintControl.Tag.Args()[1])));
+                                // 已有提示
+                                Animations.Add(ModAnimation.AaHeight(NewHintControl, 26d, 150, Ease: new ModAnimation.AniEaseOutFluent()));
+                            }
+                            else
+                            {
+                                // 是唯一提示
+                                NewHintControl.Height = 26d;
+                            }
+                            // 开始动画
+                            Animations.AddRange(new[] {
+                            ModAnimation.AaX(NewHintControl, 30d, 400, Ease: new ModAnimation.AniEaseOutElastic(ModAnimation.AniEasePower.Weak)),
+                            ModAnimation.AaX(NewHintControl, 20d, 200, Ease: new ModAnimation.AniEaseOutFluent()),
+                            ModAnimation.AaOpacity(NewHintControl, 1d, 100),
+                            ModAnimation.AaDouble(i =>
+                                {
+                                         Percent = Percent + Coerce.ToDouble(i);
+                                         LinearGradientBrush Gradient = (LinearGradientBrush)NewHintControl.Background;
+                                         Gradient.GradientStops[0].Color = TargetColor0 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
+                                         Gradient.GradientStops[1].Color = TargetColor1 * Percent + new ModBase.MyColor(255d, 255d, 255d) * (1d - Percent);
+                                     }, 0.7d, 250, 100)
+                        });
+                            ModAnimation.AniStart(Animations, Coerce.ToStr(Coerce.Concat("Hint Show ", NewHintControl.Tag.Args()[1])));
+                            // 结束动画
+                            double Delay = (800 + CurrentHint.Text.Length.Clamp(5, 23) * 180) * ModAnimation.AniSpeed;
+                            ModAnimation.AniStart(new[] { ModAnimation.AaX(NewHintControl, -50, 200, (int)Math.Round(Delay), new ModAnimation.AniEaseInFluent()), ModAnimation.AaOpacity(NewHintControl, -1, 150, (int)Math.Round(Delay)), ModAnimation.AaCode(() => NewHintControl.Tag.Args()[0] = false, (int)Math.Round(Delay)), ModAnimation.AaHeight(NewHintControl, -26, 100, Ease: new ModAnimation.AniEaseOutFluent(), After: true), ModAnimation.AaCode(() => FrmMain.PanHint.Children.Remove(NewHintControl), After: true) }, Coerce.ToStr(Coerce.Concat("Hint Hide ", NewHintControl.Tag.Args()[1])));
+                        }
                     }
-                // 结束处理
-                EndHint:
-                    ;
 
                     if (CurrentHint.Log)
                         Logger.Info($"弹出提示：{CurrentHint.Text}");

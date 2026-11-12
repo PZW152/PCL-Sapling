@@ -230,20 +230,13 @@ namespace PCL
             {
                 ex.ThrowIfCanceled();
                 var CurrentEx = ex;
-            NextInner:
-                ;
-
+                while (!CurrentEx.Message.StartsWithF("$") && CurrentEx.InnerException is not null)
+                    CurrentEx = CurrentEx.InnerException;
                 if (CurrentEx.Message.StartsWithF("$"))
                 {
                     // 若有以 $ 开头的错误信息，则以此为准显示提示
                     ModMain.MyMsgBox(CurrentEx.Message.TrimStart('$'), IsSavingBatch ? "导出启动脚本失败" : "启动失败");
                     throw;
-                }
-                else if (CurrentEx.InnerException is not null)
-                {
-                    // 检查下一级错误
-                    CurrentEx = CurrentEx.InnerException;
-                    goto NextInner;
                 }
                 else
                 {
@@ -541,63 +534,62 @@ namespace PCL
                     ProfileJson = Settings.Get<string>("CacheMsV2ProfileJson")
                 };
                 McLaunchLog("无需登录，AccessToken 尚未过期");
-                goto SkipLogin;
-            }
-            // 尝试登录
-            (string OAuthAccessToken, string OAuthRefreshToken) OAuthTokens;
-            if (string.IsNullOrEmpty(Input.OAuthRefreshToken))
-            {
-                // 无 RefreshToken
-                OAuthTokens = MsLoginStep1New(Data);
             }
             else
             {
-                // 有 RefreshToken
-                OAuthTokens = MsLoginStep1Refresh(Input.OAuthRefreshToken);
-                if (OAuthTokens.OAuthAccessToken == "Relogin")
-                    OAuthTokens = MsLoginStep1New(Data); // 要求重新打开登录网页认证
+                // 尝试登录
+                (string OAuthAccessToken, string OAuthRefreshToken) OAuthTokens;
+                if (string.IsNullOrEmpty(Input.OAuthRefreshToken))
+                {
+                    // 无 RefreshToken
+                    OAuthTokens = MsLoginStep1New(Data);
+                }
+                else
+                {
+                    // 有 RefreshToken
+                    OAuthTokens = MsLoginStep1Refresh(Input.OAuthRefreshToken);
+                    if (OAuthTokens.OAuthAccessToken == "Relogin")
+                        OAuthTokens = MsLoginStep1New(Data); // 要求重新打开登录网页认证
+                }
+                if (Data.IsCanceled)
+                    throw new OperationCanceledException();
+                Data.Progress = 0.25d;
+                if (Data.IsCanceled)
+                    throw new OperationCanceledException();
+                string OAuthAccessToken = OAuthTokens.OAuthAccessToken;
+                string OAuthRefreshToken = OAuthTokens.OAuthRefreshToken;
+                string XBLToken = MsLoginStep2(OAuthAccessToken);
+                Data.Progress = 0.4d;
+                if (Data.IsCanceled)
+                    throw new OperationCanceledException();
+                var Tokens = MsLoginStep3(XBLToken);
+                Data.Progress = 0.55d;
+                if (Data.IsCanceled)
+                    throw new OperationCanceledException();
+                var LoginResult = MsLoginStep4(Tokens);
+                ExpiresAt = LoginResult.ExpiresAt;
+                Data.Progress = 0.7d;
+                if (Data.IsCanceled)
+                    throw new OperationCanceledException();
+                MsLoginStep5(LoginResult.AccessToken);
+                Data.Progress = 0.85d;
+                if (Data.IsCanceled)
+                    throw new OperationCanceledException();
+                var Result = MsLoginStep6(LoginResult.AccessToken);
+                Data.Progress = 0.98d;
+                // 输出登录结果
+                Settings.Set("CacheMsV2OAuthRefresh", OAuthRefreshToken);
+                Settings.Set("CacheMsV2Access", LoginResult.AccessToken);
+                Settings.Set("CacheMsV2Uuid", Result.UUID);
+                Settings.Set("CacheMsV2Name", Result.UserName);
+                Settings.Set("CacheMsV2ProfileJson", Result.ProfileJson);
+                Settings.Set("CacheMsV2Expires", LoginResult.ExpiresAt);
+                JObject MsJson = (JObject)Settings.Get<string>("LoginMsJson").DeserializeJson();
+                MsJson.Remove(Input.UserName); // 如果更改了玩家名……
+                MsJson[Result.UserName] = OAuthRefreshToken;
+                Settings.Set("LoginMsJson", MsJson.ToString(Formatting.None));
+                Data.Output = new McLoginResult() { AccessToken = LoginResult.AccessToken, Name = Result.UserName, Uuid = Result.UUID, Type = "Microsoft", ClientToken = Result.UUID, ProfileJson = Result.ProfileJson };
             }
-            if (Data.IsCanceled)
-                throw new OperationCanceledException();
-            Data.Progress = 0.25d;
-            if (Data.IsCanceled)
-                throw new OperationCanceledException();
-            string OAuthAccessToken = OAuthTokens.OAuthAccessToken;
-            string OAuthRefreshToken = OAuthTokens.OAuthRefreshToken;
-            string XBLToken = MsLoginStep2(OAuthAccessToken);
-            Data.Progress = 0.4d;
-            if (Data.IsCanceled)
-                throw new OperationCanceledException();
-            var Tokens = MsLoginStep3(XBLToken);
-            Data.Progress = 0.55d;
-            if (Data.IsCanceled)
-                throw new OperationCanceledException();
-            var LoginResult = MsLoginStep4(Tokens);
-            ExpiresAt = LoginResult.ExpiresAt;
-            Data.Progress = 0.7d;
-            if (Data.IsCanceled)
-                throw new OperationCanceledException();
-            MsLoginStep5(LoginResult.AccessToken);
-            Data.Progress = 0.85d;
-            if (Data.IsCanceled)
-                throw new OperationCanceledException();
-            var Result = MsLoginStep6(LoginResult.AccessToken);
-            Data.Progress = 0.98d;
-            // 输出登录结果
-            Settings.Set("CacheMsV2OAuthRefresh", OAuthRefreshToken);
-            Settings.Set("CacheMsV2Access", LoginResult.AccessToken);
-            Settings.Set("CacheMsV2Uuid", Result.UUID);
-            Settings.Set("CacheMsV2Name", Result.UserName);
-            Settings.Set("CacheMsV2ProfileJson", Result.ProfileJson);
-            Settings.Set("CacheMsV2Expires", LoginResult.ExpiresAt);
-            JObject MsJson = (JObject)Settings.Get<string>("LoginMsJson").DeserializeJson();
-            MsJson.Remove(Input.UserName); // 如果更改了玩家名……
-            MsJson[Result.UserName] = OAuthRefreshToken;
-            Settings.Set("LoginMsJson", MsJson.ToString(Formatting.None));
-            Data.Output = new McLoginResult() { AccessToken = LoginResult.AccessToken, Name = Result.UserName, Uuid = Result.UUID, Type = "Microsoft", ClientToken = Result.UUID, ProfileJson = Result.ProfileJson };
-        // 结束
-        SkipLogin:
-            ;
 
             McLaunchLog($"微软登录结束，AccessToken 将在 {DateTimeOffset.FromUnixTimeSeconds(ExpiresAt).LocalDateTime} 过期");
             Settings.Set("HintBuy", true); // 关闭正版购买提示
@@ -629,12 +621,9 @@ namespace PCL
         // 微软登录步骤 1，原始登录：获取 DeviceCode 并开启登录网页
         private static (string OAuthAccessToken, string OAuthRefreshToken) MsLoginStep1New(ModLoader.LoaderTask<McLoginMs, McLoginResult> Data)
         {
-        // 参考：https://learn.microsoft.com/zh-cn/entra/identity-platform/v2-oauth2-device-code
+            // 参考：https://learn.microsoft.com/zh-cn/entra/identity-platform/v2-oauth2-device-code
 
-        // 初始请求
-        Retry:
-            ;
-
+            // 初始请求
             McLaunchLog("开始微软登录步骤 1/6（原始登录）");
             JObject PrepareJson = (JObject)ModNet.NetRequestByClientRetry("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode", HttpMethod.Post, Content: $"client_id={ModSecret.OAuthClientId}&tenant=/consumers&scope=XboxLive.signin%20offline_access", ContentType: "application/x-www-form-urlencoded", RequireJson: true).DeserializeJson();
             McLaunchLog("网页登录地址：" + PrepareJson["verification_uri"].ToString());
@@ -646,14 +635,9 @@ namespace PCL
                 Thread.Sleep(100);
             if (Converter.Result is ModBase.RestartException)
             {
-                if (ModMain.MyMsgBox($"请在登录时选择 {ModBase.vbLQ}其他登录方法{ModBase.vbRQ}，然后选择 {ModBase.vbLQ}使用我的密码{ModBase.vbRQ}。{ModBase.CrLf}如果没有该选项，请选择 {ModBase.vbLQ}设置密码{ModBase.vbRQ}，设置完毕后再登录。", "需要使用密码登录", "重新登录", "设置密码", "取消", Button2Action: () => ModBase.OpenWebsite("https://account.live.com/password/Change")) == 1)
-                {
-                    goto Retry;
-                }
-                else
-                {
+                if (ModMain.MyMsgBox($"请在登录时选择 {ModBase.vbLQ}其他登录方法{ModBase.vbRQ}，然后选择 {ModBase.vbLQ}使用我的密码{ModBase.vbRQ}。{ModBase.CrLf}如果没有该选项，请选择 {ModBase.vbLQ}设置密码{ModBase.vbRQ}，设置完毕后再登录。", "需要使用密码登录", "重新登录", "设置密码", "取消", Button2Action: () => ModBase.OpenWebsite("https://account.live.com/password/Change")) != 1)
                     throw new OperationCanceledException();
-                }
+                return MsLoginStep1New(Data); // 重新登录
             }
             else if (Converter.Result is Exception)
             {
@@ -1060,6 +1044,41 @@ namespace PCL
             McLaunchArgument = Argument.TrimEnd();
         }
 
+        /// <summary>
+        /// 从选中的实例及其继承链中依次读取版本 JSON 里 arguments 下指定类别（jvm / game）满足规则的参数。
+        /// </summary>
+        private static List<string> McLaunchArgumentsFromJson(string Key, string LogTitle)
+        {
+            var Result = new List<string>();
+            for (var CurrentInstance = ModMinecraft.McInstanceSelected; CurrentInstance is not null;
+                CurrentInstance = string.IsNullOrEmpty(CurrentInstance.InheritName) ? null : new ModMinecraft.McInstance(CurrentInstance.InheritName))
+            {
+                McLaunchLog($"{LogTitle}：从版本 JSON 获取（{CurrentInstance.Name}）");
+                if (CurrentInstance.JsonObject["arguments"] is null || CurrentInstance.JsonObject["arguments"][Key] is not JToken List)
+                    continue;
+                foreach (JToken SubJson in List)
+                {
+                    if (SubJson.Type == JTokenType.String)
+                    {
+                        Result.Add(SubJson.ToString());
+                    }
+                    else if (SubJson.Type == JTokenType.Object)
+                    {
+                        JObject Argument = (JObject)SubJson;
+                        if (Argument.ContainsKey("rules") && !ModMinecraft.McJsonRuleCheck(Argument["rules"]))
+                            continue; // 不满足准则
+                        if (!Argument.ContainsKey("value"))
+                            continue; // 没有 value 字段
+                        if (Argument["value"].Type == JTokenType.String)
+                            Result.Add(Argument["value"].ToString());
+                        else
+                            Result.AddRange(Argument["value"].Select(Value => Value.ToString()));
+                    }
+                }
+            }
+            return Result;
+        }
+
         // JVM 部分
         private static List<string> McLaunchArgumentsJVM()
         {
@@ -1069,49 +1088,7 @@ namespace PCL
             if (ModMinecraft.McInstanceSelected.JsonObject["arguments"] is not null && ModMinecraft.McInstanceSelected.JsonObject["arguments"]["jvm"] is not null)
             {
                 // 新版 MC：从版本 JSON 获取参数
-                var CurrentInstance = ModMinecraft.McInstanceSelected;
-            NextInstance:
-                ;
-
-                McLaunchLog($"新版 JVM 参数：从版本 JSON 获取（{CurrentInstance.Name}）");
-                if (CurrentInstance.JsonObject["arguments"] is not null && CurrentInstance.JsonObject["arguments"]["jvm"] is not null)
-                {
-                    foreach (JToken SubJson in CurrentInstance.JsonObject["arguments"]["jvm"])
-                    {
-                        switch (SubJson.Type)
-                        {
-                            case JTokenType.String:
-                                {
-                                    Args.Add(SubJson.ToString().Trim());
-                                    break;
-                                }
-                            case JTokenType.Object:
-                                {
-                                    JObject Argument = (JObject)SubJson;
-                                    if (Argument.ContainsKey("rules") && !ModMinecraft.McJsonRuleCheck(Argument["rules"]))
-                                        continue; // 不满足准则
-                                    if (!Argument.ContainsKey("value"))
-                                        continue; // 没有 value 字段
-                                    if (Argument["value"].Type == JTokenType.String)
-                                    {
-                                        Args.Add(Argument["value"].ToString().Trim());
-                                    }
-                                    else
-                                    {
-                                        foreach (JToken value in Argument["value"])
-                                            Args.Add(value.ToString().Trim());
-                                    }
-
-                                    break;
-                                }
-                        }
-                    }
-                }
-                if (!string.IsNullOrEmpty(CurrentInstance.InheritName))
-                {
-                    CurrentInstance = new ModMinecraft.McInstance(CurrentInstance.InheritName);
-                    goto NextInstance;
-                }
+                Args.AddRange(McLaunchArgumentsFromJson("jvm", "新版 JVM 参数").Select(a => a.Trim()));
                 // 1.17.1 中有个 "-Dos.name=Windows 10"，不立即加双引号会导致 10 被隔开
                 Args = Args.Select(a => a.Contains(" ") && !a.StartsWithF("\"") && !a.EndsWithF("\"") ? $"\"{a.Replace("\"", @"\""")}\"" : a).ToList();
             }
@@ -1162,7 +1139,7 @@ namespace PCL
 
             #region 内存管理
 
-            McLaunchLog("当前剩余内存：" + Math.Round(SystemInfo.AvailablePhysicalMemory / 1024d / 1024d / 1024d * 10d) / 10d + "G");
+            McLaunchLog("当前剩余内存：" + MemoryPlanner.BytesToGb(SystemInfo.AvailablePhysicalMemory) + "G");
             int TargetRam = (int)Math.Round(Math.Floor(PageInstanceSetup.GetRam(ModMinecraft.McInstanceSelected) * 1024d));
             Args.Add("-Xmx" + TargetRam + "m");
 
@@ -1287,50 +1264,8 @@ namespace PCL
             // 新版 MC：从版本 JSON 获取参数
             if (ModMinecraft.McInstanceSelected.JsonObject["arguments"] is not null && ModMinecraft.McInstanceSelected.JsonObject["arguments"]["game"] is not null)
             {
-                var CurrentInstance = ModMinecraft.McInstanceSelected;
-                void AppendArg(string a) => Arg += " " + (a.Contains(" ") && !a.StartsWithF("\"") && !a.EndsWithF("\"") ? $"\"{a.Replace("\"", @"\""")}\"" : a);
-            NextInstance:
-                ;
-
-                McLaunchLog($"新版游戏参数：从版本 JSON 获取（{CurrentInstance.Name}）");
-                if (CurrentInstance.JsonObject["arguments"] is not null && CurrentInstance.JsonObject["arguments"]["game"] is not null)
-                {
-                    foreach (JToken SubJson in CurrentInstance.JsonObject["arguments"]["game"])
-                    {
-                        switch (SubJson.Type)
-                        {
-                            case JTokenType.String:
-                                {
-                                    AppendArg(SubJson.ToString());
-                                    break;
-                                }
-                            case JTokenType.Object:
-                                {
-                                    JObject Argument = (JObject)SubJson;
-                                    if (Argument.ContainsKey("rules") && !ModMinecraft.McJsonRuleCheck(Argument["rules"]))
-                                        continue; // 不满足准则
-                                    if (!Argument.ContainsKey("value"))
-                                        continue; // 没有 value 字段
-                                    if (Argument["value"].Type == JTokenType.String)
-                                    {
-                                        AppendArg(Argument["value"].ToString());
-                                    }
-                                    else
-                                    {
-                                        foreach (JToken value in Argument["value"])
-                                            AppendArg(value.ToString());
-                                    }
-
-                                    break;
-                                }
-                        }
-                    }
-                }
-                if (!string.IsNullOrEmpty(CurrentInstance.InheritName))
-                {
-                    CurrentInstance = new ModMinecraft.McInstance(CurrentInstance.InheritName);
-                    goto NextInstance;
-                }
+                foreach (string a in McLaunchArgumentsFromJson("game", "新版游戏参数"))
+                    Arg += " " + (a.Contains(" ") && !a.StartsWithF("\"") && !a.EndsWithF("\"") ? $"\"{a.Replace("\"", @"\""")}\"" : a);
             }
 
             // 设置里自定义的参数
@@ -1843,129 +1778,128 @@ namespace PCL
                     if (ModMinecraft.McInstanceSelected.Version.Vanilla.Major < 6)
                     {
                         McLaunchLog("Minecraft 版本过老，尚不支持自定义离线皮肤");
-                        goto IgnoreCustomSkin;
-                    }
-                    var PackVersionJToken = ModMinecraft.McInstanceSelected.JsonVersion?["pack_version"];
-                    if (PackVersionJToken is JObject)
-                        PackVersionJToken = ((JObject)PackVersionJToken)["resource"]; // 从 1.17 开始，可以从 pack_version.resource 获取资源包版本
-                    int PackVersion = (int)Math.Round(ModBase.Val(PackVersionJToken?.ToString()));
-                    if (PackVersion <= 0) // 没有对应字段的老版本 MC，或兜底
-                    {
-                        switch (ModMinecraft.McInstanceSelected.Version.Vanilla.Major)
-                        {
-                            case 6:
-                            case 7:
-                            case 8:
-                                {
-                                    PackVersion = 1;
-                                    break;
-                                }
-                            case 9:
-                            case 10:
-                                {
-                                    PackVersion = 2;
-                                    break;
-                                }
-                            case 11:
-                            case 12:
-                                {
-                                    PackVersion = 3;
-                                    break;
-                                }
-                            case 13:
-                            case 14:
-                                {
-                                    PackVersion = 4;
-                                    break;
-                                }
-                            case 15:
-                                {
-                                    PackVersion = 5;
-                                    break;
-                                }
-                            case 16:
-                                {
-                                    PackVersion = ModMinecraft.McInstanceSelected.Version.Vanilla.Build <= 1 ? 5 : 6;
-                                    break;
-                                }
-                            case 17:
-                                {
-                                    PackVersion = 7;
-                                    break;
-                                }
-                            case 18:
-                                {
-                                    PackVersion = 8; // 旧版快照可能没有可用的资源包格式声明
-                                    break;
-                                }
-
-                            default:
-                                {
-                                    PackVersion = 17;
-                                    break;
-                                }
-                        }
-                    }
-                    McLaunchLog($"正在构建自定义皮肤资源包，版本号 {PackVersion}，MC 版本 {ModMinecraft.McInstanceSelected.Version.Vanilla}");
-                    // 准备文件
-                    var Bit = new MyBitmap(ModBase.PathImage + "Heads/Logo.png");
-                    Bit.Save(PackPicAddress);
-                    FileUtils.Write(MetaFileAddress, "{\"pack\":{\"pack_format\":" + PackVersion + ",\"description\":\"PCL 自定义离线皮肤资源包\"}}");
-                    var Skin = new MyBitmap(Paths.AppDataThenName + "CustomSkin.png");
-                    if ((ModMinecraft.McInstanceSelected.Version.Vanilla.Major == 6 || ModMinecraft.McInstanceSelected.Version.Vanilla.Major == 7) && Skin.Pic.Height == 64)
-                    {
-                        McLaunchLog("该 Minecraft 版本不支持双层皮肤，已进行裁剪");
-                        Skin = Skin.Clip(0, 0, 64, 32);
-                    }
-                    Skin.Save(Paths.Base + @"PCL\CustomSkin_Cliped.png");
-                    // 构建压缩文件
-                    var FilesToCompress = new Dictionary<string, string>() { { "pack.mcmeta", MetaFileAddress }, { "pack.png", PackPicAddress } };
-                    if (ModMinecraft.McInstanceSelected.Version.Vanilla >= new Version(19, 0, 3))
-                    {
-                        // 1.19.3+ 使用复杂版本的替换
-                        foreach (var SkinName in new[] { "alex", "ari", "efe", "kai", "makena", "noor", "steve", "sunny", "zuri" })
-                            FilesToCompress.Add($"assets/minecraft/textures/entity/player/{(Settings.Get<bool>("LaunchSkinSlim") ? "slim" : "wide")}/{SkinName}.png", Paths.Base + @"PCL\CustomSkin_Cliped.png");
                     }
                     else
                     {
-                        FilesToCompress.Add($"assets/minecraft/textures/entity/{(Settings.Get<bool>("LaunchSkinSlim") ? "alex.png" : "steve.png")}", Paths.Base + @"PCL\CustomSkin_Cliped.png");
-                    }
-                    FileUtils.CreateZipFromFiles(ZipFileAddress, FilesToCompress);
-                    FileUtils.Delete(Paths.Base + @"PCL\CustomSkin_Cliped.png");
-                    // 更改设置文件
-                    ModBase.IniClearCache(SetupFileAddress);
-                    string EnabledResourcePack = ModBase.ReadIni(SetupFileAddress, "resourcePacks", "[]").TrimStart('[').TrimEnd(']');
-                    if (NewTypeSetup)
-                    {
-                        if (string.IsNullOrEmpty(EnabledResourcePack))
-                            EnabledResourcePack = "\"vanilla\"";
-                        var EnabledResourcePacks = new List<string>(EnabledResourcePack.Split(","));
-                        var NewResourcePacks = new List<string>();
-                        foreach (var Res in EnabledResourcePacks)
+                        var PackVersionJToken = ModMinecraft.McInstanceSelected.JsonVersion?["pack_version"];
+                        if (PackVersionJToken is JObject)
+                            PackVersionJToken = ((JObject)PackVersionJToken)["resource"]; // 从 1.17 开始，可以从 pack_version.resource 获取资源包版本
+                        int PackVersion = (int)Math.Round(ModBase.Val(PackVersionJToken?.ToString()));
+                        if (PackVersion <= 0) // 没有对应字段的老版本 MC，或兜底
                         {
-                            if (Res != "\"file/PCL2 Skin.zip\"" && !string.IsNullOrEmpty(Res))
-                                NewResourcePacks.Add(Res);
-                        }
-                        NewResourcePacks.Add("\"file/PCL2 Skin.zip\"");
-                        string Result = "[" + NewResourcePacks.Join(',') + "]";
-                        ModBase.WriteIni(SetupFileAddress, "resourcePacks", Result);
-                    }
-                    else
-                    {
-                        var EnabledResourcePacks = new List<string>(EnabledResourcePack.Split(","));
-                        var NewResourcePacks = new List<string>();
-                        foreach (var Res in EnabledResourcePacks)
-                        {
-                            if (Res != "\"PCL2 Skin.zip\"" && !string.IsNullOrEmpty(Res))
-                                NewResourcePacks.Add(Res);
-                        }
-                        NewResourcePacks.Add("\"PCL2 Skin.zip\"");
-                        string Result = "[" + NewResourcePacks.Join(',') + "]";
-                        ModBase.WriteIni(SetupFileAddress, "resourcePacks", Result);
-                    }
+                            switch (ModMinecraft.McInstanceSelected.Version.Vanilla.Major)
+                            {
+                                case 6:
+                                case 7:
+                                case 8:
+                                    {
+                                        PackVersion = 1;
+                                        break;
+                                    }
+                                case 9:
+                                case 10:
+                                    {
+                                        PackVersion = 2;
+                                        break;
+                                    }
+                                case 11:
+                                case 12:
+                                    {
+                                        PackVersion = 3;
+                                        break;
+                                    }
+                                case 13:
+                                case 14:
+                                    {
+                                        PackVersion = 4;
+                                        break;
+                                    }
+                                case 15:
+                                    {
+                                        PackVersion = 5;
+                                        break;
+                                    }
+                                case 16:
+                                    {
+                                        PackVersion = ModMinecraft.McInstanceSelected.Version.Vanilla.Build <= 1 ? 5 : 6;
+                                        break;
+                                    }
+                                case 17:
+                                    {
+                                        PackVersion = 7;
+                                        break;
+                                    }
+                                case 18:
+                                    {
+                                        PackVersion = 8; // 旧版快照可能没有可用的资源包格式声明
+                                        break;
+                                    }
 
-                IgnoreCustomSkin:
-                    ;
+                                default:
+                                    {
+                                        PackVersion = 17;
+                                        break;
+                                    }
+                            }
+                        }
+                        McLaunchLog($"正在构建自定义皮肤资源包，版本号 {PackVersion}，MC 版本 {ModMinecraft.McInstanceSelected.Version.Vanilla}");
+                        // 准备文件
+                        var Bit = new MyBitmap(ModBase.PathImage + "Heads/Logo.png");
+                        Bit.Save(PackPicAddress);
+                        FileUtils.Write(MetaFileAddress, "{\"pack\":{\"pack_format\":" + PackVersion + ",\"description\":\"PCL 自定义离线皮肤资源包\"}}");
+                        var Skin = new MyBitmap(Paths.AppDataThenName + "CustomSkin.png");
+                        if ((ModMinecraft.McInstanceSelected.Version.Vanilla.Major == 6 || ModMinecraft.McInstanceSelected.Version.Vanilla.Major == 7) && Skin.Pic.Height == 64)
+                        {
+                            McLaunchLog("该 Minecraft 版本不支持双层皮肤，已进行裁剪");
+                            Skin = Skin.Clip(0, 0, 64, 32);
+                        }
+                        Skin.Save(Paths.Base + @"PCL\CustomSkin_Cliped.png");
+                        // 构建压缩文件
+                        var FilesToCompress = new Dictionary<string, string>() { { "pack.mcmeta", MetaFileAddress }, { "pack.png", PackPicAddress } };
+                        if (ModMinecraft.McInstanceSelected.Version.Vanilla >= new Version(19, 0, 3))
+                        {
+                            // 1.19.3+ 使用复杂版本的替换
+                            foreach (var SkinName in new[] { "alex", "ari", "efe", "kai", "makena", "noor", "steve", "sunny", "zuri" })
+                                FilesToCompress.Add($"assets/minecraft/textures/entity/player/{(Settings.Get<bool>("LaunchSkinSlim") ? "slim" : "wide")}/{SkinName}.png", Paths.Base + @"PCL\CustomSkin_Cliped.png");
+                        }
+                        else
+                        {
+                            FilesToCompress.Add($"assets/minecraft/textures/entity/{(Settings.Get<bool>("LaunchSkinSlim") ? "alex.png" : "steve.png")}", Paths.Base + @"PCL\CustomSkin_Cliped.png");
+                        }
+                        FileUtils.CreateZipFromFiles(ZipFileAddress, FilesToCompress);
+                        FileUtils.Delete(Paths.Base + @"PCL\CustomSkin_Cliped.png");
+                        // 更改设置文件
+                        ModBase.IniClearCache(SetupFileAddress);
+                        string EnabledResourcePack = ModBase.ReadIni(SetupFileAddress, "resourcePacks", "[]").TrimStart('[').TrimEnd(']');
+                        if (NewTypeSetup)
+                        {
+                            if (string.IsNullOrEmpty(EnabledResourcePack))
+                                EnabledResourcePack = "\"vanilla\"";
+                            var EnabledResourcePacks = new List<string>(EnabledResourcePack.Split(","));
+                            var NewResourcePacks = new List<string>();
+                            foreach (var Res in EnabledResourcePacks)
+                            {
+                                if (Res != "\"file/PCL2 Skin.zip\"" && !string.IsNullOrEmpty(Res))
+                                    NewResourcePacks.Add(Res);
+                            }
+                            NewResourcePacks.Add("\"file/PCL2 Skin.zip\"");
+                            string Result = "[" + NewResourcePacks.Join(',') + "]";
+                            ModBase.WriteIni(SetupFileAddress, "resourcePacks", Result);
+                        }
+                        else
+                        {
+                            var EnabledResourcePacks = new List<string>(EnabledResourcePack.Split(","));
+                            var NewResourcePacks = new List<string>();
+                            foreach (var Res in EnabledResourcePacks)
+                            {
+                                if (Res != "\"PCL2 Skin.zip\"" && !string.IsNullOrEmpty(Res))
+                                    NewResourcePacks.Add(Res);
+                            }
+                            NewResourcePacks.Add("\"PCL2 Skin.zip\"");
+                            string Result = "[" + NewResourcePacks.Join(',') + "]";
+                            ModBase.WriteIni(SetupFileAddress, "resourcePacks", Result);
+                        }
+                    }
                 }
 
                 else if (FileUtils.Exists(ZipFileAddress))

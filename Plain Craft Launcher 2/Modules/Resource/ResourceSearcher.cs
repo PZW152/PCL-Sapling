@@ -342,236 +342,238 @@ return true;
             #endregion
 
             var RealResults = new List<ResourceProject>();
-        NextPage:
-            ;
-
-            var RawResults = new List<ResourceProject>();
-
-            #region 从 CurseForge 和 Modrinth 获取结果列表，存储于 RawResults
-
-            var WorkThreads = new List<Thread>();
-            var Errors = new ConcurrentBag<(Exception Ex, ResourcePlatforms Source)>();
-
-            // 在 1.14-，部分老 Mod 没有设置支持的加载器，因此添加 Forge 筛选就会出现遗漏
-            // 所以，在发起请求时不筛选加载器，然后在返回的结果中自行筛除不是 Forge 的 Mod
-            bool IgnoreModLoaderFilter = Request.ModLoaders == ModLoaders.Forge && McVersion.VersionToDrop(Request.GameVersion) < 140;
-            var SearchResults = new ConcurrentBag<ResourceProject>();
-            try
+            while (true) // 结果数量不足且可继续时，继续加载下一页
             {
 
-                // CurseForge 搜索
-                if (Request.Sources.HasFlagF(ResourcePlatforms.CurseForge) && !(Storage.CurseForgeTotal > -1 && Storage.CurseForgeTotal <= Storage.CurseForgeOffset) && (!IsChineseSearch || IsChineseSearch && !string.IsNullOrEmpty(CurseForgeAltSearchText))) // 剩余的未显示的搜索结果不足
-                                                                                                                                                                                                                                                                 // 如果是中文搜索，就只在有对应搜索关键词的时候才继续
-                {
-                    WorkThreads.Add(ModBase.RunInNewThread(() =>
-        {
-            try
-            {
-                // 获取工程列表
-                string CurseForgeUrl = Request.GetCurseForgeAddress(CurseForgeAltSearchText ?? RawSearchText, IgnoreModLoaderFilter);
-                Logger.Info($"开始 CurseForge 搜索：{CurseForgeUrl}");
-                JObject RequestResult = (JObject)ModDownload.DlModRequest(CurseForgeUrl);
-                var ProjectList = new List<ResourceProject>();
-                foreach (JObject JsonEntry in RequestResult["data"])
-                {
-                    var Project = new ResourceProject(JsonEntry);
-                    if (Request.Type == ResourceTypes.ResourcePack && Project.Tags.Contains("数据包"))
-                        continue; // CurseForge 将一些数据包分类成了资源包
-                    if (Request.Type != ResourceTypes.Any && !Project.Types.HasFlagF(Request.Type))
-                        continue; // 过滤分区不匹配的搜索结果（#8265）
-                    ProjectList.Add(Project);
-                }
-                // 更新结果
-                ProjectList.ForEach(p => SearchResults.Add(p));
-                Storage.CurseForgeOffset += RequestResult["data"].Count();
-                Storage.CurseForgeTotal = RequestResult["pagination"]["totalCount"].ToObject<int>();
-                Logger.Info($"从 CurseForge 搜索到了 {ProjectList.Count} 个工程（总计已获取 {Storage.CurseForgeOffset} 个，共 {Storage.CurseForgeTotal} 个）");
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn(ex, "CurseForge 搜索失败");
-                Storage.CurseForgeTotal = -1;
-                Errors.Add((ex, ResourcePlatforms.CurseForge));
-            }
-            if (Task.Progress < 0.75d)
-                Task.Progress += 0.25d; // 可能重复加载多页，所以不能直接给够
-        }, "CurseForge Search"));
-                }
+                var RawResults = new List<ResourceProject>();
 
-                // Modrinth 搜索
-                if (Request.Sources.HasFlagF(ResourcePlatforms.Modrinth) && !(Storage.ModrinthTotal > -1 && Storage.ModrinthTotal <= Storage.ModrinthOffset) && (!IsChineseSearch || IsChineseSearch && !string.IsNullOrEmpty(ModrinthAltSearchText))) // 剩余的未显示的搜索结果不足
-                                                                                                                                                                                                                                                       // 如果是中文搜索，就只在有对应搜索关键词的时候才继续
-                {
-                    WorkThreads.Add(ModBase.RunInNewThread(() =>
-        {
-            try
-            {
-                string ModrinthUrl = Request.GetModrinthAddress(ModrinthAltSearchText ?? RawSearchText, IgnoreModLoaderFilter);
-                Logger.Info($"开始 Modrinth 搜索：{ModrinthUrl}");
-                JObject RequestResult = (JObject)ModDownload.DlModRequest(ModrinthUrl);
-                var ProjectList = new List<ResourceProject>();
-                foreach (JObject JsonEntry in RequestResult["hits"])
-                    ProjectList.Add(new ResourceProject(JsonEntry));
-                // 更新结果
-                ProjectList.ForEach(p => SearchResults.Add(p));
-                Storage.ModrinthOffset += RequestResult["hits"].Count();
-                Storage.ModrinthTotal = RequestResult["total_hits"].ToObject<int>();
-                Logger.Info($"从 Modrinth 搜索到了 {ProjectList.Count} 个工程（总计已获取 {Storage.ModrinthOffset} 个，共 {Storage.ModrinthTotal} 个）");
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn(ex, "Modrinth 搜索失败");
-                Storage.ModrinthTotal = -1;
-                Errors.Add((ex, ResourcePlatforms.Modrinth));
-            }
-            if (Task.Progress < 0.75d)
-                Task.Progress += 0.25d; // 可能重复加载多页，所以不能直接给够
-        }, "Modrinth Search"));
-                }
+                #region 从 CurseForge 和 Modrinth 获取结果列表，存储于 RawResults
 
-                // Modrinth 直接获取工程
-                if (Request.Sources.HasFlagF(ResourcePlatforms.Modrinth) && !(Storage.ModrinthTotal > -1 && Storage.ModrinthTotal <= Storage.ModrinthOffset) && ModrinthSlugs.Any()) // 剩余的未显示的搜索结果不足
-                                                                                                                                                                                     // 有直接获取的 Slug
-                {
-                    WorkThreads.Add(ModBase.RunInNewThread(() =>
-        {
-            try
-            {
-                string ModrinthUrl = $"https://api.modrinth.com/v2/projects?ids=[\"{ModrinthSlugs.Join("\",\"")}\"]";
-                Logger.Info($"开始 Modrinth 直接获取：{ModrinthUrl}");
+                var WorkThreads = new List<Thread>();
+                var Errors = new ConcurrentBag<(Exception Ex, ResourcePlatforms Source)>();
 
-                var ProjectList = new List<ResourceProject>();foreach (JObject JsonEntry in ModDownload.DlModRequest(ModrinthUrl))
-                {
-                    ;
-                    // 应用筛选
-                    var Project = new ResourceProject(JsonEntry);if (Request.Type != ResourceTypes.Any && !Project.Types.HasFlagF(Request.Type))
-                        continue;
-                    if (!string.IsNullOrEmpty(Request.Tag) && !JsonEntry["categories"].Any(c => (c.ToString() ?? "") == (Request.Tag.AfterLast("/") ?? "")))
-                        continue; // Project.Tags 已经转换成中文了，只能从 json 判
-                    if (Request.ModLoaders != ModLoaders.None && !IgnoreModLoaderFilter && !Project.ModLoaders.Flags().Intersect(Request.ModLoaders.Flags()).Any())
-                        continue;
-                    if (!string.IsNullOrEmpty(Request.GameVersion) && !Project.UnsafeGameVersions.Any(d => (d ?? "") == (Request.GameVersion ?? "")))
-                        continue;
-                    ProjectList.Add(Project);
-                }
-                if (ProjectList.Any() && Request.ModLoaders != ModLoaders.None && !IgnoreModLoaderFilter && !string.IsNullOrEmpty(Request.GameVersion))
+                // 在 1.14-，部分老 Mod 没有设置支持的加载器，因此添加 Forge 筛选就会出现遗漏
+                // 所以，在发起请求时不筛选加载器，然后在返回的结果中自行筛除不是 Forge 的 Mod
+                bool IgnoreModLoaderFilter = Request.ModLoaders == ModLoaders.Forge && McVersion.VersionToDrop(Request.GameVersion) < 140;
+                var SearchResults = new ConcurrentBag<ResourceProject>();
+                try
                 {
 
-                    var ProjectIds = ProjectList.Select(p => p.Id).Join("\",\"project_id:");
-                    var Loaders = Request.ModLoaders.Flags().Select(f => f.ToString().Lower()).Join("\",\"categories:");string FilterUrl = $"https://api.modrinth.com/v2/search?limit={ProjectList.Count}&facets=" + $"[[\"project_id:{ProjectIds}\"],[\"categories:{Loaders}\"],[\"versions:{Request.GameVersion}\"]]";
-
-                    var MatchedIds = ModDownload.DlModRequest(FilterUrl)["hits"].Select(h => h["project_id"].ToString()).ToList();ProjectList.KeepIf(p => MatchedIds.Contains(p.Id));
-                }
-                // 更新结果
-                ProjectList.ForEach(p => SearchResults.Add(p));
-                Logger.Info($"从 Modrinth 直接获取到了 {ProjectList.Count} 个工程");
-                ModrinthSlugs.Clear(); // 防止重试/加载下一页时重复获取
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn(ex, "Modrinth 直接获取失败");
-                Errors.Add((ex, ResourcePlatforms.Modrinth));
-            }
-            if (Task.Progress < 0.75d)
-                Task.Progress += 0.25d; // 可能重复加载多页，所以不能直接给够
-        }, "Modrinth Get"));
-                }
-
-                // 等待线程结束
-                foreach (var Thread in WorkThreads)
-                {
-                    Thread.Join();
-                    if (Task.IsCanceled)
-                        return; // 会自动触发 Finally 以清理线程
-                }
-                RawResults = new List<ResourceProject>(SearchResults);
-
-                // 仅保留兼容 Forge 的 Mod，或老版本中没有标注任何 Mod Loader 的 Mod
-                if (IgnoreModLoaderFilter)
-                {
-                    RawResults.KeepIf(p => p.ModLoaders == ModLoaders.None || p.ModLoaders.HasFlagF(ModLoaders.Forge));
-                }
-
-                // 确保存在结果
-                Storage.ErrorMessage = null;
-                if (!RawResults.Any())
-                {
-                    if (Errors.Any())
+                    // CurseForge 搜索
+                    if (Request.Sources.HasFlagF(ResourcePlatforms.CurseForge) && !(Storage.CurseForgeTotal > -1 && Storage.CurseForgeTotal <= Storage.CurseForgeOffset) && (!IsChineseSearch || IsChineseSearch && !string.IsNullOrEmpty(CurseForgeAltSearchText))) // 剩余的未显示的搜索结果不足
+                                                                                                                                                                                                                                                                     // 如果是中文搜索，就只在有对应搜索关键词的时候才继续
                     {
-                        throw Errors.First().Ex;
+                        WorkThreads.Add(ModBase.RunInNewThread(() =>
+            {
+                try
+                {
+                    // 获取工程列表
+                    string CurseForgeUrl = Request.GetCurseForgeAddress(CurseForgeAltSearchText ?? RawSearchText, IgnoreModLoaderFilter);
+                    Logger.Info($"开始 CurseForge 搜索：{CurseForgeUrl}");
+                    JObject RequestResult = (JObject)ModDownload.DlModRequest(CurseForgeUrl);
+                    var ProjectList = new List<ResourceProject>();
+                    foreach (JObject JsonEntry in RequestResult["data"])
+                    {
+                        var Project = new ResourceProject(JsonEntry);
+                        if (Request.Type == ResourceTypes.ResourcePack && Project.Tags.Contains("数据包"))
+                            continue; // CurseForge 将一些数据包分类成了资源包
+                        if (Request.Type != ResourceTypes.Any && !Project.Types.HasFlagF(Request.Type))
+                            continue; // 过滤分区不匹配的搜索结果（#8265）
+                        ProjectList.Add(Project);
                     }
-                    else if (IsChineseSearch && !(Request.Type == ResourceTypes.Mod || Request.Type == ResourceTypes.DataPack))
-                    {
-                        throw new Exception(MSG_NO_CHINESE_RESULT);
+                    // 更新结果
+                    ProjectList.ForEach(p => SearchResults.Add(p));
+                    Storage.CurseForgeOffset += RequestResult["data"].Count();
+                    Storage.CurseForgeTotal = RequestResult["pagination"]["totalCount"].ToObject<int>();
+                    Logger.Info($"从 CurseForge 搜索到了 {ProjectList.Count} 个工程（总计已获取 {Storage.CurseForgeOffset} 个，共 {Storage.CurseForgeTotal} 个）");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, "CurseForge 搜索失败");
+                    Storage.CurseForgeTotal = -1;
+                    Errors.Add((ex, ResourcePlatforms.CurseForge));
+                }
+                if (Task.Progress < 0.75d)
+                    Task.Progress += 0.25d; // 可能重复加载多页，所以不能直接给够
+            }, "CurseForge Search"));
                     }
-                    else if (Request.Sources == ResourcePlatforms.CurseForge && Request.Tag.StartsWithF("/"))
+
+                    // Modrinth 搜索
+                    if (Request.Sources.HasFlagF(ResourcePlatforms.Modrinth) && !(Storage.ModrinthTotal > -1 && Storage.ModrinthTotal <= Storage.ModrinthOffset) && (!IsChineseSearch || IsChineseSearch && !string.IsNullOrEmpty(ModrinthAltSearchText))) // 剩余的未显示的搜索结果不足
+                                                                                                                                                                                                                                                           // 如果是中文搜索，就只在有对应搜索关键词的时候才继续
                     {
-                        throw new Exception("CurseForge 不兼容所选的类型");
+                        WorkThreads.Add(ModBase.RunInNewThread(() =>
+            {
+                try
+                {
+                    string ModrinthUrl = Request.GetModrinthAddress(ModrinthAltSearchText ?? RawSearchText, IgnoreModLoaderFilter);
+                    Logger.Info($"开始 Modrinth 搜索：{ModrinthUrl}");
+                    JObject RequestResult = (JObject)ModDownload.DlModRequest(ModrinthUrl);
+                    var ProjectList = new List<ResourceProject>();
+                    foreach (JObject JsonEntry in RequestResult["hits"])
+                        ProjectList.Add(new ResourceProject(JsonEntry));
+                    // 更新结果
+                    ProjectList.ForEach(p => SearchResults.Add(p));
+                    Storage.ModrinthOffset += RequestResult["hits"].Count();
+                    Storage.ModrinthTotal = RequestResult["total_hits"].ToObject<int>();
+                    Logger.Info($"从 Modrinth 搜索到了 {ProjectList.Count} 个工程（总计已获取 {Storage.ModrinthOffset} 个，共 {Storage.ModrinthTotal} 个）");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, "Modrinth 搜索失败");
+                    Storage.ModrinthTotal = -1;
+                    Errors.Add((ex, ResourcePlatforms.Modrinth));
+                }
+                if (Task.Progress < 0.75d)
+                    Task.Progress += 0.25d; // 可能重复加载多页，所以不能直接给够
+            }, "Modrinth Search"));
                     }
-                    else if (Request.Sources == ResourcePlatforms.Modrinth && Request.Tag.EndsWithF("/"))
+
+                    // Modrinth 直接获取工程
+                    if (Request.Sources.HasFlagF(ResourcePlatforms.Modrinth) && !(Storage.ModrinthTotal > -1 && Storage.ModrinthTotal <= Storage.ModrinthOffset) && ModrinthSlugs.Any()) // 剩余的未显示的搜索结果不足
+                                                                                                                                                                                         // 有直接获取的 Slug
                     {
-                        throw new Exception("Modrinth 不兼容所选的类型");
+                        WorkThreads.Add(ModBase.RunInNewThread(() =>
+            {
+                try
+                {
+                    string ModrinthUrl = $"https://api.modrinth.com/v2/projects?ids=[\"{ModrinthSlugs.Join("\",\"")}\"]";
+                    Logger.Info($"开始 Modrinth 直接获取：{ModrinthUrl}");
+
+                    var ProjectList = new List<ResourceProject>();foreach (JObject JsonEntry in ModDownload.DlModRequest(ModrinthUrl))
+                    {
+                        ;
+                        // 应用筛选
+                        var Project = new ResourceProject(JsonEntry);if (Request.Type != ResourceTypes.Any && !Project.Types.HasFlagF(Request.Type))
+                            continue;
+                        if (!string.IsNullOrEmpty(Request.Tag) && !JsonEntry["categories"].Any(c => (c.ToString() ?? "") == (Request.Tag.AfterLast("/") ?? "")))
+                            continue; // Project.Tags 已经转换成中文了，只能从 json 判
+                        if (Request.ModLoaders != ModLoaders.None && !IgnoreModLoaderFilter && !Project.ModLoaders.Flags().Intersect(Request.ModLoaders.Flags()).Any())
+                            continue;
+                        if (!string.IsNullOrEmpty(Request.GameVersion) && !Project.UnsafeGameVersions.Any(d => (d ?? "") == (Request.GameVersion ?? "")))
+                            continue;
+                        ProjectList.Add(Project);
+                    }
+                    if (ProjectList.Any() && Request.ModLoaders != ModLoaders.None && !IgnoreModLoaderFilter && !string.IsNullOrEmpty(Request.GameVersion))
+                    {
+
+                        var ProjectIds = ProjectList.Select(p => p.Id).Join("\",\"project_id:");
+                        var Loaders = Request.ModLoaders.Flags().Select(f => f.ToString().Lower()).Join("\",\"categories:");string FilterUrl = $"https://api.modrinth.com/v2/search?limit={ProjectList.Count}&facets=" + $"[[\"project_id:{ProjectIds}\"],[\"categories:{Loaders}\"],[\"versions:{Request.GameVersion}\"]]";
+
+                        var MatchedIds = ModDownload.DlModRequest(FilterUrl)["hits"].Select(h => h["project_id"].ToString()).ToList();ProjectList.KeepIf(p => MatchedIds.Contains(p.Id));
+                    }
+                    // 更新结果
+                    ProjectList.ForEach(p => SearchResults.Add(p));
+                    Logger.Info($"从 Modrinth 直接获取到了 {ProjectList.Count} 个工程");
+                    ModrinthSlugs.Clear(); // 防止重试/加载下一页时重复获取
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, "Modrinth 直接获取失败");
+                    Errors.Add((ex, ResourcePlatforms.Modrinth));
+                }
+                if (Task.Progress < 0.75d)
+                    Task.Progress += 0.25d; // 可能重复加载多页，所以不能直接给够
+            }, "Modrinth Get"));
+                    }
+
+                    // 等待线程结束
+                    foreach (var Thread in WorkThreads)
+                    {
+                        Thread.Join();
+                        if (Task.IsCanceled)
+                            return; // 会自动触发 Finally 以清理线程
+                    }
+                    RawResults = new List<ResourceProject>(SearchResults);
+
+                    // 仅保留兼容 Forge 的 Mod，或老版本中没有标注任何 Mod Loader 的 Mod
+                    if (IgnoreModLoaderFilter)
+                    {
+                        RawResults.KeepIf(p => p.ModLoaders == ModLoaders.None || p.ModLoaders.HasFlagF(ModLoaders.Forge));
+                    }
+
+                    // 确保存在结果
+                    Storage.ErrorMessage = null;
+                    if (!RawResults.Any())
+                    {
+                        if (Errors.Any())
+                        {
+                            throw Errors.First().Ex;
+                        }
+                        else if (IsChineseSearch && !(Request.Type == ResourceTypes.Mod || Request.Type == ResourceTypes.DataPack))
+                        {
+                            throw new Exception(MSG_NO_CHINESE_RESULT);
+                        }
+                        else if (Request.Sources == ResourcePlatforms.CurseForge && Request.Tag.StartsWithF("/"))
+                        {
+                            throw new Exception("CurseForge 不兼容所选的类型");
+                        }
+                        else if (Request.Sources == ResourcePlatforms.Modrinth && Request.Tag.EndsWithF("/"))
+                        {
+                            throw new Exception("Modrinth 不兼容所选的类型");
+                        }
+                        else
+                        {
+                            throw new Exception("没有搜索结果");
+                        }
+                    }
+                    else if (Errors.Any())
+                    {
+                        // 有结果但是有错误
+                        if (Errors.Any(e => e.Source == ResourcePlatforms.CurseForge))
+                        {
+                            Storage.ErrorMessage = $"无法连接到 CurseForge，所以目前仅显示了来自 Modrinth 的内容，搜索结果可能不全。{ModBase.CrLf}请稍后再试，或使用 VPN 改善网络环境。";
+                        }
+                        else
+                        {
+                            Storage.ErrorMessage = $"无法连接到 Modrinth，所以目前仅显示了来自 CurseForge 的内容，搜索结果可能不全。{ModBase.CrLf}请稍后再试，或使用 VPN 改善网络环境。";
+                        }
+                    }
+                }
+                finally
+                {
+                    foreach (var Thread in WorkThreads)
+                    {
+                        if (Thread.IsAlive)
+                            Thread.Interrupt();
+                    }
+                }
+
+                #endregion
+
+                #region 提取非重复项，存储于 RealResults
+
+                // 将 CurseForge 排在 Modrinth 的前面，避免加载结束顺序不同导致排名不同
+                RawResults = RawResults.Where(x => x.Platform == ResourcePlatforms.CurseForge).Concat(RawResults.Where(x => x.Platform != ResourcePlatforms.CurseForge)).ToList();
+                // 去重
+                RawResults = RawResults.Distinct((a, b) => a.IsLike(b)).ToList();
+                // 已有内容去重
+                RawResults = RawResults.Where(r => !RealResults.Any(b => r.IsLike(b)) && !Storage.Results.Any(b => r.IsLike(b))).ToList();
+                // 加入列表
+                RealResults.AddRange(RawResults);
+                Logger.Info($"去重、筛选后累计新增结果 {RealResults.Count} 个（目前已有结果 {Storage.Results.Count} 个）");
+
+                #endregion
+
+                #region 检查结果数量，如果不足且可继续，会继续加载下一页
+
+                if (RealResults.Count + Storage.Results.Count < Request.TargetResultCount)
+                {
+                    Logger.Info($"总结果数需求最少 {Request.TargetResultCount} 个，仅获得了 {RealResults.Count + Storage.Results.Count} 个");
+                    if (Request.CanContinue && !Errors.Any()) // 如果有某个源失败则不再重试，这时候重试可能导致无限循环
+                    {
+                        Logger.Info("将继续尝试加载下一页");
+                        continue;
                     }
                     else
                     {
-                        throw new Exception("没有搜索结果");
+                        Logger.Info("无法继续加载，将强制结束");
                     }
                 }
-                else if (Errors.Any())
-                {
-                    // 有结果但是有错误
-                    if (Errors.Any(e => e.Source == ResourcePlatforms.CurseForge))
-                    {
-                        Storage.ErrorMessage = $"无法连接到 CurseForge，所以目前仅显示了来自 Modrinth 的内容，搜索结果可能不全。{ModBase.CrLf}请稍后再试，或使用 VPN 改善网络环境。";
-                    }
-                    else
-                    {
-                        Storage.ErrorMessage = $"无法连接到 Modrinth，所以目前仅显示了来自 CurseForge 的内容，搜索结果可能不全。{ModBase.CrLf}请稍后再试，或使用 VPN 改善网络环境。";
-                    }
-                }
+
+                #endregion
+                break;
             }
-            finally
-            {
-                foreach (var Thread in WorkThreads)
-                {
-                    if (Thread.IsAlive)
-                        Thread.Interrupt();
-                }
-            }
-
-            #endregion
-
-            #region 提取非重复项，存储于 RealResults
-
-            // 将 CurseForge 排在 Modrinth 的前面，避免加载结束顺序不同导致排名不同
-            RawResults = RawResults.Where(x => x.Platform == ResourcePlatforms.CurseForge).Concat(RawResults.Where(x => x.Platform != ResourcePlatforms.CurseForge)).ToList();
-            // 去重
-            RawResults = RawResults.Distinct((a, b) => a.IsLike(b)).ToList();
-            // 已有内容去重
-            RawResults = RawResults.Where(r => !RealResults.Any(b => r.IsLike(b)) && !Storage.Results.Any(b => r.IsLike(b))).ToList();
-            // 加入列表
-            RealResults.AddRange(RawResults);
-            Logger.Info($"去重、筛选后累计新增结果 {RealResults.Count} 个（目前已有结果 {Storage.Results.Count} 个）");
-
-            #endregion
-
-            #region 检查结果数量，如果不足且可继续，会继续加载下一页
-
-            if (RealResults.Count + Storage.Results.Count < Request.TargetResultCount)
-            {
-                Logger.Info($"总结果数需求最少 {Request.TargetResultCount} 个，仅获得了 {RealResults.Count + Storage.Results.Count} 个");
-                if (Request.CanContinue && !Errors.Any()) // 如果有某个源失败则不再重试，这时候重试可能导致无限循环
-                {
-                    Logger.Info("将继续尝试加载下一页");
-                    goto NextPage;
-                }
-                else
-                {
-                    Logger.Info("无法继续加载，将强制结束");
-                }
-            }
-
-            #endregion
 
             #region 将结果排序并添加
 

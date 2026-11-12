@@ -668,34 +668,38 @@ return Results;
             try
             {
                 Logger.Info($"正在尝试迁移版本独立的 Java 设置（{Instance.Name}）");
-                // 强制使用指定 Java
-                string ForcedJavaSetting = Settings.Get<string>("VersionArgumentJavaSelect", Instance);
-                if (!ForcedJavaSetting.StartsWithF("{"))
+                // 迁移老版本中强制指定的 Java；返回 True 表示迁移完成
+                bool MigrateForcedJava()
                 {
-                    p?.Set(0.4d, true);
-                    goto NoForcedJava;
+                    // 强制使用指定 Java
+                    string ForcedJavaSetting = Settings.Get<string>("VersionArgumentJavaSelect", Instance);
+                    if (!ForcedJavaSetting.StartsWithF("{"))
+                    {
+                        p?.Set(0.4d, true);
+                        return false;
+                    }
+                    var ForcedJava = new Java(ForcedJavaSetting.DeserializeJson<JObject>()["Path"].ToString());
+                    if (!ForcedJava.CheckAsync(c).Run())
+                    {
+                        ModMain.Hint("该版本的设置中强制指定的 Java 存在异常，该设置已重置", ModMain.HintType.Red);
+                        p?.Set(0.4d);
+                        return false;
+                    }
+                    Logger.Info($"将版本独立设置改为老版本中强制指定的 Java：{ForcedJava}");
+                    if (!Configs.JavaList.Get().Contains(ForcedJava))
+                    {
+                        Configs.JavaList.Edit((ref ConcurrentList<Java> List) => List.Add(ForcedJava)); // 加入列表底部
+                        Logger.Info($"已将强制指定的 Java 加入 Java 列表底部：{ForcedJava}");
+                    }
+                    Configs.JavaForced.Set(ForcedJava, Instance.Config);
+                    Settings.Set("VersionArgumentJavaV2", 3, Instance);
+                    UpdateJavaLists();
+                    Configs.JavaMigrated.Set(true, Instance.Config); // 完成
+                    p?.Finish();
+                    return true;
                 }
-                var ForcedJava = new Java(ForcedJavaSetting.DeserializeJson<JObject>()["Path"].ToString());
-                if (!ForcedJava.CheckAsync(c).Run())
-                {
-                    ModMain.Hint("该版本的设置中强制指定的 Java 存在异常，该设置已重置", ModMain.HintType.Red);
-                    p?.Set(0.4d);
-                    goto NoForcedJava;
-                }
-                Logger.Info($"将版本独立设置改为老版本中强制指定的 Java：{ForcedJava}");
-                if (!Configs.JavaList.Get().Contains(ForcedJava))
-                {
-                    Configs.JavaList.Edit((ref ConcurrentList<Java> List) => List.Add(ForcedJava)); // 加入列表底部
-                    Logger.Info($"已将强制指定的 Java 加入 Java 列表底部：{ForcedJava}");
-                }
-                Configs.JavaForced.Set(ForcedJava, Instance.Config);
-                Settings.Set("VersionArgumentJavaV2", 3, Instance);
-                UpdateJavaLists();
-                Configs.JavaMigrated.Set(true, Instance.Config); // 完成
-                p?.Finish();
-                return;
-            NoForcedJava:
-                ;
+                if (MigrateForcedJava())
+                    return;
 
                 var JavaFound = JavaUtils.SearchFoldersAsync(true, new[] { Instance.PathVersion }, c, p?.SplitTo(1d)).Run();
                 if (JavaFound.Any())

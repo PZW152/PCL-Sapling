@@ -131,6 +131,7 @@ namespace PCL
             Logger.Info("步骤 1：自主导入日志文件");
 
             // 尝试视作压缩包解压
+            bool Extracted = false;
             try
             {
                 var Info = FileUtils.GetInfo(FilePath);
@@ -138,18 +139,18 @@ namespace PCL
                 {
                     FileUtils.ExtractToDirectory(FilePath, TempFolder + @"Temp\");
                     Logger.Info($"已解压导入的日志文件：{FilePath}");
-                    goto Extracted;
+                    Extracted = true;
                 }
             }
             catch
             {
             }
             // 并非压缩包
-            FileUtils.Copy(FilePath, TempFolder + @"Temp\" + PathUtils.GetLastPart(FilePath));
-            Logger.Info($"已复制导入的日志文件：{FilePath}");
-        Extracted:
-            ;
-
+            if (!Extracted)
+            {
+                FileUtils.Copy(FilePath, TempFolder + @"Temp\" + PathUtils.GetLastPart(FilePath));
+                Logger.Info($"已复制导入的日志文件：{FilePath}");
+            }
 
             // 导入其中的日志文件
             foreach (FileInfo TargetFile in DirectoryUtils.GetInfo(TempFolder + @"Temp\").EnumerateFiles())
@@ -538,68 +539,70 @@ namespace PCL
             Logger.Info("步骤 3：分析崩溃原因");
             LogAll = (LogMc ?? LogMcDebug ?? "") + (LogHs ?? "") + (LogCrash ?? "");
 
-            // 1. 精准日志匹配，中/高优先级
-            AnalyzeCrit1();
-            if (CrashReasons.Any())
-                goto Done;
-            AnalyzeCrit2();
-            if (CrashReasons.Any())
-                goto Done;
-
-            // 2. 堆栈分析
-            if (LogAll.Contains("orge") || LogAll.Contains("abric") || LogAll.Contains("uilt") || LogAll.Contains("iteloader"))
+            // 按优先级依次分析，一旦找到原因就停止
+            void FindReasons()
             {
-                var Keywords = new List<string>();
-                // 崩溃日志
-                if (LogCrash is not null)
+                // 1. 精准日志匹配，中/高优先级
+                AnalyzeCrit1();
+                if (CrashReasons.Any())
+                    return;
+                AnalyzeCrit2();
+                if (CrashReasons.Any())
+                    return;
+
+                // 2. 堆栈分析
+                if (LogAll.Contains("orge") || LogAll.Contains("abric") || LogAll.Contains("uilt") || LogAll.Contains("iteloader"))
                 {
-                    Logger.Info("开始进行崩溃日志堆栈分析");
-                    Keywords.AddRange(AnalyzeStackKeyword(LogCrash.BeforeFirst("System Details")));
-                }
-                // Minecraft 日志
-                if (LogMc is not null)
-                {
-                    var Fatals = LogMc.RegexSearch(@"/FATAL] .+?(?=[\n]+\[)").ToList();
-                    if (LogMc.Contains("Unreported exception thrown!"))
-                        Fatals.Add(LogMc.Between("Unreported exception thrown!", "at oolloo.jlw.Wrapper"));
-                    Logger.Info($"开始进行 Minecraft 日志堆栈分析，发现 {Fatals.Count} 个报错项");
-                    foreach (var Fatal in Fatals)
-                        Keywords.AddRange(AnalyzeStackKeyword(Fatal));
-                }
-                // 虚拟机日志
-                if (LogHs is not null)
-                {
-                    Logger.Info("开始进行虚拟机堆栈分析");
-                    string StackLogs = LogHs.Between("T H R E A D", "Registers:");
-                    Keywords.AddRange(AnalyzeStackKeyword(StackLogs));
-                }
-                // Mod 名称分析
-                if (Keywords.Any())
-                {
-                    var Names = AnalyzeModName(Keywords);
-                    if (Names is null)
+                    var Keywords = new List<string>();
+                    // 崩溃日志
+                    if (LogCrash is not null)
                     {
-                        AppendReason(CrashReason.堆栈分析发现关键字, Keywords);
+                        Logger.Info("开始进行崩溃日志堆栈分析");
+                        Keywords.AddRange(AnalyzeStackKeyword(LogCrash.BeforeFirst("System Details")));
                     }
-                    else
+                    // Minecraft 日志
+                    if (LogMc is not null)
                     {
-                        AppendReason(CrashReason.堆栈分析发现Mod名称, Names);
+                        var Fatals = LogMc.RegexSearch(@"/FATAL] .+?(?=[\n]+\[)").ToList();
+                        if (LogMc.Contains("Unreported exception thrown!"))
+                            Fatals.Add(LogMc.Between("Unreported exception thrown!", "at oolloo.jlw.Wrapper"));
+                        Logger.Info($"开始进行 Minecraft 日志堆栈分析，发现 {Fatals.Count} 个报错项");
+                        foreach (var Fatal in Fatals)
+                            Keywords.AddRange(AnalyzeStackKeyword(Fatal));
                     }
-                    goto Done;
+                    // 虚拟机日志
+                    if (LogHs is not null)
+                    {
+                        Logger.Info("开始进行虚拟机堆栈分析");
+                        string StackLogs = LogHs.Between("T H R E A D", "Registers:");
+                        Keywords.AddRange(AnalyzeStackKeyword(StackLogs));
+                    }
+                    // Mod 名称分析
+                    if (Keywords.Any())
+                    {
+                        var Names = AnalyzeModName(Keywords);
+                        if (Names is null)
+                        {
+                            AppendReason(CrashReason.堆栈分析发现关键字, Keywords);
+                        }
+                        else
+                        {
+                            AppendReason(CrashReason.堆栈分析发现Mod名称, Names);
+                        }
+                        return;
+                    }
                 }
+                else
+                {
+                    Logger.Info("可能并未安装 Mod，不进行堆栈分析");
+                }
+
+                // 3. 精准日志匹配，低优先级
+                AnalyzeCrit3();
             }
-            else
-            {
-                Logger.Info("可能并未安装 Mod，不进行堆栈分析");
-            }
+            FindReasons();
 
-            // 3. 精准日志匹配，低优先级
-            AnalyzeCrit3();
-
-        // 输出到日志
-        Done:
-            ;
-
+            // 输出到日志
             if (!CrashReasons.Any())
             {
                 Logger.Info("步骤 3：分析崩溃原因完成，未找到可能的原因");
@@ -945,16 +948,9 @@ namespace PCL
             var PossibleStacks = new List<string>();
             foreach (string Stack in StackSearchResults)
             {
-                // If Not Stack.Contains(".") Then Continue For
-                foreach (var IgnoreStack in new[] { "java", "sun", "javax", "jdk", "oolloo", "org.lwjgl", "com.sun", "net.minecraftforge", "paulscode.sound", "com.mojang", "net.minecraft", "cpw.mods", "com.google", "org.apache", "org.spongepowered", "net.fabricmc", "com.mumfrey", "com.electronwill.nightconfig", "it.unimi.dsi", "MojangTricksIntelDriversForPerformance_javaw" })
-                {
-                    if (Stack.StartsWithF(IgnoreStack))
-                        goto NextStack;
-                }
+                if (new[] { "java", "sun", "javax", "jdk", "oolloo", "org.lwjgl", "com.sun", "net.minecraftforge", "paulscode.sound", "com.mojang", "net.minecraft", "cpw.mods", "com.google", "org.apache", "org.spongepowered", "net.fabricmc", "com.mumfrey", "com.electronwill.nightconfig", "it.unimi.dsi", "MojangTricksIntelDriversForPerformance_javaw" }.Any(IgnoreStack => Stack.StartsWithF(IgnoreStack)))
+                    continue;
                 PossibleStacks.Add(Stack.Trim());
-            NextStack:
-                ;
-
             }
             PossibleStacks = PossibleStacks.Distinct().ToList();
             Logger.Info($"找到 {PossibleStacks.Count} 条可能的堆栈信息");

@@ -710,27 +710,12 @@ namespace PCL
         // 查找列表中的第一个滚动条
         private MyScrollBar GetFirstScrollViewer(IEnumerable<FrameworkElement> Elements)
         {
-            MyScrollViewer Viewer = null;
-            foreach (var Element in Elements)
-            {
-                if (Element is MyScrollViewer)
-                {
-                    Viewer = (MyScrollViewer)Element;
-                    goto FindViewer;
-                }
-                foreach (var Control in LogicalTreeHelper.GetChildren(Element))
-                {
-                    if (Control is MyScrollViewer)
-                    {
-                        Viewer = (MyScrollViewer)Control;
-                        goto FindViewer;
-                    }
-                }
-            }
-            return null;
-        FindViewer:
-            ;
-
+            MyScrollViewer Viewer = Elements
+                .SelectMany(Element => Element is MyScrollViewer Self ? new object[] { Self } : LogicalTreeHelper.GetChildren(Element).Cast<object>())
+                .OfType<MyScrollViewer>()
+                .FirstOrDefault();
+            if (Viewer is null)
+                return null;
             if (Viewer.ComputedVerticalScrollBarVisibility != Visibility.Visible)
                 return null;
             return Viewer.ScrollBar;

@@ -675,6 +675,31 @@ pause";
         }
 
         /// <summary>
+        /// 运行安装器：先使用 JavaWrapper，失败后不使用 JavaWrapper 再试一次。
+        /// </summary>
+        private static void RunInstallerWithWrapperFallback(Action<bool> Install, string Name)
+        {
+            try
+            {
+                Install(true);
+            }
+            catch (Exception ex)
+            {
+                ex.ThrowIfCanceled();
+                Logger.Warn(ex, $"使用 JavaWrapper 安装 {Name} 失败，将不使用 JavaWrapper 并重试");
+                try
+                {
+                    Install(false);
+                }
+                catch (Exception RetryEx)
+                {
+                    RetryEx.ThrowIfCanceled();
+                    throw new Exception($"运行 {Name} 安装器失败", RetryEx);
+                }
+            }
+        }
+
+        /// <summary>
     /// 获取下载某个 OptiFine 版本的加载器列表。
     /// 这不会补全所需的支持库文件，需要后续手动补全支持库。
     /// </summary>
@@ -766,27 +791,7 @@ pause";
                 FileUtils.Copy(McFolder + @"versions\" + DownloadInfo.Inherit + @"\" + DownloadInfo.Inherit + ".jar", BaseMcFolder + @"versions\" + DownloadInfo.Inherit + @"\" + DownloadInfo.Inherit + ".jar");
                 Task.Progress = 0.06d;
                 // 进行安装
-                bool UseJavaWrapper = true;
-            Retry:
-                ;
-
-                try
-                {
-                    McDownloadOptiFineInstall(BaseMcFolderHome, Target, Task, UseJavaWrapper);
-                }
-                catch (Exception ex)
-                {
-                    if (UseJavaWrapper)
-                    {
-                        Logger.Warn(ex, "使用 JavaWrapper 安装 OptiFine 失败，将不使用 JavaWrapper 并重试");
-                        UseJavaWrapper = false;
-                        goto Retry;
-                    }
-                    else
-                    {
-                        throw new Exception("运行 OptiFine 安装器失败", ex);
-                    }
-                }
+                RunInstallerWithWrapperFallback(UseJavaWrapper => McDownloadOptiFineInstall(BaseMcFolderHome, Target, Task, UseJavaWrapper), "OptiFine");
                 Task.Progress = 0.96d;
                 // 复制文件
                 FileUtils.Delete(BaseMcFolder + "launcher_profiles.json");
@@ -1646,11 +1651,7 @@ pause";
                 ModMinecraft.McFolderLauncherProfilesJsonCreate(McFolder);
                 Task.Progress = 0.05d;
                 // 运行 Forge 安装器
-                bool UseJavaWrapper = true;
-            Retry:
-                ;
-
-                try
+                RunInstallerWithWrapperFallback(UseJavaWrapper =>
                 {
                     // 释放 Forge 注入器
                     ModBase.ExtractResources(ModBase.PathTemp + @"Cache\forge_installer.jar", "ForgeInstaller");
@@ -1658,21 +1659,7 @@ pause";
                     // 运行注入器
                     ForgelikeInjector(InstallerAddress, Task, McFolder, UseJavaWrapper, IsNeoForge);
                     Task.Progress = 0.97d;
-                }
-                catch (Exception ex)
-                {
-                    if (UseJavaWrapper)
-                    {
-                        Logger.Warn(ex, $"使用 JavaWrapper 安装 {LoaderName} 失败，将不使用 JavaWrapper 并重试");
-                        UseJavaWrapper = false;
-                        goto Retry;
-                    }
-                    else
-                    {
-                        throw new Exception($"运行 {LoaderName} 安装器失败", ex);
-                    }
-                    // 复制新增的版本 Json
-                }
+                }, LoaderName);
 
 
                             // 复制新增的版本 Json

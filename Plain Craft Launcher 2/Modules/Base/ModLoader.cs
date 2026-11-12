@@ -808,80 +808,70 @@ namespace PCL
                 object Input = this.Input;
                 foreach (var Loader in Loaders)
                 {
-                    switch (Loader.State)
+                    bool IsTaskLoader = GeneralUtils.IsGenericInstanceOf(Loader, typeof(LoaderTask<,>));
+                    object TaskInput() => Input is not null && ReferenceEquals(Loader.GetType().GenericTypeArguments.First(), Input.GetType()) ? Input : null;
+                    if (Loader.State == ModBase.LoadState.Finished)
                     {
-                        case ModBase.LoadState.Finished:
-                            {
-                                // 检查 LoaderTask 是否需要重启
-                                if (GeneralUtils.IsGenericInstanceOf(Loader, typeof(LoaderTask<,>)))
-                                {
-                                    if (((ILoaderTask)Loader).ShouldStartBoxed(Input is not null && ReferenceEquals(Loader.GetType().GenericTypeArguments.First(), Input.GetType()) ? Input : null, IgnoreReloadTimeout: true))
-                                    {
-                                        Logger.Info($"由于输入条件变更，重启已完成的加载器 {Loader.Name}");
-                                        goto default;
-                                    }
-                                    // 更新下一个加载器的输入
-                                    Input = ((ILoaderTask)Loader).OutputBoxed;
-                                }
-                                // 如果不让继续启动，且已有加载器正在加载中，就不继续启动
-                                if (Loader.Block && !IsFinished)
-                                    Blocked = true;
-                                break;
-                            }
-                        case ModBase.LoadState.Loading:
-                            {
-                                // 检查 LoaderTask 是否需要重启
-                                if (GeneralUtils.IsGenericInstanceOf(Loader, typeof(LoaderTask<,>)))
-                                {
-                                    if (((ILoaderTask)Loader).ShouldStartBoxed(Input is not null && ReferenceEquals(Loader.GetType().GenericTypeArguments.First(), Input.GetType()) ? Input : null, IgnoreReloadTimeout: true))
-                                    {
-                                        Logger.Warn($"由于输入条件变更，重启进行中的加载器 {Loader.Name}");
-                                        goto default;
-                                    }
-                                }
-                                // 已经有正在加载中的了，不需要再启动了
-                                IsFinished = false;
+                        // 已完成：输入条件变化时重启，否则把输出交给下一个加载器
+                        if (IsTaskLoader && ((ILoaderTask)Loader).ShouldStartBoxed(TaskInput(), IgnoreReloadTimeout: true))
+                        {
+                            Logger.Info($"由于输入条件变更，重启已完成的加载器 {Loader.Name}");
+                        }
+                        else
+                        {
+                            if (IsTaskLoader)
+                                Input = ((ILoaderTask)Loader).OutputBoxed;
+                            // 如果不让继续启动，且已有加载器正在加载中，就不继续启动
+                            if (Loader.Block && !IsFinished)
                                 Blocked = true;
-                                break;
-                            }
-
-                        default:
-                            {
-
-                                // 未启动，则启动加载器
-                                IsFinished = false;
-                                if (Blocked)
-                                    continue;
-                                if (Input is not null)
-                                {
-                                    // 若输入类型与下一个加载器相同才继续
-                                    if (GeneralUtils.IsGenericInstanceOf(Loader, typeof(LoaderTask<,>)) || GeneralUtils.IsGenericInstanceOf(Loader, typeof(LoaderCombo<>)))
-                                    {
-                                        Loader.Start(ReferenceEquals(Loader.GetType().GenericTypeArguments.First(), Input.GetType()) ? Input : null, IsForceRestarting);
-                                    }
-                                    else if (Loader is LoaderWorker)
-                                    {
-                                        Loader.Start(IsForceRestart: IsForceRestarting);
-                                    }
-                                    else if (Loader is ModNet.LoaderDownload)
-                                    {
-                                        Loader.Start(Input is List<ModNet.NetFile> ? Input : null, IsForceRestarting);
-                                    }
-                                    else
-                                    {
-                                        throw new Exception("未知的加载器类型（" + Loader.GetType().Name + "）");
-                                    }
-                                }
-                                else
-                                {
-                                    Loader.Start(IsForceRestart: IsForceRestarting);
-                                }
-                                // 阻止继续
-                                if (Loader.Block)
-                                    Blocked = true;
-                                break;
-                            }
+                            continue;
+                        }
                     }
+                    else if (Loader.State == ModBase.LoadState.Loading)
+                    {
+                        // 进行中：输入条件变化时重启，否则等待它完成
+                        if (IsTaskLoader && ((ILoaderTask)Loader).ShouldStartBoxed(TaskInput(), IgnoreReloadTimeout: true))
+                        {
+                            Logger.Warn($"由于输入条件变更，重启进行中的加载器 {Loader.Name}");
+                        }
+                        else
+                        {
+                            IsFinished = false;
+                            Blocked = true;
+                            continue;
+                        }
+                    }
+                    // 未启动或需要重启：启动加载器
+                    IsFinished = false;
+                    if (Blocked)
+                        continue;
+                    if (Input is not null)
+                    {
+                        // 若输入类型与下一个加载器相同才继续
+                        if (IsTaskLoader || GeneralUtils.IsGenericInstanceOf(Loader, typeof(LoaderCombo<>)))
+                        {
+                            Loader.Start(ReferenceEquals(Loader.GetType().GenericTypeArguments.First(), Input.GetType()) ? Input : null, IsForceRestarting);
+                        }
+                        else if (Loader is LoaderWorker)
+                        {
+                            Loader.Start(IsForceRestart: IsForceRestarting);
+                        }
+                        else if (Loader is ModNet.LoaderDownload)
+                        {
+                            Loader.Start(Input is List<ModNet.NetFile> ? Input : null, IsForceRestarting);
+                        }
+                        else
+                        {
+                            throw new Exception("未知的加载器类型（" + Loader.GetType().Name + "）");
+                        }
+                    }
+                    else
+                    {
+                        Loader.Start(IsForceRestart: IsForceRestarting);
+                    }
+                    // 阻止继续
+                    if (Loader.Block)
+                        Blocked = true;
                 }
                 if (IsFinished)
                 {

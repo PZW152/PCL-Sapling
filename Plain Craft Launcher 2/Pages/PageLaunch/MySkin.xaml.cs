@@ -273,11 +273,10 @@ namespace PCL
                 ModMain.Hint("正在获取披风列表，请稍候……");
             IsChanging = true;
             // 开始实际获取
-            ModBase.RunInNewThread(() =>
+            ModBase.RunInNewThread(() => ChangeCape(), "Cape Change");
+        }
+        private void ChangeCape(bool IsRetry = false)
         {
-        Retry:
-            ;
-
             try
             {
                 // 获取登录信息
@@ -341,10 +340,15 @@ namespace PCL
                         case HttpStatusCode.Unauthorized:
                             {
                                 Logger.Warn(ex, "更改披风时遭遇 401 错误");
+                                if (IsRetry)
+                                {
+                                    ModMain.Hint("更改披风失败：重新登录后仍然没有权限", ModMain.HintType.Red);
+                                    return;
+                                }
                                 ModMain.Hint("正在重新登录，将在登录后自动更改披风……");
                                 ModLaunch.McLoginMsLoader.Start(PageLoginMsSkin.GetLoginData(), IsForceRestart: true);
-                                goto Retry;
-                                break;
+                                ChangeCape(true);
+                                return;
                             }
                     }
                 }
@@ -361,7 +365,6 @@ namespace PCL
             {
                 IsChanging = false;
             }
-        }, "Cape Change");
         }
 
     }

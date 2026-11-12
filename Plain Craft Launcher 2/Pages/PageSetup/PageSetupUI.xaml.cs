@@ -228,58 +228,52 @@ namespace PCL
         {
             if (!(ModAnimation.AniControlEnabled == 0 && e.RaiseByMouse))
                 return;
-            Refresh:
-            ;
-
-            // 已有图片则不再选择
             string TargetPath = Paths.Base + @"PCL\Logo.png";
-            if (FileUtils.Exists(TargetPath))
+            // 还没有图片：要求选择一张，复制过来
+            if (!FileUtils.Exists(TargetPath))
             {
-                try
+                string FileName = Dialogs.SelectFile("选择图片", false, filter: new[] { (new[] { "png", "jpeg", "jpg", "gif", "webp" }, "常用图片文件") }).FirstOrDefault();
+                if (string.IsNullOrEmpty(FileName))
                 {
-                    ModMain.FrmMain.ImageTitleLogo.Source = (string)null; // 防止因为 Source 属性前后的值相同而不更新 (#5628)
-                    ModMain.FrmMain.ImageTitleLogo.Source = TargetPath;
-                }
-                catch (Exception ex)
-                {
-                    if (ex.Message.Contains("参数无效"))
-                    {
-                        Logger.Error($"改变标题栏图片失败，该图片文件可能并非标准格式。{ModBase.CrLf}你可以尝试使用画图打开该文件并重新保存，这会让图片变为标准格式。{ModBase.CrLf}文件：{TargetPath}", LogBehavior.Alert);
-                    }
-                    else
-                    {
-                        Logger.Error(ex, "调整标题栏图片失败", LogBehavior.Alert);
-                    }
                     ModMain.FrmMain.ImageTitleLogo.Source = (string)null;
                     e.Handled = true;
-                    try
-                    {
-                        FileUtils.Delete(TargetPath);
-                    }
-                    catch (Exception exx)
-                    {
-                        Logger.Error(exx, "清理错误的标题栏图片失败", LogBehavior.Alert);
-                    }
+                    return;
                 }
-                return;
-            }
-            // 没有图片则要求选择
-            string FileName = Dialogs.SelectFile("选择图片", false, filter: new[] { (new[] { "png", "jpeg", "jpg", "gif", "webp" }, "常用图片文件") }).FirstOrDefault();
-            if (string.IsNullOrEmpty(FileName))
-            {
-                ModMain.FrmMain.ImageTitleLogo.Source = (string)null;
-                e.Handled = true;
-            }
-            else
-            {
                 try
                 {
                     FileUtils.Copy(FileName, TargetPath);
-                    goto Refresh;
                 }
                 catch (Exception ex)
                 {
                     Logger.Error(ex, "复制标题栏图片失败", LogBehavior.Alert);
+                    return;
+                }
+            }
+            // 显示图片
+            try
+            {
+                ModMain.FrmMain.ImageTitleLogo.Source = (string)null; // 防止因为 Source 属性前后的值相同而不更新 (#5628)
+                ModMain.FrmMain.ImageTitleLogo.Source = TargetPath;
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("参数无效"))
+                {
+                    Logger.Error($"改变标题栏图片失败，该图片文件可能并非标准格式。{ModBase.CrLf}你可以尝试使用画图打开该文件并重新保存，这会让图片变为标准格式。{ModBase.CrLf}文件：{TargetPath}", LogBehavior.Alert);
+                }
+                else
+                {
+                    Logger.Error(ex, "调整标题栏图片失败", LogBehavior.Alert);
+                }
+                ModMain.FrmMain.ImageTitleLogo.Source = (string)null;
+                e.Handled = true;
+                try
+                {
+                    FileUtils.Delete(TargetPath);
+                }
+                catch (Exception exx)
+                {
+                    Logger.Error(exx, "清理错误的标题栏图片失败", LogBehavior.Alert);
                 }
             }
         }

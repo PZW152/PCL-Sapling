@@ -584,10 +584,7 @@ namespace PCL
                                         break;
                                     }
 
-                                Recheck:
-                                    ;
-
-                                    if (Coerce.NotEqual(InstanceNameInheritFrom, ""))
+                                    while (Coerce.NotEqual(InstanceNameInheritFrom, ""))
                                     {
                                         var InheritInstance = new McInstance(Coerce.ToStr(InstanceNameInheritFrom));
                                         // 继续循环
@@ -602,7 +599,6 @@ namespace PCL
                                         InheritInstance.JsonObject.Merge(_JsonObject);
                                         _JsonObject = InheritInstance.JsonObject;
                                         _JsonObject["libraries"] = CurrentLib;
-                                        goto Recheck;
                                     }
                                 }
                                 catch (Exception ex)
@@ -803,63 +799,62 @@ namespace PCL
                 try
                 {
                     // 检查版本，若出错则跳过数据确定阶段
-                    if (!Check())
-                        goto ExitDataLoad;
-                    #region 确定版本分类
-                    switch (Version.VanillaName ?? "") // 在获取 Version.Original 对象时会完成它的加载
+                    if (Check())
                     {
-                        case "Unknown":
-                            {
-                                State = McInstanceState.Error;
-                                break;
-                            }
-                        case "Old":
-                            {
-                                State = McInstanceState.Old;
-                                break;
-                            }
-
-                        default:
-                            {
-                                // 愚人节与快照版本
-                                if (Version.IsFool)
+                        #region 确定版本分类
+                        switch (Version.VanillaName ?? "") // 在获取 Version.Original 对象时会完成它的加载
+                        {
+                            case "Unknown":
                                 {
-                                    State = McInstanceState.Fool;
+                                    State = McInstanceState.Error;
+                                    break;
                                 }
-                                else if (Version.IsSnapshot)
+                            case "Old":
                                 {
-                                    State = McInstanceState.Snapshot;
-                                }
-                                // OptiFine
-                                if (Version.HasOptiFine)
-                                {
-                                    State = McInstanceState.OptiFine;
-                                }
-                                // LiteLoader
-                                if (Version.ModLoaders.HasFlagF(ModLoaders.LiteLoader))
-                                {
-                                    State = McInstanceState.LiteLoader;
-                                }
-                                // Fabric、Forge、NeoForge
-                                if (Version.ModLoaders.HasFlagF(ModLoaders.Fabric))
-                                {
-                                    State = McInstanceState.Fabric;
-                                }
-                                else if (Version.ModLoaders.HasFlagF(ModLoaders.Forge))
-                                {
-                                    State = McInstanceState.Forge;
-                                }
-                                else if (Version.ModLoaders.HasFlagF(ModLoaders.NeoForge))
-                                {
-                                    State = McInstanceState.NeoForge;
+                                    State = McInstanceState.Old;
+                                    break;
                                 }
 
-                                break;
-                            }
+                            default:
+                                {
+                                    // 愚人节与快照版本
+                                    if (Version.IsFool)
+                                    {
+                                        State = McInstanceState.Fool;
+                                    }
+                                    else if (Version.IsSnapshot)
+                                    {
+                                        State = McInstanceState.Snapshot;
+                                    }
+                                    // OptiFine
+                                    if (Version.HasOptiFine)
+                                    {
+                                        State = McInstanceState.OptiFine;
+                                    }
+                                    // LiteLoader
+                                    if (Version.ModLoaders.HasFlagF(ModLoaders.LiteLoader))
+                                    {
+                                        State = McInstanceState.LiteLoader;
+                                    }
+                                    // Fabric、Forge、NeoForge
+                                    if (Version.ModLoaders.HasFlagF(ModLoaders.Fabric))
+                                    {
+                                        State = McInstanceState.Fabric;
+                                    }
+                                    else if (Version.ModLoaders.HasFlagF(ModLoaders.Forge))
+                                    {
+                                        State = McInstanceState.Forge;
+                                    }
+                                    else if (Version.ModLoaders.HasFlagF(ModLoaders.NeoForge))
+                                    {
+                                        State = McInstanceState.NeoForge;
+                                    }
+
+                                    break;
+                                }
+                        }
+                    #endregion
                     }
-                #endregion
-                ExitDataLoad:
-                    ;
 
                     // 确定版本图标
                     Logo = ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "Logo", "");
@@ -1325,35 +1320,35 @@ namespace PCL
                 if (!FolderList.Any())
                 {
                     ModBase.WriteIni(PathMc + "PCL.ini", "InstanceCache", ""); // 清空缓存
-                    goto OnLoaded;
                 }
-                // 有可用版本
-                int FolderListCheck = (int)Math.Round((Versions.McInstanceCacheVersion + "#" + FolderList.Join('#')).GetStableHashCode() % (decimal)(int.MaxValue - 1)); // 根据文件夹名列表生成辨识码
-                bool NeedReload = true; // 原 VB 以 GoTo Reload 在缓存失效时跳入重载分支
-                if (!McInstanceListForceRefresh && ModBase.Val(ModBase.ReadIni(PathMc + "PCL.ini", "InstanceCache")) == FolderListCheck)
+                else
                 {
-                    // 可以使用缓存
-                    var Result = InitMcInstanceListWithCache(PathMc);
-                    if (Result is not null)
+                    // 有可用版本
+                    int FolderListCheck = (int)Math.Round((Versions.McInstanceCacheVersion + "#" + FolderList.Join('#')).GetStableHashCode() % (decimal)(int.MaxValue - 1)); // 根据文件夹名列表生成辨识码
+                    bool NeedReload = true; // 原 VB 以 GoTo Reload 在缓存失效时跳入重载分支
+                    if (!McInstanceListForceRefresh && ModBase.Val(ModBase.ReadIni(PathMc + "PCL.ini", "InstanceCache")) == FolderListCheck)
                     {
-                        McInstanceList = Result;
-                        NeedReload = false;
+                        // 可以使用缓存
+                        var Result = InitMcInstanceListWithCache(PathMc);
+                        if (Result is not null)
+                        {
+                            McInstanceList = Result;
+                            NeedReload = false;
+                        }
                     }
-                }
-                if (NeedReload)
-                {
-                    // 文件夹列表不符
+                    if (NeedReload)
+                    {
+                        // 文件夹列表不符
 
-                    McInstanceListForceRefresh = false;
-                    Logger.Info("文件夹列表变更，重载所有版本");
-                    ModBase.WriteIni(PathMc + "PCL.ini", "InstanceCache", FolderListCheck.ToString());
-                    McInstanceList = InitMcInstanceListWithoutCache(PathMc);
+                        McInstanceListForceRefresh = false;
+                        Logger.Info("文件夹列表变更，重载所有版本");
+                        ModBase.WriteIni(PathMc + "PCL.ini", "InstanceCache", FolderListCheck.ToString());
+                        McInstanceList = InitMcInstanceListWithoutCache(PathMc);
+                    }
+                    IsFirstMcInstanceListLoad = false;
                 }
-                IsFirstMcInstanceListLoad = false;
 
-            // 改变当前选择的版本
-            OnLoaded:
-                ;
+                // 改变当前选择的版本
 
                 if (Loader.IsCanceled)
                     return;

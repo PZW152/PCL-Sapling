@@ -101,26 +101,25 @@ namespace PCL
                     Environment.Exit((int)ModBase.ProcessReturnValues.Cancel);
                 }
 
-            RetryCacheCheck:
-                ;
-
-                try
+                while (true)
                 {
-                    DirectoryUtils.Create(ModBase.PathTemp);
-                    ModBase.CheckPermissionWithException(ModBase.PathTemp);
-                }
-                catch (Exception ex)
-                {
-                    if (PathUtils.IsSame(ModBase.PathTemp, Path.GetTempPath() + @"PCL\"))
+                    try
                     {
-                        ModMain.MyMsgBox("PCL 无法访问缓存文件夹，可能导致程序出错或无法正常使用！" + ModBase.CrLf + ModBase.CrLf + "错误原因：" + ex.GetDisplay(true), "缓存文件夹不可用");
+                        DirectoryUtils.Create(ModBase.PathTemp);
+                        ModBase.CheckPermissionWithException(ModBase.PathTemp);
+                        break;
                     }
-                    else
+                    catch (Exception ex)
                     {
+                        if (PathUtils.IsSame(ModBase.PathTemp, Path.GetTempPath() + @"PCL\"))
+                        {
+                            ModMain.MyMsgBox("PCL 无法访问缓存文件夹，可能导致程序出错或无法正常使用！" + ModBase.CrLf + ModBase.CrLf + "错误原因：" + ex.GetDisplay(true), "缓存文件夹不可用");
+                            break;
+                        }
+                        // 手动设置的缓存文件夹不可用：改用默认文件夹后重试
                         ModMain.MyMsgBox("手动设置的缓存文件夹不可用，PCL 将使用默认缓存文件夹。" + ModBase.CrLf + ModBase.CrLf + "错误原因：" + ex.GetDisplay(true), "缓存文件夹不可用");
                         Settings.Set("SystemSystemCache", "");
                         ModBase.PathTemp = Path.GetTempPath() + @"PCL\";
-                        goto RetryCacheCheck;
                     }
                 }
                 DirectoryUtils.Create(ModBase.PathTemp + @"Cache\");

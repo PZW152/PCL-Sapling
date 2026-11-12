@@ -72,7 +72,8 @@ namespace PCL
             int RetryCount = 0;
             Exception RetryException = null;
             long StartTime = ModBase.GetTimeMs();
-        Retry:
+            while (true)
+            {
             try
             {
 
@@ -115,28 +116,13 @@ namespace PCL
                     if ((int)((HttpRequestCodeException)ex).StatusCode == 429)
                         Thread.Sleep(10000); // Too Many Requests
                 }
-                // 重试
-                switch (RetryCount)
-                {
-                    case 0:
-                        {
-                            RetryException = ex;
-                            RetryCount += 1;
-                            goto Retry;
-                            break;
-                        }
-                    case 1:
-                        {
-                            RetryCount += 1;
-                            goto Retry;
-                            break;
-                        }
-
-                    default:
-                        {
-                            throw;
-                        }
-                }
+                // 重试：第一次失败记下原因，第二次失败后只在耗时较长时再试一次
+                if (RetryCount == 0)
+                    RetryException = ex;
+                if (RetryCount >= 2)
+                    throw;
+                RetryCount += 1;
+            }
             }
         }
         /// <summary>
@@ -236,24 +222,20 @@ namespace PCL
         public static void NetDownloadByClient(string Url, string LocalPath, bool SimulateBrowserHeaders = false)
         {
             Logger.Info($"通过网络请求直接下载小文件：{Url} → {LocalPath}");
-            int RetryCount = 0;
-        Retry:
-            ;
-
-            try
+            for (int RetryCount = 0; ; RetryCount++)
             {
-                FileUtils.Write(LocalPath, SendRequest(Url, HttpMethod.Get, SimulateBrowserHeaders: SimulateBrowserHeaders));
-            }
-            catch (Exception ex)
-            {
-                FileUtils.Delete(LocalPath);
-                ex.ThrowIfCanceled();
-                if (RetryCount < 2)
+                try
                 {
-                    RetryCount += 1;
-                    goto Retry;
+                    FileUtils.Write(LocalPath, SendRequest(Url, HttpMethod.Get, SimulateBrowserHeaders: SimulateBrowserHeaders));
+                    return;
                 }
-                throw new HttpRequestException($"通过网络请求直接下载小文件失败（{LocalPath}）", ex);
+                catch (Exception ex)
+                {
+                    FileUtils.Delete(LocalPath);
+                    ex.ThrowIfCanceled();
+                    if (RetryCount >= 2)
+                        throw new HttpRequestException($"通过网络请求直接下载小文件失败（{LocalPath}）", ex);
+                }
             }
         }
 
@@ -1044,7 +1026,7 @@ namespace PCL
                 try
                 {
 
-                    long StartPosition;
+                    long StartPosition = 0L;
                     NetSource StartSource = null;
                     Thread Th;
                     NetThread ThreadInfo;
@@ -1074,48 +1056,51 @@ namespace PCL
                     }
                     lock (LockChain)
                     {
-                        // 首个开始点
-                        if (Threads is null)
+                        // 决定新线程从哪里开始下载；返回 False 表示不需要再开新线程
+                        bool FindStartPoint()
                         {
-                            StartPosition = 0L;
-                            StartSource = GetSource(FirstThreadSource);
-                            FirstThreadSource = StartSource.Id + 1;
-                            goto StartThread;
-                        }
-                        // 寻找失败点
-                        foreach (NetThread Thread in Threads)
-                        {
-                            if (Thread.State == NetState.Canceled && Thread.DownloadUndone > 0L)
+                            // 首个开始点
+                            if (Threads is null)
                             {
-                                StartPosition = Thread.DownloadStart + Thread.DownloadDone;
-                                StartSource = GetSource(Thread.Source.Id + 1);
-                                goto StartThread;
+                                StartPosition = 0L;
+                                StartSource = GetSource(FirstThreadSource);
+                                FirstThreadSource = StartSource.Id + 1;
+                                return true;
                             }
+                            // 寻找失败点
+                            foreach (NetThread Thread in Threads)
+                            {
+                                if (Thread.State == NetState.Canceled && Thread.DownloadUndone > 0L)
+                                {
+                                    StartPosition = Thread.DownloadStart + Thread.DownloadDone;
+                                    StartSource = GetSource(Thread.Source.Id + 1);
+                                    return true;
+                                }
+                            }
+                            // 是否禁用多线程，以及规定碎片大小
+                            var Source = GetSource();
+                            if (Source is null)
+                                return false;
+                            string TargetUrl = Source.Url;
+                            if (TargetUrl.Contains("pcl2-server") || TargetUrl.Contains("meloong.com") || TargetUrl.Contains("github.com") || TargetUrl.Contains("optifine.net") || TargetUrl.Contains("momot.rs"))
+                                return false;
+                            // 寻找最大碎片，从它的后段开始新线程
+                            var FilePieceMax = Threads;
+                            foreach (NetThread Thread in Threads)
+                            {
+                                if (Thread.DownloadUndone > FilePieceMax.DownloadUndone)
+                                    FilePieceMax = Thread;
+                            }
+                            if (FilePieceMax is null || FilePieceMax.DownloadUndone < FilePieceLimit)
+                                return false;
+                            StartPosition = (long)Math.Round(FilePieceMax.DownloadEnd - FilePieceMax.DownloadUndone * 0.4d);
+                            StartSource = GetSource();
+                            return true;
                         }
-                        // 是否禁用多线程，以及规定碎片大小
-                        var Source = GetSource();
-                        if (Source is null)
+                        if (!FindStartPoint())
                             return null;
-                        string TargetUrl = Source.Url;
-                        if (TargetUrl.Contains("pcl2-server") || TargetUrl.Contains("meloong.com") || TargetUrl.Contains("github.com") || TargetUrl.Contains("optifine.net") || TargetUrl.Contains("momot.rs"))
-                            return null;
-                        // 寻找最大碎片
-                        // FUTURE: 下载引擎重做，计算下载源平均链接时间和线程下载速度，按最高时间节省来开启多线程
-                        var FilePieceMax = Threads;
-                        foreach (NetThread Thread in Threads)
-                        {
-                            if (Thread.DownloadUndone > FilePieceMax.DownloadUndone)
-                                FilePieceMax = Thread;
-                        }
-                        if (FilePieceMax is null || FilePieceMax.DownloadUndone < FilePieceLimit)
-                            return null;
-                        StartPosition = (long)Math.Round(FilePieceMax.DownloadEnd - FilePieceMax.DownloadUndone * 0.4d);
-                        StartSource = GetSource();
 
-                    // 开始线程
-                    StartThread:
-                        ;
-
+                        // 开始线程
                         if (StartPosition > FileSize && FileSize >= 0L && !IsUnknownSize || StartPosition < 0L || StartSource == null)
                             return null;
                         // 构建线程
@@ -1175,178 +1160,180 @@ namespace PCL
                 {
                     int HttpDataCount = 0;
                     long ContentLength = 0L;
-                    if (SourcesOnce.Contains(Th.Source) && Th != Th.Source.SingleThread)
-                        goto SourceBreak;
-                    HttpRequest = new HttpRequestMessage(HttpMethod.Get, Th.Source.Url);
-                    ModSecret.SecretHeadersSign(Th.Source.Url, ref HttpRequest, SimulateBrowserHeaders);
-                    CancelToken = new CancellationTokenSource(Timeout);
-                    if (!Th.IsFirstThread)
-                        HttpRequest.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(Th.DownloadStart, default);
-                    Response = ThreadClient.SendAsync(HttpRequest, HttpCompletionOption.ResponseHeadersRead, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
-                    if (!Response.IsSuccessStatusCode) // 状态码检查
+                    // 建立连接并接收数据；中途被取消或该下载源只允许单线程时提前返回
+                    void Transfer()
                     {
-                        throw new HttpRequestCodeException($"错误码 {Response.StatusCode} ({(int)Response.StatusCode})，{Th.Source.Url}", Response.StatusCode, null);
-                    }
-                    if (State == NetState.Canceled)
-                        goto SourceBreak; // 快速中断
-                    if ((Response.RequestMessage.RequestUri.ToString() ?? "") != (Th.Source.Url ?? ""))
-                        Logger.Trace(() => $"{LocalName}：重定向至 {Response.RequestMessage.RequestUri}");
-                    // 文件大小校验
-                    ContentLength = Response.Content.Headers.ContentLength.GetValueOrDefault(-1);
-                    bool IsRangeNotSupported = false; // 原 VB 以 GoTo NotSupportRange 跳入下方分支
-                    if (ContentLength < 0L)
-                    {
-                        if (FileSize > 1L)
+                        if (SourcesOnce.Contains(Th.Source) && Th != Th.Source.SingleThread)
+                            return; // 结束本线程的传输
+                        HttpRequest = new HttpRequestMessage(HttpMethod.Get, Th.Source.Url);
+                        ModSecret.SecretHeadersSign(Th.Source.Url, ref HttpRequest, SimulateBrowserHeaders);
+                        CancelToken = new CancellationTokenSource(Timeout);
+                        if (!Th.IsFirstThread)
+                            HttpRequest.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(Th.DownloadStart, default);
+                        Response = ThreadClient.SendAsync(HttpRequest, HttpCompletionOption.ResponseHeadersRead, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
+                        if (!Response.IsSuccessStatusCode) // 状态码检查
                         {
-                            if (Th.DownloadStart == 0L)
+                            throw new HttpRequestCodeException($"错误码 {Response.StatusCode} ({(int)Response.StatusCode})，{Th.Source.Url}", Response.StatusCode, null);
+                        }
+                        if (State == NetState.Canceled)
+                            return; // 结束本线程的传输 // 快速中断
+                        if ((Response.RequestMessage.RequestUri.ToString() ?? "") != (Th.Source.Url ?? ""))
+                            Logger.Trace(() => $"{LocalName}：重定向至 {Response.RequestMessage.RequestUri}");
+                        // 文件大小校验
+                        ContentLength = Response.Content.Headers.ContentLength.GetValueOrDefault(-1);
+                        bool IsRangeNotSupported = false; // 原 VB 以 GoTo NotSupportRange 跳入下方分支
+                        if (ContentLength < 0L)
+                        {
+                            if (FileSize > 1L)
                             {
-                                Logger.Info($"{LocalName}：文件大小未知，但已从其他下载源获取，不作处理");
+                                if (Th.DownloadStart == 0L)
+                                {
+                                    Logger.Info($"{LocalName}：文件大小未知，但已从其他下载源获取，不作处理");
+                                }
+                                else
+                                {
+                                    Logger.Info($"{LocalName}：ContentLength 返回了 {ContentLength}，无法确定是否支持分段下载，视作不支持");
+                                    IsRangeNotSupported = true;
+                                }
                             }
                             else
                             {
-                                Logger.Info($"{LocalName}：ContentLength 返回了 {ContentLength}，无法确定是否支持分段下载，视作不支持");
-                                IsRangeNotSupported = true;
+                                FileSize = -1;
+                                IsUnknownSize = true;
+                                Logger.Info($"{LocalName}：文件大小未知");
                             }
+                        }
+                        else if (Th.IsFirstThread)
+                        {
+                            if (Check is not null)
+                            {
+                                if (ContentLength < Check.MinSize && Check.MinSize > 0L)
+                                {
+                                    throw new Exception($"文件大小不足，获取结果为 {ContentLength}，要求至少为 {Check.MinSize}。");
+                                }
+                                if (ContentLength != Check.ActualSize && Check.ActualSize > 0L)
+                                {
+                                    throw new Exception($"文件大小不一致，获取结果为 {ContentLength}，要求必须为 {Check.ActualSize}。");
+                                }
+                            }
+                            FileSize = ContentLength;
+                            IsUnknownSize = false;
+                            Logger.Info($"{LocalName}：文件大小 {ContentLength}（{StringUtils.FormatByteSize(ContentLength)}）");
+                            // 若文件大小大于 50 M，进行剩余磁盘空间校验
+                            if (ContentLength > 50 * 1024 * 1024)
+                            {
+                                foreach (DriveInfo Drive in DriveInfo.GetDrives())
+                                {
+                                    string DriveName = Drive.Name.First().ToString();
+                                    double RequiredSpace = (ModBase.PathTemp.StartsWithF(DriveName) ? ContentLength * 1.1d : 0d) + (LocalPath.StartsWithF(DriveName) ? ContentLength + 5 * 1024 * 1024 : 0L);
+                                    if (RequiredSpace > 0d && Drive.TotalFreeSpace < RequiredSpace)
+                                    {
+                                        throw new Exception(DriveName + " 盘空间不足，无法进行下载。" + ModBase.CrLf + "需要至少 " + StringUtils.FormatByteSize((long)Math.Round(RequiredSpace)) + " 空间，但当前仅剩余 " + StringUtils.FormatByteSize(Drive.TotalFreeSpace) + "。" + (ModBase.PathTemp.StartsWithF(DriveName) ? ModBase.CrLf + ModBase.CrLf + "下载时需要与文件同等大小的空间存放缓存，你可以在设置中调整缓存文件夹的位置。" : ""));
+                                    }
+                                }
+                            }
+                        }
+                        else if (FileSize < 0L)
+                        {
+                            throw new Exception("非首线程运行时，尚未获取文件大小");
+                        }
+                        else if (Th.DownloadStart > 0L && ContentLength >= FileSize)
+                        {
+                            IsRangeNotSupported = true;
+                        }
+                        else if (!(FileSize - Th.DownloadStart == ContentLength))
+                        {
+                            throw new RangeNotSupportedException($"获取到的分段大小不一致：Range 起始于 {Th.DownloadStart}，预期 ContentLength 为 {FileSize - Th.DownloadStart}，返回 ContentLength 为 {ContentLength}，总文件大小 {FileSize}");
+                        }
+                        if (IsRangeNotSupported)
+                        {
+                            lock (LockSource)
+                            {
+                                if (SourcesOnce.Contains(Th.Source))
+                                    return; // 结束本线程的传输
+                            }
+                            throw new RangeNotSupportedException($"该下载源不支持分段下载：Range 起始于 {Th.DownloadStart}，预期 ContentLength 为 {FileSize - Th.DownloadStart}，返回 ContentLength 为 {ContentLength}，总文件大小 {FileSize}");
+                        }
+                        // Log($"[Download] {LocalName} {Info.Uuid}#：通过大小检查，文件大小 {FileSize}，起始点 {Info.DownloadStart}，ContentLength {ContentLength}")
+                        Th.State = NetState.Reading;
+                        lock (LockState)
+                        {
+                            if (State < NetState.Reading)
+                                State = NetState.Reading;
+                        }
+                        // 创建缓存文件
+                        if (IsNoSplit)
+                        {
+                            Th.Temp = null;
+                            Cache = new MemoryStream();
+                            ResultStream = Cache;
                         }
                         else
                         {
-                            FileSize = -1;
-                            IsUnknownSize = true;
-                            Logger.Info($"{LocalName}：文件大小未知");
+                            Th.Temp = $@"{ModBase.PathTemp}Download\{Uuid}_{Th.Uuid}_{ModBase.RandomInteger(0, 999999)}.tmp";
+                            ResultStream = FileUtils.CreateAsStream(Th.Temp);
                         }
-                    }
-                    else if (Th.IsFirstThread)
-                    {
-                        if (Check is not null)
-                        {
-                            if (ContentLength < Check.MinSize && Check.MinSize > 0L)
-                            {
-                                throw new Exception($"文件大小不足，获取结果为 {ContentLength}，要求至少为 {Check.MinSize}。");
-                            }
-                            if (ContentLength != Check.ActualSize && Check.ActualSize > 0L)
-                            {
-                                throw new Exception($"文件大小不一致，获取结果为 {ContentLength}，要求必须为 {Check.ActualSize}。");
-                            }
-                        }
-                        FileSize = ContentLength;
-                        IsUnknownSize = false;
-                        Logger.Info($"{LocalName}：文件大小 {ContentLength}（{StringUtils.FormatByteSize(ContentLength)}）");
-                        // 若文件大小大于 50 M，进行剩余磁盘空间校验
-                        if (ContentLength > 50 * 1024 * 1024)
-                        {
-                            foreach (DriveInfo Drive in DriveInfo.GetDrives())
-                            {
-                                string DriveName = Drive.Name.First().ToString();
-                                double RequiredSpace = (ModBase.PathTemp.StartsWithF(DriveName) ? ContentLength * 1.1d : 0d) + (LocalPath.StartsWithF(DriveName) ? ContentLength + 5 * 1024 * 1024 : 0L);
-                                if (RequiredSpace > 0d && Drive.TotalFreeSpace < RequiredSpace)
-                                {
-                                    throw new Exception(DriveName + " 盘空间不足，无法进行下载。" + ModBase.CrLf + "需要至少 " + StringUtils.FormatByteSize((long)Math.Round(RequiredSpace)) + " 空间，但当前仅剩余 " + StringUtils.FormatByteSize(Drive.TotalFreeSpace) + "。" + (ModBase.PathTemp.StartsWithF(DriveName) ? ModBase.CrLf + ModBase.CrLf + "下载时需要与文件同等大小的空间存放缓存，你可以在设置中调整缓存文件夹的位置。" : ""));
-                                }
-                            }
-                        }
-                    }
-                    else if (FileSize < 0L)
-                    {
-                        throw new Exception("非首线程运行时，尚未获取文件大小");
-                    }
-                    else if (Th.DownloadStart > 0L && ContentLength >= FileSize)
-                    {
-                        IsRangeNotSupported = true;
-                    }
-                    else if (!(FileSize - Th.DownloadStart == ContentLength))
-                    {
-                        throw new RangeNotSupportedException($"获取到的分段大小不一致：Range 起始于 {Th.DownloadStart}，预期 ContentLength 为 {FileSize - Th.DownloadStart}，返回 ContentLength 为 {ContentLength}，总文件大小 {FileSize}");
-                    }
-                    if (IsRangeNotSupported)
-                    {
-                        lock (LockSource)
-                        {
-                            if (SourcesOnce.Contains(Th.Source))
-                                goto SourceBreak;
-                        }
-                        throw new RangeNotSupportedException($"该下载源不支持分段下载：Range 起始于 {Th.DownloadStart}，预期 ContentLength 为 {FileSize - Th.DownloadStart}，返回 ContentLength 为 {ContentLength}，总文件大小 {FileSize}");
-                    }
-                    // Log($"[Download] {LocalName} {Info.Uuid}#：通过大小检查，文件大小 {FileSize}，起始点 {Info.DownloadStart}，ContentLength {ContentLength}")
-                    Th.State = NetState.Reading;
-                    lock (LockState)
-                    {
-                        if (State < NetState.Reading)
-                            State = NetState.Reading;
-                    }
-                    // 创建缓存文件
-                    if (IsNoSplit)
-                    {
-                        Th.Temp = null;
-                        Cache = new MemoryStream();
-                        ResultStream = Cache;
-                    }
-                    else
-                    {
-                        Th.Temp = $@"{ModBase.PathTemp}Download\{Uuid}_{Th.Uuid}_{ModBase.RandomInteger(0, 999999)}.tmp";
-                        ResultStream = FileUtils.CreateAsStream(Th.Temp);
-                    }
-                    // 开始下载
-                    CancelToken.Dispose();
-                    CancelToken = new CancellationTokenSource(); // 重置超时，不再让 CancellationToken 在固定时间后触发（#8488）
-                    ResponseStream = Response.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
-                    if (Settings.Get<bool>("SystemDebugDelay"))
-                        System.Threading.Thread.Sleep(ModBase.RandomInteger(50, 3000));
-                    byte[] ResponseBytes = new byte[16385];
-                    HttpDataCount = ResponseStream.ReadAsync(ResponseBytes, 0, 16384, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
-                    while ((IsUnknownSize || Th.DownloadUndone > 0L) && HttpDataCount > 0 && !ModBase.IsProgramEnding && State < NetState.Merging && (!Th.Source.IsFailed || Th.Source.SingleThread == Th)) // 判断是否下载完成
-                    {
-                        // 限速
-                        while (NetTaskSpeedLimitHigh > 0L && NetTaskSpeedLimitLeft <= 0L)
-                            System.Threading.Thread.Sleep(16);
-                        int RealDataCount = (int)(IsUnknownSize ? HttpDataCount : Math.Min(HttpDataCount, Th.DownloadUndone));
-                        if (NetTaskSpeedLimitHigh > 0L)
-                            Interlocked.Add(ref NetTaskSpeedLimitLeft, -RealDataCount);
-                        long DeltaTime = ModBase.GetTimeMs() - Th.LastReceiveTime;
-                        if (DeltaTime > 100000000L)
-                            DeltaTime = 1L; // 避免时间刻反转导致出现极大值
-                        if (RealDataCount > 0)
-                        {
-                            // 有数据
-                            if (Th.DownloadDone == 0L)
-                            {
-                                // 第一次接受到数据
-                                Th.State = NetState.Downloading;
-                                lock (LockState)
-                                {
-                                    if (State < NetState.Downloading)
-                                        State = NetState.Downloading;
-                                }
-                                Interlocked.Increment(ref ConnectCount);
-                                Interlocked.Add(ref ConnectTime, ModBase.GetTimeMs() - Th.InitTime);
-                            }
-                            Th.Source.FailCount = 0;
-                            foreach (var Task in Tasks)
-                                Task.FailCount = 0;
-                            Interlocked.Add(ref NetManager.DownloadDone, RealDataCount);
-                            Interlocked.Add(ref DownloadDone, RealDataCount);
-                            Th.DownloadDone += RealDataCount;
-                            ResultStream.Write(ResponseBytes, 0, RealDataCount);
-                            // 已完成
-                            if (Th.DownloadUndone == 0L && !IsUnknownSize)
-                                break;
-                            // 检查速度是否过慢
-                            if (Th.LastReceiveTime > 0L && DeltaTime > 5000L && DeltaTime > RealDataCount && Th.Source.SingleThread is null) // 数据包间隔大于 5s，且速度小于 1K/s
-                                                                                                                                             // 且并非单线程下载
-                            {
-                                throw new TimeoutException("由于速度过慢断开链接，下载 " + RealDataCount + " B，消耗 " + DeltaTime + " ms。");
-                            }
-                            Th.LastReceiveTime = ModBase.GetTimeMs();
-                        }
-                        else if (Th.LastReceiveTime > 0L && DeltaTime > Timeout)
-                        {
-                            // 无数据，且已超时
-                            throw new TimeoutException("操作超时，无数据。");
-                        }
+                        // 开始下载
+                        CancelToken.Dispose();
+                        CancelToken = new CancellationTokenSource(); // 重置超时，不再让 CancellationToken 在固定时间后触发（#8488）
+                        ResponseStream = Response.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
+                        if (Settings.Get<bool>("SystemDebugDelay"))
+                            System.Threading.Thread.Sleep(ModBase.RandomInteger(50, 3000));
+                        byte[] ResponseBytes = new byte[16385];
                         HttpDataCount = ResponseStream.ReadAsync(ResponseBytes, 0, 16384, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
+                        while ((IsUnknownSize || Th.DownloadUndone > 0L) && HttpDataCount > 0 && !ModBase.IsProgramEnding && State < NetState.Merging && (!Th.Source.IsFailed || Th.Source.SingleThread == Th)) // 判断是否下载完成
+                        {
+                            // 限速
+                            while (NetTaskSpeedLimitHigh > 0L && NetTaskSpeedLimitLeft <= 0L)
+                                System.Threading.Thread.Sleep(16);
+                            int RealDataCount = (int)(IsUnknownSize ? HttpDataCount : Math.Min(HttpDataCount, Th.DownloadUndone));
+                            if (NetTaskSpeedLimitHigh > 0L)
+                                Interlocked.Add(ref NetTaskSpeedLimitLeft, -RealDataCount);
+                            long DeltaTime = ModBase.GetTimeMs() - Th.LastReceiveTime;
+                            if (DeltaTime > 100000000L)
+                                DeltaTime = 1L; // 避免时间刻反转导致出现极大值
+                            if (RealDataCount > 0)
+                            {
+                                // 有数据
+                                if (Th.DownloadDone == 0L)
+                                {
+                                    // 第一次接受到数据
+                                    Th.State = NetState.Downloading;
+                                    lock (LockState)
+                                    {
+                                        if (State < NetState.Downloading)
+                                            State = NetState.Downloading;
+                                    }
+                                    Interlocked.Increment(ref ConnectCount);
+                                    Interlocked.Add(ref ConnectTime, ModBase.GetTimeMs() - Th.InitTime);
+                                }
+                                Th.Source.FailCount = 0;
+                                foreach (var Task in Tasks)
+                                    Task.FailCount = 0;
+                                Interlocked.Add(ref NetManager.DownloadDone, RealDataCount);
+                                Interlocked.Add(ref DownloadDone, RealDataCount);
+                                Th.DownloadDone += RealDataCount;
+                                ResultStream.Write(ResponseBytes, 0, RealDataCount);
+                                // 已完成
+                                if (Th.DownloadUndone == 0L && !IsUnknownSize)
+                                    break;
+                                // 检查速度是否过慢
+                                if (Th.LastReceiveTime > 0L && DeltaTime > 5000L && DeltaTime > RealDataCount && Th.Source.SingleThread is null) // 数据包间隔大于 5s，且速度小于 1K/s
+                                                                                                                                                 // 且并非单线程下载
+                                {
+                                    throw new TimeoutException("由于速度过慢断开链接，下载 " + RealDataCount + " B，消耗 " + DeltaTime + " ms。");
+                                }
+                                Th.LastReceiveTime = ModBase.GetTimeMs();
+                            }
+                            else if (Th.LastReceiveTime > 0L && DeltaTime > Timeout)
+                            {
+                                // 无数据，且已超时
+                                throw new TimeoutException("操作超时，无数据。");
+                            }
+                            HttpDataCount = ResponseStream.ReadAsync(ResponseBytes, 0, 16384, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
+                        }
                     }
-
-                SourceBreak:
-                    ;
+                    Transfer();
 
                     if (State == NetState.Canceled || Th.Source.IsFailed && Th.Source.SingleThread != Th || Th.DownloadUndone > 0L && !IsUnknownSize)
                     {
@@ -1520,105 +1507,112 @@ namespace PCL
                     }
                 }
                 int RetryCount = 0;
-            Retry:
                 try
                 {
-
-                    // 创建文件夹
-                    DirectoryUtils.Create(PathUtils.RemoveLastPart(LocalPath));
-                    FileUtils.Delete(LocalPath);
-                    lock (LockChain)
+                    while (true)
                     {
-                        // 合并文件
-                        if (IsNoSplit)
+                        try
                         {
-                            // 仅有一个线程，从内存中输出
-                            Logger.Trace(() => $"{LocalName}：下载结束，从内存输出文件");
-                            FileUtils.Write(LocalPath, Cache);
-                        }
-                        else if (Threads.DownloadDone == DownloadDone && Threads.Temp is not null)
-                        {
-                            // 仅有一个文件，直接复制
-                            Logger.Trace(() => $"{LocalName}：下载结束，仅有一个文件，无需合并");
-                            FileUtils.Copy(Threads.Temp, LocalPath);
-                        }
-                        else
-                        {
-                            // 有多个线程，合并
-                            Logger.Trace(() => $"{LocalName}：下载结束，开始合并文件");
-                            using (var MergeFile = FileUtils.CreateAsStream(LocalPath))
+
+                            // 创建文件夹
+                            DirectoryUtils.Create(PathUtils.RemoveLastPart(LocalPath));
+                            FileUtils.Delete(LocalPath);
+                            lock (LockChain)
                             {
-                                using (var AddWriter = new BinaryWriter(MergeFile))
+                                // 合并文件
+                                if (IsNoSplit)
                                 {
-                                    foreach (NetThread Thread in Threads)
+                                    // 仅有一个线程，从内存中输出
+                                    Logger.Trace(() => $"{LocalName}：下载结束，从内存输出文件");
+                                    FileUtils.Write(LocalPath, Cache);
+                                }
+                                else if (Threads.DownloadDone == DownloadDone && Threads.Temp is not null)
+                                {
+                                    // 仅有一个文件，直接复制
+                                    Logger.Trace(() => $"{LocalName}：下载结束，仅有一个文件，无需合并");
+                                    FileUtils.Copy(Threads.Temp, LocalPath);
+                                }
+                                else
+                                {
+                                    // 有多个线程，合并
+                                    Logger.Trace(() => $"{LocalName}：下载结束，开始合并文件");
+                                    using (var MergeFile = FileUtils.CreateAsStream(LocalPath))
                                     {
-                                        if (Thread.DownloadDone == 0L || Thread.Temp is null)
-                                            continue;
-                                        using (var fs = FileUtils.ReadAsStream(Thread.Temp))
+                                        using (var AddWriter = new BinaryWriter(MergeFile))
                                         {
-                                            using (var TempReader = new BinaryReader(fs))
+                                            foreach (NetThread Thread in Threads)
                                             {
-                                                AddWriter.Write(TempReader.ReadBytes((int)Thread.DownloadDone));
+                                                if (Thread.DownloadDone == 0L || Thread.Temp is null)
+                                                    continue;
+                                                using (var fs = FileUtils.ReadAsStream(Thread.Temp))
+                                                {
+                                                    using (var TempReader = new BinaryReader(fs))
+                                                    {
+                                                        AddWriter.Write(TempReader.ReadBytes((int)Thread.DownloadDone));
+                                                    }
+                                                }
                                             }
                                         }
                                     }
                                 }
+                                // 检查文件
+                                string CheckResult = Check?.Check(LocalPath);
+                                if (CheckResult is null && !IsUnknownSize && Check is not null)
+                                {
+                                    if (Check.ActualSize == -1)
+                                    {
+                                        CheckResult = new FileChecker() { ActualSize = FileSize }.Check(LocalPath); // 不修改原始的 Checker，以免污染原始实例
+                                    }
+                                    else if (Check.ActualSize != FileSize)
+                                    {
+                                        CheckResult = $"文件大小不一致：任务校验要求为 {Check.ActualSize}，请求结果为 {FileSize}";
+                                    }
+                                }
+                                if (CheckResult is not null)
+                                {
+                                    Logger.Info($"{LocalName} 文件校验失败，下载线程细节：");
+                                    foreach (NetThread T in Threads)
+                                        Logger.Info($"- {T.Uuid}#，状态 {T.State}，范围 {T.DownloadStart}~{T.DownloadEnd}，已下载 {T.DownloadDone}，未下载 {T.DownloadUndone}");
+                                    throw new Exception(CheckResult);
+                                }
+                                // 后处理
+                                if (!IsNoSplit)
+                                {
+                                    foreach (NetThread Thread in Threads)
+                                    {
+                                        if (Thread.Temp is not null)
+                                            FileUtils.Delete(Thread.Temp);
+                                    }
+                                }
+                                Finish();
                             }
+                            break;
                         }
-                        // 检查文件
-                        string CheckResult = Check?.Check(LocalPath);
-                        if (CheckResult is null && !IsUnknownSize && Check is not null)
+                        catch (Exception ex)
                         {
-                            if (Check.ActualSize == -1)
+                            RetryCount += 1;
+                            if (State > NetState.Merging)
+                                return; // 通常是因为在合并时被中断了
+                            Logger.Warn(ex, $"合并文件出错，第 {RetryCount} 次尝试（{LocalName}）");
+                            // 重新尝试合并
+                            if (RetryCount < 3)
                             {
-                                CheckResult = new FileChecker() { ActualSize = FileSize }.Check(LocalPath); // 不修改原始的 Checker，以免污染原始实例
+                                System.Threading.Thread.Sleep(500 * RetryCount);
+                                continue;
                             }
-                            else if (Check.ActualSize != FileSize)
+                            // 失败，禁用当前下载源并重启下载
+                            try
                             {
-                                CheckResult = $"文件大小不一致：任务校验要求为 {Check.ActualSize}，请求结果为 {FileSize}";
+                                FileUtils.Delete(LocalPath);
                             }
-                        }
-                        if (CheckResult is not null)
-                        {
-                            Logger.Info($"{LocalName} 文件校验失败，下载线程细节：");
-                            foreach (NetThread T in Threads)
-                                Logger.Info($"- {T.Uuid}#，状态 {T.State}，范围 {T.DownloadStart}~{T.DownloadEnd}，已下载 {T.DownloadDone}，未下载 {T.DownloadUndone}");
-                            throw new Exception(CheckResult);
-                        }
-                        // 后处理
-                        if (!IsNoSplit)
-                        {
-                            foreach (NetThread Thread in Threads)
+                            catch (Exception)
                             {
-                                if (Thread.Temp is not null)
-                                    FileUtils.Delete(Thread.Temp);
+                                Logger.Warn(ex, $"删除合并失败的文件出错（{LocalPath}）");
                             }
+                            SourceFail(Th, ex, true);
+                            break;
                         }
-                        Finish();
                     }
-                }
-                catch (Exception ex)
-                {
-                    RetryCount += 1;
-                    if (State > NetState.Merging)
-                        return; // 通常是因为在合并时被中断了
-                    Logger.Warn(ex, $"合并文件出错，第 {RetryCount} 次尝试（{LocalName}）");
-                    // 重新尝试合并
-                    if (RetryCount < 3)
-                    {
-                        System.Threading.Thread.Sleep(500 * RetryCount);
-                        goto Retry;
-                    }
-                    // 失败，禁用当前下载源并重启下载
-                    try
-                    {
-                        FileUtils.Delete(LocalPath);
-                    }
-                    catch (Exception)
-                    {
-                        Logger.Warn(ex, $"删除合并失败的文件出错（{LocalPath}）");
-                    }
-                    SourceFail(Th, ex, true);
                 }
                 finally
                 {
@@ -1760,27 +1754,13 @@ namespace PCL
                     if (State == ModBase.LoadState.Loading && value >= Math.Min(10000, Math.Max(FileRemain * 8, NetTaskThreadLimit * 8 + 3)))
                     {
                         Logger.Error($"由于同加载器中失败次数过多引发强制失败：连续失败了 {value} 次", LogBehavior.ToastIfDebug);
+                        // 收集最多 11 个下载源的错误；集合在收集时被修改等异常不影响后续的失败处理
                         var ExList = new List<Exception>();
                         try
                         {
-                            foreach (var File in Files)
-                            {
-                            foreach (var Source in File.Sources)
-                            {
-                                if (Source.Ex is not null)
-                                {
-                                    ExList.Add(Source.Ex);
-                                    if (ExList.Count > 10)
-                                        goto FinishExCatch;
-                                }
-                            }
-                            }
+                            ExList.AddRange(Files.SelectMany(File => File.Sources).Select(Source => Source.Ex).Where(SourceEx => SourceEx is not null).Take(11));
                         }
-                        catch { } // 原 VB 為 On Error Resume Next：收集錯誤時（如集合被修改）出錯不影響後續的失敗處理
-
-                    FinishExCatch:
-                        ;
-
+                        catch { }
                         OnFail(ExList);
                     }
                 }

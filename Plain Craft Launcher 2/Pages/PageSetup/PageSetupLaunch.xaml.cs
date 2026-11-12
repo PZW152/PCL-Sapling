@@ -363,99 +363,22 @@ namespace PCL
         public static double GetRam(ModMinecraft.McInstance Instance, bool UseVersionJavaSetup)
         {
 
-            // ------------------------------------------
-            // 修改下方代码时需要一并修改 PageInstanceSetup
-            // ------------------------------------------
 
             var RamGive = default(double);
             if (Settings.Get<int>("LaunchRamType") == 0)
             {
                 // 自动配置
-                double RamAvailable = Math.Round(SystemInfo.AvailablePhysicalMemory / 1024d / 1024d / 1024d * 10d) / 10d;
-                // 确定需求的内存值
-                double RamMininum; // 无论如何也需要保证的最低限度内存
-                double RamTarget1; // 估计能勉强带动了的内存
-                double RamTarget2; // 估计没啥问题了的内存
-                double RamTarget3; // 放一百万个材质和 Mod 和光影需要的内存
                 if (Instance is not null && !Instance.IsLoaded)
                     Instance.Load();
-                if (Instance is not null && Instance.Modable)
-                {
-                    // 可安装 Mod 的版本
-                    var ModDir = DirectoryUtils.GetInfo(Instance.PathIndie + @"mods\");
-                    int ModCount = ModDir.Exists ? ModDir.GetFiles().Count(f => new[] { ".jar", ".zip", ".litemod" }.Contains(f.Extension.Lower())) : 0;
-                    RamMininum = 0.5d + ModCount / 150d;
-                    RamTarget1 = 1.5d + ModCount / 90d;
-                    RamTarget2 = 2.7d + ModCount / 50d;
-                    RamTarget3 = 4.5d + ModCount / 25d;
-                }
-                else if (Instance is not null && Instance.Version.HasOptiFine)
-                {
-                    // OptiFine 版本
-                    RamMininum = 0.5d;
-                    RamTarget1 = 1.5d;
-                    RamTarget2 = 3d;
-                    RamTarget3 = 5d;
-                }
-                else
-                {
-                    // 普通版本
-                    RamMininum = 0.5d;
-                    RamTarget1 = 1.5d;
-                    RamTarget2 = 2.5d;
-                    RamTarget3 = 4d;
-                }
-                double RamDelta;
-                // 预分配内存，阶段一，0 ~ T1，100%
-                RamDelta = RamTarget1;
-                RamGive += Math.Min(RamAvailable, RamDelta);
-                RamAvailable -= RamDelta;
-                if (RamAvailable < 0.1d)
-                    goto PreFin;
-                // 预分配内存，阶段二，T1 ~ T2，70%
-                RamDelta = RamTarget2 - RamTarget1;
-                RamGive += Math.Min(RamAvailable * 0.7d, RamDelta);
-                RamAvailable -= RamDelta / 0.7d;
-                if (RamAvailable < 0.1d)
-                    goto PreFin;
-                // 预分配内存，阶段三，T2 ~ T3，40%
-                RamDelta = RamTarget3 - RamTarget2;
-                RamGive += Math.Min(RamAvailable * 0.4d, RamDelta);
-                RamAvailable -= RamDelta / 0.4d;
-                if (RamAvailable < 0.1d)
-                    goto PreFin;
-                // 预分配内存，阶段四，T3 ~ T3 * 2，15%
-                RamDelta = RamTarget3;
-                RamGive += Math.Min(RamAvailable * 0.15d, RamDelta);
-                RamAvailable -= RamDelta / 0.15d;
-                if (RamAvailable < 0.1d)
-                    goto PreFin;
-                PreFin:
-                ;
-
-                // 不低于最低值
-                RamGive = Math.Round(Math.Max(RamGive, RamMininum), 1);
+                bool Modable = Instance is not null && Instance.Modable;
+                bool HasOptiFine = !Modable && Instance is not null && Instance.Version.HasOptiFine;
+                var Needs = MemoryPlanner.Needs(Modable, HasOptiFine, Modable ? MemoryPlanner.CountMods(Instance.PathIndie + @"mods\") : 0);
+                RamGive = MemoryPlanner.Auto(MemoryPlanner.BytesToGb(SystemInfo.AvailablePhysicalMemory), Needs);
             }
             else
             {
                 // 手动配置
-                int Value = Settings.Get<int>("LaunchRamCustom");
-                if (Value <= 12)
-                {
-                    RamGive = Value * 0.1d + 0.3d;
-                }
-                else if (Value <= 25)
-                {
-                    RamGive = (Value - 12) * 0.5d + 1.5d;
-                }
-                else if (Value <= 33)
-                {
-                    RamGive = (Value - 25) * 1 + 8;
-                }
-                else
-                {
-                    RamGive = (Value - 33) * 2 + 16;
-                }
+                RamGive = MemoryPlanner.FromSlider(Settings.Get<int>("LaunchRamCustom"));
             }
             return RamGive;
         }

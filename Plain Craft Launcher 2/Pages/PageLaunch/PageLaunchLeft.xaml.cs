@@ -348,11 +348,14 @@ namespace PCL
             {
                 LoginPageType = Settings.Get<int>("LoginPageType");
             }
+            if (LoginPageType is < 0 or > 4)
+                Logger.Error($"未知的登录页面：{LoginPageType}", LogBehavior.Toast);
             switch (LoginPageType)
             {
                 case 0:
                 case 3:
                 case 4: // 正版或离线（3、4 是已删除的统一通行证与 Authlib 登录，按 0 处理）
+                default: // 未知的登录页面同样按 0 处理
                     {
 
                         if (this.RadioLoginType5.Checked)
@@ -408,12 +411,6 @@ namespace PCL
                         break;
                     }
 
-                default:
-                    {
-                        Logger.Error($"未知的登录页面：{LoginPageType}", LogBehavior.Toast);
-                        goto case 0;
-                        break;
-                    }
             }
             // 刷新页面
             if (PageCurrent == Type)
@@ -452,44 +449,43 @@ namespace PCL
             {
                 Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
                 Logger.Info("获取微软正版皮肤失败，ID 为空");
-                goto Finish;
             }
-            try
+            else
             {
-                string Result = ModMinecraft.McSkinGetAddress(Uuid, "Ms");
-                if (Data.IsCanceled)
-                    throw new OperationCanceledException("当前任务已取消：" + UserName);
-                Result = ModMinecraft.McSkinDownload(Result);
-                if (Data.IsCanceled)
-                    throw new OperationCanceledException("当前任务已取消：" + UserName);
-                Data.Output = Result;
+                try
+                {
+                    string Result = ModMinecraft.McSkinGetAddress(Uuid, "Ms");
+                    if (Data.IsCanceled)
+                        throw new OperationCanceledException("当前任务已取消：" + UserName);
+                    Result = ModMinecraft.McSkinDownload(Result);
+                    if (Data.IsCanceled)
+                        throw new OperationCanceledException("当前任务已取消：" + UserName);
+                    Data.Output = Result;
+                }
+                catch (Exception ex)
+                {
+                    if (ex.IsCanceled())
+                    {
+                        Data.Output = "";
+                        return;
+                    }
+                    else if (ex.GetDisplay(false).Contains("(429)"))
+                    {
+                        Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
+                        Logger.Error($"获取正版皮肤失败（{UserName}）：获取皮肤太过频繁，请 5 分钟后再试！", LogBehavior.Toast);
+                    }
+                    else if (ex.GetDisplay(false).Contains("未设置自定义皮肤"))
+                    {
+                        Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
+                        Logger.Info("用户未设置自定义皮肤，跳过皮肤加载");
+                    }
+                    else
+                    {
+                        Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
+                        Logger.Error(ex, $"获取微软正版皮肤失败（{UserName}）", LogBehavior.Toast);
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                if (ex.IsCanceled())
-                {
-                    Data.Output = "";
-                    return;
-                }
-                else if (ex.GetDisplay(false).Contains("(429)"))
-                {
-                    Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
-                    Logger.Error($"获取正版皮肤失败（{UserName}）：获取皮肤太过频繁，请 5 分钟后再试！", LogBehavior.Toast);
-                }
-                else if (ex.GetDisplay(false).Contains("未设置自定义皮肤"))
-                {
-                    Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
-                    Logger.Info("用户未设置自定义皮肤，跳过皮肤加载");
-                }
-                else
-                {
-                    Data.Output = ModBase.PathImage + "Skins/" + ModMinecraft.McSkinSex(Coerce.ToStr(ModLaunch.McLoginLegacyUuid(UserName))) + ".png";
-                    Logger.Error(ex, $"获取微软正版皮肤失败（{UserName}）", LogBehavior.Toast);
-                }
-            }
-
-        Finish:
-            ;
 
             // 刷新显示
             if (ModMain.FrmLoginMsSkin is not null)
@@ -605,13 +601,16 @@ namespace PCL
                     }
                 case 4: // 自定义
                     {
-                        if (!FileUtils.Exists(Paths.AppDataThenName + "CustomSkin.png"))
+                        if (FileUtils.Exists(Paths.AppDataThenName + "CustomSkin.png"))
+                        {
+                            Data.Output = Paths.AppDataThenName + "CustomSkin.png";
+                        }
+                        else
                         {
                             ModMain.Hint("未找到离线皮肤自定义文件，可能它已被删除。PCL 将使用默认的 Steve 皮肤！");
                             Settings.Set("LaunchSkinType", 1);
-                            goto case 1;
+                            Data.Output = ModBase.PathImage + "Skins/Steve.png";
                         }
-                        Data.Output = Paths.AppDataThenName + "CustomSkin.png";
                         break;
                     }
             }
@@ -682,56 +681,54 @@ namespace PCL
                 CurrentState = 3;
             }
             // 更新状态
-            if (CurrentState == BtnLaunchState && ((ModMinecraft.McInstanceSelected is null ? "" : ModMinecraft.McInstanceSelected.PathVersion) ?? "") == ((BtnLaunchInstance is null ? "" : BtnLaunchInstance.PathVersion) ?? ""))
-                goto ExitRefresh;
-            BtnLaunchInstance = ModMinecraft.McInstanceSelected;
-            BtnLaunchState = CurrentState;
-            switch (CurrentState)
+            if (CurrentState != BtnLaunchState || (ModMinecraft.McInstanceSelected?.PathVersion ?? "") != (BtnLaunchInstance?.PathVersion ?? ""))
             {
-                case 0:
-                    {
-                        Logger.Info("启动按钮：正在加载 Minecraft 版本");
-                        ModMain.FrmLaunchLeft.BtnLaunch.Text = "正在加载";
-                        ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = false;
-                        ModMain.FrmLaunchLeft.LabVersion.Text = "正在加载中，请稍候";
-                        ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = false;
-                        ModMain.FrmLaunchLeft.BtnMore.Visibility = Visibility.Collapsed;
-                        break;
-                    }
-                case 1:
-                    {
-                        Logger.Info("启动按钮：无 Minecraft 版本，下载已禁用");
-                        ModMain.FrmLaunchLeft.BtnLaunch.Text = "启动游戏";
-                        ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = false;
-                        ModMain.FrmLaunchLeft.LabVersion.Text = "未找到可用的游戏版本";
-                        ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = true;
-                        ModMain.FrmLaunchLeft.BtnMore.Visibility = Visibility.Collapsed;
-                        break;
-                    }
-                case 2:
-                    {
-                        Logger.Info("启动按钮：无 Minecraft 版本，要求下载");
-                        ModMain.FrmLaunchLeft.BtnLaunch.Text = "下载游戏";
-                        ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = true;
-                        ModMain.FrmLaunchLeft.LabVersion.Text = "未找到可用的游戏版本";
-                        ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = true;
-                        ModMain.FrmLaunchLeft.BtnMore.Visibility = Visibility.Collapsed;
-                        break;
-                    }
-                case 3:
-                    {
-                        Logger.Info($"启动按钮：Minecraft 版本：{ModMinecraft.McInstanceSelected.PathVersion}");
-                        ModMain.FrmLaunchLeft.BtnLaunch.Text = "启动游戏";
-                        ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = true;
-                        ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = true;
-                        ModMain.FrmLaunchLeft.LabVersion.Text = ModMinecraft.McInstanceSelected.Name;
-                        break;
-                    }
-                    // FrmLaunchLeft.BtnMore.Visibility = Visibility.Visible '由功能隐藏设置修改
+                BtnLaunchInstance = ModMinecraft.McInstanceSelected;
+                BtnLaunchState = CurrentState;
+                switch (CurrentState)
+                {
+                    case 0:
+                        {
+                            Logger.Info("启动按钮：正在加载 Minecraft 版本");
+                            ModMain.FrmLaunchLeft.BtnLaunch.Text = "正在加载";
+                            ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = false;
+                            ModMain.FrmLaunchLeft.LabVersion.Text = "正在加载中，请稍候";
+                            ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = false;
+                            ModMain.FrmLaunchLeft.BtnMore.Visibility = Visibility.Collapsed;
+                            break;
+                        }
+                    case 1:
+                        {
+                            Logger.Info("启动按钮：无 Minecraft 版本，下载已禁用");
+                            ModMain.FrmLaunchLeft.BtnLaunch.Text = "启动游戏";
+                            ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = false;
+                            ModMain.FrmLaunchLeft.LabVersion.Text = "未找到可用的游戏版本";
+                            ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = true;
+                            ModMain.FrmLaunchLeft.BtnMore.Visibility = Visibility.Collapsed;
+                            break;
+                        }
+                    case 2:
+                        {
+                            Logger.Info("启动按钮：无 Minecraft 版本，要求下载");
+                            ModMain.FrmLaunchLeft.BtnLaunch.Text = "下载游戏";
+                            ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = true;
+                            ModMain.FrmLaunchLeft.LabVersion.Text = "未找到可用的游戏版本";
+                            ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = true;
+                            ModMain.FrmLaunchLeft.BtnMore.Visibility = Visibility.Collapsed;
+                            break;
+                        }
+                    case 3:
+                        {
+                            Logger.Info($"启动按钮：Minecraft 版本：{ModMinecraft.McInstanceSelected.PathVersion}");
+                            ModMain.FrmLaunchLeft.BtnLaunch.Text = "启动游戏";
+                            ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = true;
+                            ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = true;
+                            ModMain.FrmLaunchLeft.LabVersion.Text = ModMinecraft.McInstanceSelected.Name;
+                            break;
+                        }
+                        // FrmLaunchLeft.BtnMore.Visibility = Visibility.Visible '由功能隐藏设置修改
+                }
             }
-
-        ExitRefresh:
-            ;
 
             // 功能隐藏
             ModMain.FrmLaunchLeft.BtnVersion.Visibility = !PageSetupUI.HiddenForceShow && Settings.Get<bool>("UiHiddenFunctionSelect") ? Visibility.Collapsed : Visibility.Visible;
