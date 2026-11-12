@@ -564,9 +564,9 @@ namespace PCL
         private void SliderLoad()
         {
             this.SliderLauncherTransparent.GetHintText = new Func<object, object>(v => Math.Round(40 + Coerce.ToDouble(v) * 0.1d) + "%");
-            this.SliderLauncherHue.GetHintText = new Func<object, object>(v => Coerce.Concat(v, "°"));
+            this.SliderLauncherHue.GetHintText = new Func<object, object>(v => (ThemePalette.BlueHueMin + Coerce.ToInt(v)) + "°"); // 滑块只覆盖蓝色范围
             this.SliderLauncherSat.GetHintText = new Func<object, object>(v => Coerce.Concat(v, "%"));
-            this.SliderLauncherDelta.GetHintText = new Func<int, string>((Value) => { if (Value > 90) { return "+" + (Value - 90); } else if (Value == 90) { return 0.ToString(); } else { return (Value - 90).ToString(); } });
+            this.SliderLauncherDelta.GetHintText = new Func<int, string>(Value => { int Delta = Value - ThemePalette.MaxTopbarDelta; return Delta > 0 ? "+" + Delta : Delta.ToString(); });
             this.SliderLauncherLight.GetHintText = new Func<int, string>((Value) => { if (Value > 20) { return "+" + (Value - 20); } else if (Value == 20) { return 0.ToString(); } else { return (Value - 20).ToString(); } });
             this.SliderBackgroundOpacity.GetHintText = new Func<object, object>(v => Math.Round(Coerce.ToDouble(v) * 0.1d) + "%");
             this.SliderBackgroundBlur.GetHintText = new Func<object, object>(v => Coerce.Concat(v, " 像素"));

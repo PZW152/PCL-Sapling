@@ -207,15 +207,7 @@ namespace PCL
                     }
                 }
                 // 将已有的 PCL 窗口拖出来
-                string argClassName = null;
-                string argWindowName = "Plain Craft Launcher　";
-                var WindowHwnd = ModMain.FindWindow(argClassName, argWindowName);
-                if (WindowHwnd == IntPtr.Zero)
-                {
-                    string argClassName1 = null;
-                    string argWindowName1 = "Plain Craft Launcher 2　";
-                    WindowHwnd = ModMain.FindWindow(argClassName1, argWindowName1);
-                }
+                var WindowHwnd = ModMain.FindWindow(null, ModBase.WindowTitle);
                 if (WindowHwnd != IntPtr.Zero)
                     ModMain.ShowWindowToTop(WindowHwnd);
                 // 播放提示音并退出

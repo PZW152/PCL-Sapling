@@ -10,11 +10,11 @@ using System.Windows;
 
 // 查看程序集特性的值
 
-[assembly: AssemblyTitle("Plain Craft Launcher 启动器")]
-[assembly: AssemblyDescription("Minecraft 启动器")]
+[assembly: AssemblyTitle("Plain Craft Launcher (PCL) 樹苗修改版")]
+[assembly: AssemblyDescription("由第三方基于 PCL 独立二次创作的 Minecraft 启动器")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Plain Craft Launcher")]
-[assembly: AssemblyCopyright("Copyright © 成都瓜皮龙科技有限公司")]
+[assembly: AssemblyProduct("Plain Craft Launcher (PCL) 樹苗修改版")]
+[assembly: AssemblyCopyright("PCL © 成都瓜皮龙科技有限公司；樹苗修改版由 PZW152 修改")]
 [assembly: AssemblyConfiguration("PCL2 Config Mark")]
 [assembly: ComVisible(false)]
 
@@ -53,6 +53,6 @@ using System.Windows;
 // 可以指定所有值，也可以使用以下所示的 "*" 预置版本号和修订号
 // 方法是按如下所示使用“*”
 
-[assembly: AssemblyVersion("2.99.0.1")]
-[assembly: AssemblyFileVersion("2.99.0.1")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
 [assembly: NeutralResourcesLanguage("")]

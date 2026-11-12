@@ -55,6 +55,7 @@
     <Resource Include="Images\icon.ico" />
     <Resource Include="Resources\Font.ttf" />
     <Resource Include="Images\Heads\LTCat.jpg" />
+    <Resource Include="Images\Heads\Sapling.png" />
     <Resource Include="Images\Blocks\Anvil.png" />
     <Resource Include="Images\Blocks\CobbleStone.png" />
     <Resource Include="Images\Blocks\CommandBlock.png" />

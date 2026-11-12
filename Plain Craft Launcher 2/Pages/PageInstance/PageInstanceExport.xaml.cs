@@ -690,7 +690,7 @@ namespace PCL
             ModBase.WriteIni(OverridesFolder + @"PCL\Setup.ini", "IsStar", false.ToString());
             // 复制 PCL 本体（正式版）
             if (IncludePCL)
-                FileUtils.Copy(ModBase.PathExe, CacheFolder + "Plain Craft Launcher.exe");
+                FileUtils.Copy(ModBase.PathExe, CacheFolder + ModBase.ProductName + ".exe");
             // 复制 PCL 个性化内容
             if (IncludePCLCustom)
             {

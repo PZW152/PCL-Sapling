@@ -3,14 +3,14 @@ namespace PCL.Tests;
 public class ThemePaletteTests
 {
     [Test]
-    public async Task 每个预设主题的色相都不同()
+    public async Task 预设主题都是蓝色且互不相同()
     {
-        var Hues = new[] { 0, 1, 2, 3, 4 }.Select(t => ThemePalette.Preset(t).Hue).ToList();
-        await Assert.That(Hues.Distinct().Count()).IsEqualTo(5);
-        // 相邻色相至少相差 20 度，肉眼才分得出来
-        var Sorted = Hues.OrderBy(h => h).ToList();
-        for (int i = 1; i < Sorted.Count; i++)
-            await Assert.That(Sorted[i] - Sorted[i - 1] >= 20).IsTrue();
+        // PCL 的使用指南要求界面主色相必须为蓝色
+        var Presets = new[] { 0, 1, 2, 3, 4 }.Select(ThemePalette.Preset).ToList();
+        foreach (var Args in Presets)
+            await Assert.That(Args.Hue >= ThemePalette.BlueHueMin && Args.Hue <= ThemePalette.BlueHueMax).IsTrue();
+        await Assert.That(Presets.Distinct().Count()).IsEqualTo(5);
+        await Assert.That(Presets.Select(a => a.Hue).Distinct().Count()).IsEqualTo(5);
     }
 
     [Test]
@@ -21,12 +21,20 @@ public class ThemePaletteTests
     }
 
     [Test]
-    public async Task 自定义主题读取滑块的值()
+    public async Task 自定义主题只能在蓝色范围内调整()
     {
-        // 滑块的默认值：色调 180、饱和度 80、渐变 90、亮度 20
-        await Assert.That(ThemePalette.Resolve(14, 180, 80, 90, 20)).IsEqualTo(new ThemeArgs(180, 80, 0, 0));
-        await Assert.That(ThemePalette.Resolve(14, 300, 40, 120, 35)).IsEqualTo(new ThemeArgs(300, 40, 15, 30));
-        await Assert.That(ThemePalette.Resolve(14, 999, -5, 999, -1)).IsEqualTo(new ThemeArgs(360, 0, -20, 90));
+        // 滑块的默认值：色调 10、饱和度 80、渐变 20、亮度 20，即默认的龙猫蓝色相且不渐变
+        await Assert.That(ThemePalette.Resolve(14, 10, 80, 20, 20)).IsEqualTo(new ThemeArgs(210, 80, 0, 0));
+        await Assert.That(ThemePalette.Resolve(14, 0, 40, 40, 35)).IsEqualTo(new ThemeArgs(200, 40, 15, 20));
+        // 超出范围的旧值（例如从原版 PCL 导入的 180 / 300）会被限制在蓝色范围内
+        await Assert.That(ThemePalette.Resolve(14, 300, -5, 999, -1)).IsEqualTo(new ThemeArgs(235, 0, -20, 20));
+        for (int Hue = -10; Hue <= 400; Hue += 7)
+            for (int Delta = -10; Delta <= 200; Delta += 9)
+            {
+                var Args = ThemePalette.Resolve(14, Hue, 50, Delta, 20);
+                int TopHue = Args.Hue + Args.TopbarHueDelta;
+                await Assert.That(TopHue >= ThemePalette.BlueHueMin - ThemePalette.MaxTopbarDelta && TopHue <= ThemePalette.BlueHueMax + ThemePalette.MaxTopbarDelta).IsTrue();
+            }
     }
 
     [Test]

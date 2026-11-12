@@ -313,7 +313,7 @@ public sealed class CrashLogRules {
             if (!IsMixin)
                 return false;
             // Mod 名称匹配
-            string ModName = LogText.RegexSeek(@"(?<=from mod )[^.\/ ]+(?=\] from)");
+            string? ModName = LogText.RegexSeek(@"(?<=from mod )[^.\/ ]+(?=\] from)");
             if (ModName is null)
                 ModName = LogText.RegexSeek(@"(?<=for mod )[^.\/ ]+(?= failed)");
             if (ModName is not null)

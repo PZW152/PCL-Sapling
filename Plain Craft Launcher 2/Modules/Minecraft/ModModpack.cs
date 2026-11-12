@@ -1192,7 +1192,7 @@ namespace PCL
                     {
                     var Info = FileVersionInfo.GetVersionInfo(ExeFile);
                     Logger.Info($"文件 {ExeFile} 的产品名标识为 {Info.ProductName}");
-                    if (Info.ProductName == "Plain Craft Launcher")
+                    if (Info.ProductName is not null && Info.ProductName.StartsWith("Plain Craft Launcher") && Info.ProductName != "Plain Craft Launcher Admin Manager")
                         {
                         Launcher = ExeFile;
                         Logger.Info($"发现整合包附带的 PCL 启动器：{ExeFile}");

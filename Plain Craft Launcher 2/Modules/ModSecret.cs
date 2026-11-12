@@ -47,15 +47,13 @@ namespace PCL
                 }
                 else if (SimulateBrowserHeaders)
                 {
-                    Req.Headers.Add("User-Agent", $"PCL2/{ModBase.VersionBaseName}.{(int)ModBase.BuildType} Mozilla/5.0 AppleWebKit/537.36 Chrome/63.0.3239.132 Safari/537.36");
+                    Req.Headers.Add("User-Agent", $"PCL-Sapling/{ModBase.VersionBaseName} Mozilla/5.0 AppleWebKit/537.36 Chrome/63.0.3239.132 Safari/537.36");
                 }
                 else
                 {
-                    Req.Headers.Add("User-Agent", $"PCL2/{ModBase.VersionBaseName}.{(int)ModBase.BuildType}");
+                    Req.Headers.Add("User-Agent", $"PZW152/PCL-Sapling/{ModBase.VersionBaseName} (+{ModBase.RepoUrl})");
                 }
             }
-            if (!SimulateBrowserHeaders)
-                Req.Headers.Add("Referer", $"http://{ModBase.VersionCode}.open.pcl2.server/");
             if (Url.Contains("api.curseforge.com") || Url.Contains("forgecdn.net"))
                 Req.Headers.Add("x-api-key", CurseForgeAPIKey);
         }

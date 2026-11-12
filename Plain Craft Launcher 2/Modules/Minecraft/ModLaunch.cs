@@ -270,6 +270,21 @@ namespace PCL
             ModBase.RunInUiWait(() => CheckResult = McLoginAble(McLoginInput()));
             if (!string.IsNullOrEmpty(CheckResult))
                 throw new ArgumentException(CheckResult);
+            // 求赞助：PCL 的使用指南要求修改版保留与原版一致的赞助劝导（赞助的是 PCL 原作者）
+            if (ModBase.BuildType == ModBase.BuildTypes.Release && CurrentLaunchOptions?.SaveBatch is null) // 保存脚本时不提示
+            {
+                ModBase.RunInDedicatedThread(() =>
+                {
+                    int Count = Settings.Get<int>("SystemLaunchCount");
+                    if (!new[] { 10, 20, 40, 60, 80, 100, 120, 150, 200, 250, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000 }.Contains(Count))
+                        return;
+                    if (ModMain.MyMsgBox($"PCL 已经为你启动了 {Count} 次游戏啦！" + ModBase.CrLf +
+                                         "如果 PCL 还算好用的话，能不能考虑赞助一下 PCL……" + ModBase.CrLf +
+                                         "如果没有大家的支持，PCL 很难在免费、无任何广告的情况下维持数年的更新（磕头）……！",
+                                         $"{Count} 次启动！", "支持 PCL！", "但是我拒绝") == 1)
+                        ModBase.OpenWebsite("https://meloong.com/afd/a/LTCat");
+                }, "Donate");
+            }
             // 正版购买提示
             if (CurrentLaunchOptions?.SaveBatch is null && !Settings.Get<bool>("HintBuy") && Settings.Get<McLoginType>("LoginType") != McLoginType.Ms) // 保存脚本时不提示
             {

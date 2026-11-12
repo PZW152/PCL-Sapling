@@ -38,7 +38,18 @@ namespace PCL
         public const string Lf = "\n";
         public const string Tab = "\t";
 
-        public const string VersionBaseName = "2.99.0.1"; // 显示用版本名
+        /// <summary>
+        /// 产品名称。按 PCL 的使用指南，修改版的名称必须以 Plain Craft Launcher (PCL) 开头，并表明由第三方修改。
+        /// </summary>
+        public const string ProductName = "Plain Craft Launcher (PCL) 樹苗修改版";
+        public const string ProductShortName = "PCL 樹苗修改版";
+        /// <summary>源代码仓库（使用指南要求公开源代码）。</summary>
+        public const string RepoUrl = "https://github.com/PZW152/PCL-Sapling";
+        /// <summary>窗口标题，同时用于寻找已经打开的窗口（末尾是全角空格）。</summary>
+        public const string WindowTitle = ProductName + "　";
+        public const string VersionBaseName = "1.0.0"; // 显示用版本名
+        /// <summary>修改所基于的 PCL 版本。</summary>
+        public const string UpstreamVersion = "2.99.0.1";
         public const string CommitHash = BuildSecrets.CommitHash; // 編譯時由 PCL_COMMIT_HASH 環境變量注入
 #if RELEASE
         public const int VersionCode = 415; // 正式版

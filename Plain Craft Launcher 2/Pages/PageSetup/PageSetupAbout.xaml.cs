@@ -26,7 +26,8 @@ namespace PCL
                 return;
             IsLoaded = true;
 
-            this.ItemAboutPcl.Info = this.ItemAboutPcl.Info.Replace("%VERSION%", ModBase.VersionDisplay).Replace("%VERSIONCODE%", ModBase.VersionCode.ToString()).Replace("%BRANCH%", ((int)ModBase.BuildType).ToString());
+            this.ItemAboutPcl.Info = this.ItemAboutPcl.Info.Replace("%UPSTREAM%", ModBase.UpstreamVersion);
+            this.ItemAboutEdition.Info = this.ItemAboutEdition.Info.Replace("%VERSION%", ModBase.VersionDisplay + (string.IsNullOrEmpty(ModBase.CommitHash) ? "" : "（" + ModBase.CommitHash.Substring(0, System.Math.Min(7, ModBase.CommitHash.Length)) + "）"));
 
         }
 
