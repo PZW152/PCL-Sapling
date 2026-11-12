@@ -12,6 +12,30 @@ namespace PCL
 {
     public partial class PageSetupUI
     {
+        #region 事件
+
+        private void BtnBackgroundOpen_Click(object sender, MouseButtonEventArgs e) => BtnUIBgOpen_Click(sender, e);
+        private void OnBtnBackgroundRefresh_Click(object sender, MouseButtonEventArgs e) => BtnBackgroundRefresh_Click(sender, e);
+        private void OnBtnBackgroundClear_Click(object sender, MouseButtonEventArgs e) => BtnBackgroundClear_Click(sender, e);
+        private void OnBtnLogoChange_Click(object sender, MouseButtonEventArgs e) => BtnLogoChange_Click(sender, e);
+        private void OnBtnLogoDelete_Click(object sender, MouseButtonEventArgs e) => BtnLogoDelete_Click(sender, e);
+        private void OnBtnCustomFile_Click(object sender, MouseButtonEventArgs e) => BtnCustomFile_Click(sender, e);
+        private void OnBtnCustomTutorial_Click(object sender, MouseButtonEventArgs e) => BtnCustomTutorial_Click(sender, e);
+        private void CheckHiddenSetupLaunch_Change(object sender, bool e) => HiddenSetupSub();
+        private void CheckHiddenSetupSystem_Change(object sender, bool e) => HiddenSetupSub();
+        private void CheckHiddenPageSetup_Change(object sender, bool e)
+        {
+            HiddenSetupMain();
+            HiddenHint(sender, e);
+        }
+        private void CheckHiddenSetupUI_Change(object sender, bool e)
+        {
+            HiddenSetupSub();
+            HiddenHint(sender, e);
+        }
+
+        #endregion
+
 
         // 非重复加载部分
         private bool _PageSetupUI_Loaded_Reloaded = false;
@@ -310,7 +334,7 @@ namespace PCL
                 Logger.Error(ex, "生成教学文件失败");
             }
         }
-        private void BtnCustomRefresh_Click()
+        private void BtnCustomRefresh_Click(object sender, MouseButtonEventArgs e)
         {
             ModMain.FrmLaunchRight.ForceRefresh();
             ModMain.Hint("已刷新主页！", ModMain.HintType.Green);
@@ -401,7 +425,7 @@ namespace PCL
             }
             this.CardLauncher.TriggerForceResize();
         }
-        private void HSL_Change()
+        private void HSL_Change(object sender, bool e)
         {
             if (ModAnimation.AniControlEnabled != 0 || this.SliderLauncherSat is null || !this.SliderLauncherSat.IsLoaded)
                 return;

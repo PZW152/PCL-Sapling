@@ -12,6 +12,12 @@ namespace PCL
 {
     public partial class PageLoginMs : ILoginPage
     {
+        #region 事件
+
+        private void OnBtnLogin_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => BtnLogin_Click(sender, e);
+
+        #endregion
+
         public PageLoginMs()
         {
             this.InitializeComponent();

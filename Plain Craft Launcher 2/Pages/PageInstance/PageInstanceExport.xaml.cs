@@ -403,7 +403,7 @@ namespace PCL
             ExtraFiles = null;
             this.PanBack.ScrollToHome();
         }
-        private void CardOptions_MouseLeftButtonDown()
+        private void CardOptions_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (RulesOverrides is null)
                 return;
@@ -413,7 +413,7 @@ namespace PCL
         // ================ 保存 / 读取 ================
 
         // 保存配置文件
-        private void ExportConfig()
+        private void ExportConfig(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             try
             {
@@ -467,7 +467,7 @@ namespace PCL
             }
         }
         // 读取配置文件
-        private void ImportConfig()
+        private void ImportConfig(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             try
             {
@@ -528,7 +528,7 @@ namespace PCL
         /// <summary>
     /// 开始导出。
     /// </summary>
-        private void StartExport()
+        private void StartExport(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             string PackName = string.IsNullOrEmpty(this.TextExportName.Text) ? this.TextExportName.HintText : this.TextExportName.Text;
             string PackVersion = string.IsNullOrEmpty(this.TextExportVersion.Text) ? "1.0.0" : this.TextExportVersion.Text;
@@ -917,7 +917,7 @@ namespace PCL
         }
 
         // 自动填写整合包名称
-        private void TextExportName_GotFocus()
+        private void TextExportName_GotFocus(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(this.TextExportName.Text))
             {

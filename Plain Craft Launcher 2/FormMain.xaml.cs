@@ -20,6 +20,16 @@ namespace PCL
 
     public partial class FormMain
     {
+        #region 事件
+
+        private void OnBtnTitleClose_Click(object sender, EventArgs e) => BtnTitleClose_Click(sender, (RoutedEventArgs)e);
+        private void BtnTitleInner_Click(object sender, EventArgs e) => PageBack();
+        private void PanBack_MouseMove(object sender, MouseEventArgs e) => DragDoing();
+        private void OnBtnExtraDownload_Click(object sender, MouseButtonEventArgs e) => BtnExtraDownload_Click(sender, e);
+        private void BtnExtraBack_Click(object sender, MouseButtonEventArgs e) => BackToTop();
+
+        #endregion
+
 
         #region 基础
 
@@ -761,7 +771,7 @@ namespace PCL
         }
 
         // 最小化
-        private void BtnTitleMin_Click()
+        private void BtnTitleMin_Click(object sender, EventArgs e)
         {
             this.WindowState = WindowState.Minimized;
         }
@@ -1669,8 +1679,9 @@ namespace PCL
         /// <summary>
     /// 通过点击导航栏改变页面。
     /// </summary>
-        private void BtnTitleSelect_Click(MyRadioButton sender, bool raiseByMouse)
+        private void BtnTitleSelect_Click(object RawSender, bool raiseByMouse)
         {
+            var sender = (MyRadioButton)RawSender;
             if (IsChangingPage)
                 return;
             PageChangeActual((PageType)(int)ModBase.Val(sender.Tag));
@@ -1982,7 +1993,7 @@ namespace PCL
         }
 
         // 关闭 Minecraft
-        public void BtnExtraShutdown_Click()
+        public void BtnExtraShutdown_Click(object sender, MouseButtonEventArgs e)
         {
             try
             {

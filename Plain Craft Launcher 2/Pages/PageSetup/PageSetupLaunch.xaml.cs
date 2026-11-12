@@ -13,6 +13,24 @@ namespace PCL
 {
     public partial class PageSetupLaunch
     {
+        #region 事件
+
+        private void OnBtnSkinChange_Click(object sender, MouseButtonEventArgs e) => BtnSkinChange_Click(sender, e);
+        private void OnBtnSkinDelete_Click(object sender, MouseButtonEventArgs e) => BtnSkinDelete_Click(sender, e);
+        private void OnBtnSkinSave_Click(object sender, MouseButtonEventArgs e) => BtnSkinSave_Click(sender, e);
+        private void OnBtnSkinCache_Click(object sender, MouseButtonEventArgs e) => BtnSkinCache_Click(sender, e);
+        private void SliderRamCustom_Change(object sender, bool e) => RefreshRam();
+        private void RadioRamType0_Check(object sender, ModBase.RouteEventArgs e) => RefreshRam();
+        private void RadioRamType1_Check(object sender, ModBase.RouteEventArgs e) => RefreshRam();
+        private void RectRamGame_SizeChanged(object sender, SizeChangedEventArgs e) => RefreshRamText();
+        private void RectRamEmpty_SizeChanged(object sender, SizeChangedEventArgs e) => RefreshRamText();
+        private void LabRamGame_SizeChanged(object sender, SizeChangedEventArgs e) => RefreshRamText();
+        private void OnBtnAdvanceJavaSearch_Click(object sender, EventArgs e) => BtnAdvanceJavaSearch_Click();
+        private void OnTextAdvanceJvm_TextChanged(object sender, TextChangedEventArgs e) => ReplaceEnter((MyTextBox)sender, e);
+        private void TextAdvanceGame_TextChanged(object sender, TextChangedEventArgs e) => ReplaceEnter((MyTextBox)sender, e);
+
+        #endregion
+
 
         // 非重复加载部分
         private bool _PageSetupLaunch_Loaded_Reloaded = false;
@@ -492,7 +510,7 @@ namespace PCL
 
         #region 其他选项
 
-        private void WindowTypeUIRefresh()
+        private void WindowTypeUIRefresh(object sender, SelectionChangedEventArgs e)
         {
             var IsVisibie = (this.ComboArgumentWindowType.SelectedIndex == 3).ToVisibility();
             this.TextArgumentWindowHeight.Visibility = IsVisibie;
@@ -535,7 +553,7 @@ namespace PCL
         }
 
         // JVM 参数重设
-        private void TextAdvanceJvm_TextChanged()
+        private void TextAdvanceJvm_TextChanged(object sender, RoutedEventArgs e)
         {
             this.BtnAdvanceJvmReset.Visibility = (this.TextAdvanceJvm.Text ?? "") == (Settings.GetDefault("LaunchAdvanceJvm") ?? "") ? Visibility.Hidden : Visibility.Visible;
         }

@@ -91,7 +91,7 @@ namespace PCL
             this.HintChinese.Visibility = this.ComboName.Text.RegexCheck("^[0-9A-Za-z_]*$") ? Visibility.Collapsed : Visibility.Visible;
             ModBase.RunInUi(() => this.PanMain.InvalidateMeasure(), true); // 由于 WPF 的 Bug，它不一定会自动更新 HintChinese 的大小（#6627）
         }
-        private void Skin_Click()
+        private void Skin_Click(object sender, MouseButtonEventArgs e)
         {
             if ((Settings.Get<bool>("UiHiddenPageSetup") || Settings.Get<bool>("UiHiddenSetupLaunch")) && !PageSetupUI.HiddenForceShow)
             {

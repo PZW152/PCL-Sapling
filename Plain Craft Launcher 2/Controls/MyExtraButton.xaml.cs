@@ -12,6 +12,27 @@ namespace PCL
 {
     public partial class MyExtraButton
     {
+        #region 事件
+
+        private void PanClick_MouseEnter(object sender, MouseEventArgs e) => RefreshColor();
+        private void PanClick_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            Button_LeftMouseUp(sender, e);
+            Button_LeftMouseUp();
+        }
+        private void PanClick_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            Button_RightMouseUp(sender, e);
+            Button_RightMouseUp();
+        }
+        private void PanClick_MouseLeave(object sender, MouseEventArgs e)
+        {
+            Button_MouseLeave();
+            RefreshColor();
+        }
+
+        #endregion
+
 
         // 声明
         public event ClickEventHandler Click;

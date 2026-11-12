@@ -6,7 +6,7 @@
     <Grid.RenderTransform>
         <ScaleTransform ScaleX="0" ScaleY="0" />
     </Grid.RenderTransform>
-    <Border x:Name="PanClick" MouseEnter="__On_PanClick_MouseEnter" MouseLeave="__On_PanClick_MouseLeave" MouseRightButtonDown="__On_PanClick_MouseRightButtonDown" MouseLeftButtonDown="__On_PanClick_MouseLeftButtonDown" MouseRightButtonUp="__On_PanClick_MouseRightButtonUp" MouseLeftButtonUp="__On_PanClick_MouseLeftButtonUp" CornerRadius="1000" BorderThickness="0.001" Background="{StaticResource ColorBrushSemiTransparent}"/>
+    <Border x:Name="PanClick" MouseEnter="PanClick_MouseEnter" MouseLeave="PanClick_MouseLeave" MouseRightButtonDown="Button_RightMouseDown" MouseLeftButtonDown="Button_LeftMouseDown" MouseRightButtonUp="PanClick_MouseRightButtonUp" MouseLeftButtonUp="PanClick_MouseLeftButtonUp" CornerRadius="1000" BorderThickness="0.001" Background="{StaticResource ColorBrushSemiTransparent}"/>
     <Grid x:Name="PanScale" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5" Margin="0,10,0,0">
         <Grid.RenderTransform>
             <ScaleTransform />

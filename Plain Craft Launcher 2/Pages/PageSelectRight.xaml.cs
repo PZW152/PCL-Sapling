@@ -16,6 +16,13 @@ namespace PCL
 {
     public partial class PageSelectRight
     {
+        #region 事件
+
+        private void BtnEmptyDownload_Click(object sender, MouseButtonEventArgs e) => BtnDownload_Click(sender, e);
+        private void OnBtnEmptyDownload_Loaded(object sender, RoutedEventArgs e) => BtnEmptyDownload_Loaded();
+
+        #endregion
+
         public PageSelectRight()
         {
             this.Loaded += PageSelectRight_Loaded;

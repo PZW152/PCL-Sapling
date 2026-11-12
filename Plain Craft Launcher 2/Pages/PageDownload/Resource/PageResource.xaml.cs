@@ -15,6 +15,18 @@ namespace PCL
     [ContentProperty("SearchTags")]
     public partial class PageResource
     {
+        #region 事件
+
+        private void OnBtnPageFirst_Click(object sender, EventArgs e) => BtnPageFirst_Click(sender, (RoutedEventArgs)e);
+        private void OnBtnPageLeft_Click(object sender, EventArgs e) => BtnPageLeft_Click(sender, (RoutedEventArgs)e);
+        private void OnBtnPageRight_Click(object sender, EventArgs e) => BtnPageRight_Click(sender, (RoutedEventArgs)e);
+        private void BtnSearchRun_Click(object sender, MouseButtonEventArgs e) => StartNewSearch();
+        private void BtnSearchReset_Click(object sender, MouseButtonEventArgs e) => ResetFilter();
+        private void TextSearchVersion_DropDownClosed(object sender, EventArgs e) => UpdateSearchLoaderVisibility();
+        private void OnBtnSearchInstallModPack_Click(object sender, MouseButtonEventArgs e) => BtnSearchInstallModPack_Click(sender, e);
+
+        #endregion
+
 
         #region 属性
 
@@ -307,7 +319,7 @@ namespace PCL
 
         // 版本选择
         // #3067：当下拉菜单展开时，程序会被 WPF 挂起，因而无法更新 Grid 布局，所以必须延迟到下拉菜单收起后才能更新
-        private void TextSearchVersion_TextChanged()
+        private void TextSearchVersion_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (!this.TextSearchVersion.IsDropDownOpen)
                 UpdateSearchLoaderVisibility();

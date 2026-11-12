@@ -81,7 +81,7 @@ namespace PCL
         }
 
         // 调试模式
-        private void CheckDebugMode_Change()
+        private void CheckDebugMode_Change(object sender, bool e)
         {
             if (ModAnimation.AniControlEnabled == 0)
                 ModMain.Hint("部分调试信息将在刷新或启动器重启后切换显示！", Log: false);

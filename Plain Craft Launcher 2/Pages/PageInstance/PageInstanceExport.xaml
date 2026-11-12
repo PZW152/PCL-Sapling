@@ -27,12 +27,12 @@
                             <RowDefinition Height="28" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="整合包名称" Margin="0,0,20,0" />
-                        <local:MyTextBox Grid.Row="0" Grid.Column="1" x:Name="TextExportName" GotFocus="__On_TextExportName_GotFocus" MaxLength="100" />
+                        <local:MyTextBox Grid.Row="0" Grid.Column="1" x:Name="TextExportName" GotFocus="TextExportName_GotFocus" MaxLength="100" />
                         <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Text="整合包版本" Margin="30,0,20,0" />
                         <local:MyTextBox Grid.Row="0" Grid.Column="3" x:Name="TextExportVersion" Tag="VersionArgumentTitle" MaxLength="100" />
                     </Grid>
                 </local:MyCard>
-                <local:MyCard Margin="0,0,0,15" x:Name="CardOptions" MouseLeftButtonDown="__On_CardOptions_MouseLeftButtonDown" MinHeight="39">
+                <local:MyCard Margin="0,0,0,15" x:Name="CardOptions" MouseLeftButtonDown="CardOptions_MouseLeftButtonDown" MinHeight="39">
                     <local:MyIconTextButton x:Name="BtnOverrideCancel" Height="24" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0"
                                             IsHitTestVisible="False" Opacity="0.5"
                                             Text="重置" Logo="M530 0c287 0 521 229 521 511s-233 511-521 511c-233 0-436-151-500-368a63 63 0 0 1 44-79 65 65 0 0 1 80 43c48 162 200 276 375 276 215 0 390-171 390-383s-174-383-390-383c-103 0-199 39-270 106l21-5a63 63 0 0 1 33 123l-157 42a65 65 0 0 1-90-42l-49-183a65 65 0 1 1 126-33l6 26A524 524 0 0 1 530 0z" LogoScale="0.9"  />
@@ -259,7 +259,7 @@
                                 DefaultChecked="True" />
                             </local:MyCheckBox.Tag>
                         </local:MyCheckBox>
-                        <local:MyCheckBox x:Name="CheckOptionsPcl" Change="__On_CheckOptionsPcl_Change">
+                        <local:MyCheckBox x:Name="CheckOptionsPcl" Change="CheckAdvancedModrinth_Change">
                             <local:MyCheckBox.Tag>
                                 <local:ExportOption 
                                 Title="PCL 启动器程序"
@@ -284,9 +284,9 @@
                     <StackPanel Margin="25,37,23,20">
                         <local:MyHint Text="建议仅在无法稳定连接 CurseForge 或 Modrinth 时才打包资源文件。&#xa;请不要公开发布含资源文件的整合包，这会违反部分 Mod 的使用协议！"
                                       Theme="Yellow" Margin="0,2,0,8" Visibility="{Binding Checked, ElementName=CheckAdvancedInclude, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <local:MyCheckBox Text="打包资源文件，以避免在导入时下载" x:Name="CheckAdvancedInclude" Change="__On_CheckAdvancedInclude_Change"
+                        <local:MyCheckBox Text="打包资源文件，以避免在导入时下载" x:Name="CheckAdvancedInclude" Change="CheckAdvancedInclude_Change"
                                           ToolTip="将 Mod、资源包、光影包的文件直接放入整合包中，这样在导入时就无需联网下载它们。&#xa;建议仅在无法稳定连接 CurseForge 或 Modrinth 时才考虑勾选。" />
-                        <local:MyCheckBox Text="仅从 Modrinth 下载资源文件" x:Name="CheckAdvancedModrinth" Change="__On_CheckAdvancedModrinth_Change"
+                        <local:MyCheckBox Text="仅从 Modrinth 下载资源文件" x:Name="CheckAdvancedModrinth" Change="CheckAdvancedModrinth_Change"
                                           ToolTip="若资源未在 Modrinth 上托管，则将其原始文件直接放入整合包中。&#xa;如果你想将整合包上传到 Modrinth，这能帮助你分辨哪些文件未在 Modrinth 上托管。" />
                         <local:MyHint Theme="Yellow" x:Name="HintModrinthFormat" Margin="26,2,0,2"
                                       Text="若不勾选 “PCL 启动器程序”，导出时才能在 “保存类型” 中选择 .mrpack 格式！" />
@@ -298,15 +298,15 @@
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                             </Grid.ColumnDefinitions>
-                            <local:MyButton Grid.Column="0" x:Name="BtnAdvancedImport" Click="__On_BtnAdvancedImport_Click" MinWidth="140" Text="读取配置" Padding="13,0" Margin="0,0,20,0" ColorType="Highlight" />
-                            <local:MyButton Grid.Column="1" x:Name="BtnAdvancedExport" Click="__On_BtnAdvancedExport_Click" MinWidth="140" Text="保存配置" Padding="13,0" Margin="0,0,20,0" />
+                            <local:MyButton Grid.Column="0" x:Name="BtnAdvancedImport" Click="ImportConfig" MinWidth="140" Text="读取配置" Padding="13,0" Margin="0,0,20,0" ColorType="Highlight" />
+                            <local:MyButton Grid.Column="1" x:Name="BtnAdvancedExport" Click="ExportConfig" MinWidth="140" Text="保存配置" Padding="13,0" Margin="0,0,20,0" />
                         </Grid>
                     </StackPanel>
                 </local:MyCard>
             </StackPanel>
         </local:MyScrollViewer>
         <local:MyExtraTextButton HorizontalAlignment="Center" VerticalAlignment="Bottom"
-            x:Name="BtnExport" Click="__On_BtnExport_Click" Text="开始导出"
+            x:Name="BtnExport" Click="StartExport" Text="开始导出"
             LogoScale="1.1" Logo="M511 995a128 128 0 0 1-57-13L70 791a126 126 0 0 1-70-113V311a126 126 0 0 1 15-60V248c1-2 3-5 5-8a127 127 0 0 1 49-42L454 13a128 128 0 0 1 112 0l383 190a126 126 0 0 1 72 113v360a126 126 0 0 1-70 115L568 984c-17 7-37 11-57 11z m42-470v370l360-178c14-7 23-21 23-38v-335L554 524zM85 330v347a42 42 0 0 0 23 38l360 178V523L85 330zM135 260l375 189 137-65L286 188 135 260z m245-118l363 197 150-71-365-180a42 42 0 0 0-37 0l-111 53z" />
     </Grid>
 </local:MyPageRight>

@@ -12,6 +12,14 @@ namespace PCL
 {
     public partial class MyMsgText
     {
+        #region 事件
+
+        private void OnBtn1_Click(object sender, MouseButtonEventArgs e) => Btn1_Click();
+        private void OnBtn2_Click(object sender, MouseButtonEventArgs e) => Btn2_Click();
+        private void OnBtn3_Click(object sender, MouseButtonEventArgs e) => Btn3_Click();
+
+        #endregion
+
 
         private readonly ModMain.MyMsgBoxConverter MyConverter;
         private readonly int Uuid = ModBase.GetUuid();

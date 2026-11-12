@@ -9,6 +9,17 @@ namespace PCL
 {
     public partial class PageInstanceLeft : IRefreshable
     {
+        #region 事件
+
+        private void ItemOverall_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+        private void ItemMod_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+        private void ItemModDisabled_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+        private void ItemSetup_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+        private void ItemModify_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+        private void ItemExport_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+
+        #endregion
+
 
         /// <summary>
     /// 当前显示设置的 MC 版本。

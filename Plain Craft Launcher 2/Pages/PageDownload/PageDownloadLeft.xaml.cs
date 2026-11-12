@@ -8,6 +8,17 @@ namespace PCL
 {
     public partial class PageDownloadLeft : IRefreshable
     {
+        #region 事件
+
+        private void ItemInstall_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+        private void ItemMod_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+        private void ItemPack_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+        private void ItemResourcePack_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+        private void ItemShader_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+        private void ItemDataPack_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+
+        #endregion
+
 
         #region 页面切换
 

@@ -12,6 +12,13 @@ namespace PCL
 {
     public partial class MyMsgInput
     {
+        #region 事件
+
+        private void OnBtn1_Click(object sender, MouseButtonEventArgs e) => Btn1_Click();
+        private void OnBtn2_Click(object sender, MouseButtonEventArgs e) => Btn2_Click();
+
+        #endregion
+
 
         private readonly ModMain.MyMsgBoxConverter MyConverter;
         private readonly int Uuid = ModBase.GetUuid();
@@ -22,7 +29,7 @@ namespace PCL
             {
 
                 this.InitializeComponent();
-                MyTextBox.ValidateChanged += __On_TextArea_ValidateChanged; // VB 中以 Handles 訂閱的是靜態事件
+                MyTextBox.ValidateChanged += TextCaption_ValidateChanged; // VB 中以 Handles 訂閱的是靜態事件
                 this.Btn1.Name = this.Btn1.Name + ModBase.GetUuid();
                 this.Btn2.Name = this.Btn2.Name + ModBase.GetUuid();
                 MyConverter = Converter;

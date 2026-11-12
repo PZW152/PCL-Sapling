@@ -23,6 +23,21 @@ namespace PCL
 
     public partial class PageLaunchLeft
     {
+        #region 事件
+
+        private void OnBtnVersion_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => BtnVersion_Click();
+        private void BtnLaunch_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => LaunchButtonClick();
+        private void BtnLaunch_Loaded(object sender, RoutedEventArgs e) => RefreshButtonsUI();
+        private void OnBtnCancel_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => BtnCancel_Click();
+        private void OnBtnMore_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => BtnMore_Click();
+        private void PanLaunchingInfo_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            PanLaunchingInfo_SizeChangedW(sender, e);
+            PanLaunchingInfo_SizeChangedH(sender, e);
+        }
+
+        #endregion
+
 
         // 加载当前版本
         private bool IsLoad = false;

@@ -18,6 +18,14 @@ namespace PCL
 
     public partial class PageDownloadResourceDetail
     {
+        #region 事件
+
+        private void OnBtnIntroWeb_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => BtnIntroWeb_Click(sender, e);
+        private void OnBtnIntroWiki_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => BtnIntroWiki_Click(sender, e);
+        private void OnBtnIntroCopy_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => BtnIntroCopy_Click(sender, e);
+
+        #endregion
+
         private MyResourceItem ResourceItem = null;
 
         /// <summary>
@@ -765,7 +773,7 @@ namespace PCL
         }
 
         // Mod / 数据包 互相跳转
-        private void HintAlternative_Click()
+        private void HintAlternative_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             TargetResourceType = TargetResourceType == ResourceTypes.Mod ? ResourceTypes.DataPack : ResourceTypes.Mod;
             ModMain.FrmMain.PageCurrent.Additional.Args()[4] = TargetResourceType; // 加载器会从这里重新拿数据

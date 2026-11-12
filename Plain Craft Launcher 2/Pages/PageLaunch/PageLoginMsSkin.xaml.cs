@@ -12,6 +12,13 @@ namespace PCL
 {
     public partial class PageLoginMsSkin : ILoginPage
     {
+        #region 事件
+
+        private void PanData_MouseLeave(object sender, MouseEventArgs e) => HidePanel(sender, e);
+        private void OnBtnSkin_Click(object sender, EventArgs e) => BtnSkin_Click(sender, (RoutedEventArgs)e);
+
+        #endregion
+
 
         public PageLoginMsSkin()
         {
@@ -68,7 +75,7 @@ namespace PCL
         }
 
         // 退出登录
-        private void BtnExit_Click()
+        private void BtnExit_Click(object sender, EventArgs e)
         {
             Settings.Set("CacheMsV2OAuthRefresh", "");
             Settings.Set("CacheMsV2Access", "");

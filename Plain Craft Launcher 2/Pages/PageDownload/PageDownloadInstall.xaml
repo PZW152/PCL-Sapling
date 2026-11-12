@@ -61,10 +61,10 @@
                             <TranslateTransform X="40" />
                         </StackPanel.RenderTransform>
                         <local:MyCard x:Name="CardSelectName" Margin="0,15,0,15" MinHeight="62">
-                            <local:MyIconButton HorizontalAlignment="Left" Theme="Black" Opacity="0.6" x:Name="BtnBack" Click="__On_BtnBack_Click" Margin="13,0,0,0" Height="26" Width="26"
+                            <local:MyIconButton HorizontalAlignment="Left" Theme="Black" Opacity="0.6" x:Name="BtnBack" Click="BtnBack_Click" Margin="13,0,0,0" Height="26" Width="26"
                                              LogoScale="0.87" Logo="M1097 584 250 584 562 896C591 925 591 972 562 1001 533 1030 487 1030 458 1001L21 565C6 550-0 531 0 511L0 511 0 511C-0 492 6 472 21 457L458 21C487-7 533-7 562 21 591 50 591 97 562 126L250 438 1097 438C1137 438 1170 471 1170 511 1170 551 1137 584 1097 584L1097 584Z" />
                             <local:MyImage x:Name="ImgLogo" Margin="52,15,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Height="32" RenderOptions.BitmapScalingMode="HighQuality" />
-                            <local:MyTextBox Margin="93,16,16,0" Padding="-1,0" MinHeight="30" FontSize="15" VerticalAlignment="Top" x:Name="TextSelectName" KeyDown="__On_TextSelectName_KeyDown" TextChanged="__On_TextSelectName_TextChanged" MaxLength="70" HasBackground="False" ShowValidateResult="False" />
+                            <local:MyTextBox Margin="93,16,16,0" Padding="-1,0" MinHeight="30" FontSize="15" VerticalAlignment="Top" x:Name="TextSelectName" KeyDown="TextSelectName_KeyDown" TextChanged="TextSelectName_TextChanged" MaxLength="70" HasBackground="False" ShowValidateResult="False" />
                             <TextBlock x:Name="LabSelectName" Visibility="Collapsed" Height="21" Margin="56,47,42,11" Padding="0,4,0,0" VerticalAlignment="Top" FontSize="12.5" Foreground="{DynamicResource ColorBrushGray3}" TextTrimming="CharacterEllipsis" />
                             <local:MyIconButton x:Name="BtnOriginalNameRestore" Style="{StaticResource ModifyRestoreButton}" Margin="0,16,6,0"
                                                 Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
@@ -104,7 +104,7 @@
                             </Grid>
                             <local:MyIconButton x:Name="BtnMinecraftRestore" Style="{StaticResource ModifyRestoreButton}" Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
                         </local:MyCard>
-                        <local:MyCard Title="Forge" Height="40" Margin="0,12,0,0" x:Name="CardForge" PreviewSwap="__On_CardForge_PreviewSwap" Swap="__On_CardForge_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
+                        <local:MyCard Title="Forge" Height="40" Margin="0,12,0,0" x:Name="CardForge" PreviewSwap="CardForge_PreviewSwap" Swap="CardForge_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
                         <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanForge" />
                         <Grid x:Name="PanForgeInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top" Tag="True">
                             <Grid.RenderTransform>
@@ -131,10 +131,10 @@
                                 <TextBlock Style="{StaticResource ModifyCompareText}" />
                             </DockPanel>
                         </Grid>
-                        <local:MyIconButton x:Name="BtnForgeClear" Click="__On_BtnForgeClear_Click" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
+                        <local:MyIconButton x:Name="BtnForgeClear" Click="Forge_Clear" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
                         <local:MyIconButton x:Name="BtnForgeRestore" Style="{StaticResource ModifyRestoreButton}" Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
                     </local:MyCard>
-                        <local:MyCard Title="NeoForge" Height="40" Margin="0,12,0,0" x:Name="CardNeoForge" PreviewSwap="__On_CardNeoForge_PreviewSwap" Swap="__On_CardNeoForge_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
+                        <local:MyCard Title="NeoForge" Height="40" Margin="0,12,0,0" x:Name="CardNeoForge" PreviewSwap="CardNeoForge_PreviewSwap" Swap="CardNeoForge_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
                         <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanNeoForge" />
                         <Grid x:Name="PanNeoForgeInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top" Tag="True">
                             <Grid.RenderTransform>
@@ -161,10 +161,10 @@
                                 <TextBlock Style="{StaticResource ModifyCompareText}" />
                             </DockPanel>
                         </Grid>
-                        <local:MyIconButton x:Name="BtnNeoForgeClear" Click="__On_BtnNeoForgeClear_Click" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
+                        <local:MyIconButton x:Name="BtnNeoForgeClear" Click="NeoForge_Clear" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
                         <local:MyIconButton x:Name="BtnNeoForgeRestore" Style="{StaticResource ModifyRestoreButton}" Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
                     </local:MyCard>
-                        <local:MyCard Title="Fabric" Height="40" Margin="0,12,0,0" x:Name="CardFabric" PreviewSwap="__On_CardFabric_PreviewSwap" Swap="__On_CardFabric_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
+                        <local:MyCard Title="Fabric" Height="40" Margin="0,12,0,0" x:Name="CardFabric" PreviewSwap="CardFabric_PreviewSwap" Swap="CardFabric_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
                         <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanFabric" />
                         <Grid x:Name="PanFabricInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top" Tag="True">
                             <Grid.RenderTransform>
@@ -191,10 +191,10 @@
                                 <TextBlock Style="{StaticResource ModifyCompareText}" />
                             </DockPanel>
                         </Grid>
-                        <local:MyIconButton x:Name="BtnFabricClear" Click="__On_BtnFabricClear_Click" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
+                        <local:MyIconButton x:Name="BtnFabricClear" Click="Fabric_Clear" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
                         <local:MyIconButton x:Name="BtnFabricRestore" Style="{StaticResource ModifyRestoreButton}" Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
                     </local:MyCard>
-                        <local:MyCard Title="Fabric API" Height="40" Margin="0,12,0,0" x:Name="CardFabricApi" PreviewSwap="__On_CardFabricApi_PreviewSwap" Swap="__On_CardFabricApi_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
+                        <local:MyCard Title="Fabric API" Height="40" Margin="0,12,0,0" x:Name="CardFabricApi" PreviewSwap="CardFabricApi_PreviewSwap" Swap="CardFabricApi_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
                         <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanFabricApi" />
                         <Grid x:Name="PanFabricApiInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top" Tag="True">
                             <Grid.RenderTransform>
@@ -221,10 +221,10 @@
                                 <TextBlock Style="{StaticResource ModifyCompareText}" />
                             </DockPanel>
                         </Grid>
-                        <local:MyIconButton x:Name="BtnFabricApiClear" Click="__On_BtnFabricApiClear_Click" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
+                        <local:MyIconButton x:Name="BtnFabricApiClear" Click="FabricApi_Clear" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
                         <local:MyIconButton x:Name="BtnFabricApiRestore" Style="{StaticResource ModifyRestoreButton}" Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
                     </local:MyCard>
-                        <local:MyCard Title="OptiFine" Height="40" Margin="0,12,0,0" x:Name="CardOptiFine" PreviewSwap="__On_CardOptiFine_PreviewSwap" Swap="__On_CardOptiFine_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
+                        <local:MyCard Title="OptiFine" Height="40" Margin="0,12,0,0" x:Name="CardOptiFine" PreviewSwap="CardOptiFine_PreviewSwap" Swap="CardOptiFine_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
                         <StackPanel Margin="20,40,18,15" VerticalAlignment="Top">
                             <StackPanel Name="PanOptiFine" />
                         </StackPanel>
@@ -253,10 +253,10 @@
                                 <TextBlock Style="{StaticResource ModifyCompareText}" />
                             </DockPanel>
                         </Grid>
-                        <local:MyIconButton x:Name="BtnOptiFineClear" Click="__On_BtnOptiFineClear_Click" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
+                        <local:MyIconButton x:Name="BtnOptiFineClear" Click="OptiFine_Clear" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
                         <local:MyIconButton x:Name="BtnOptiFineRestore" Style="{StaticResource ModifyRestoreButton}" Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
                     </local:MyCard>
-                        <local:MyCard Title="OptiFabric" Height="40" Margin="0,12,0,0" x:Name="CardOptiFabric" PreviewSwap="__On_CardOptiFabric_PreviewSwap" Swap="__On_CardOptiFabric_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
+                        <local:MyCard Title="OptiFabric" Height="40" Margin="0,12,0,0" x:Name="CardOptiFabric" PreviewSwap="CardOptiFabric_PreviewSwap" Swap="CardOptiFabric_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
                         <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanOptiFabric" />
                         <Grid x:Name="PanOptiFabricInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top" Tag="True">
                             <Grid.RenderTransform>
@@ -283,10 +283,10 @@
                                 <TextBlock Style="{StaticResource ModifyCompareText}" />
                             </DockPanel>
                         </Grid>
-                        <local:MyIconButton x:Name="BtnOptiFabricClear" Click="__On_BtnOptiFabricClear_Click" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
+                        <local:MyIconButton x:Name="BtnOptiFabricClear" Click="OptiFabric_Clear" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
                         <local:MyIconButton x:Name="BtnOptiFabricRestore" Style="{StaticResource ModifyRestoreButton}" Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
                     </local:MyCard>
-                        <local:MyCard Title="LiteLoader" Height="40" Margin="0,12,0,0" x:Name="CardLiteLoader" PreviewSwap="__On_CardLiteLoader_PreviewSwap" Swap="__On_CardLiteLoader_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
+                        <local:MyCard Title="LiteLoader" Height="40" Margin="0,12,0,0" x:Name="CardLiteLoader" PreviewSwap="CardLiteLoader_PreviewSwap" Swap="CardLiteLoader_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
                         <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanLiteLoader" />
                         <Grid x:Name="PanLiteLoaderInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top" Tag="True">
                             <Grid.RenderTransform>
@@ -313,25 +313,25 @@
                                 <TextBlock Style="{StaticResource ModifyCompareText}" />
                             </DockPanel>
                         </Grid>
-                        <local:MyIconButton x:Name="BtnLiteLoaderClear" Click="__On_BtnLiteLoaderClear_Click" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
+                        <local:MyIconButton x:Name="BtnLiteLoaderClear" Click="LiteLoader_Clear" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
                         <local:MyIconButton x:Name="BtnLiteLoaderRestore" Style="{StaticResource ModifyRestoreButton}" Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
                     </local:MyCard>
                     </StackPanel>
                 </Grid>
             </local:MyScrollViewer>
-            <local:MyExtraTextButton x:Name="BtnStart" Click="__On_BtnStart_Click" Text="开始下载"
+            <local:MyExtraTextButton x:Name="BtnStart" Click="OnBtnStart_Click" Text="开始下载"
                 HorizontalAlignment="Center" VerticalAlignment="Bottom"
                 LogoScale="0.95" Logo="M955 610h-59c-15 0-29 13-29 29v196c0 15-13 29-29 29h-649c-15 0-29-13-29-29v-196c0-15-13-29-29-29h-59c-15 0-29 13-29 29V905c0 43 35 78 78 78h787c43 0 78-35 78-78V640c0-15-13-29-29-29zM492 740c11 11 29 11 41 0l265-265c11-11 11-29 0-41l-41-41c-11-11-29-11-41 0l-110 110c-11 11-33 3-33-13V68C571 53 555 39 541 39h-59c-15 0-29 13-29 29v417c0 17-21 25-33 13l-110-110c-11-11-29-11-41 0L226 433c-11 11-11 29 0 41L492 740z" />
         </Grid>
         <local:MyCard HorizontalAlignment="Center" VerticalAlignment="Center" Margin="40,0" SnapsToDevicePixels="True" x:Name="PanLoad" UseAnimation="False">
             <local:MyLoading Text="正在加载" Margin="20,20,20,17" x:Name="LoadMinecraft" HorizontalAlignment="Center" VerticalAlignment="Center" ShowProgress="True" />
-            <local:MyLoading Visibility="Collapsed" x:Name="LoadOptiFine" StateChanged="__On_LoadOptiFine_StateChanged" HasAnimation="False" />
-            <local:MyLoading Visibility="Collapsed" x:Name="LoadForge" StateChanged="__On_LoadForge_StateChanged" HasAnimation="False" />
-            <local:MyLoading Visibility="Collapsed" x:Name="LoadNeoForge" StateChanged="__On_LoadNeoForge_StateChanged" HasAnimation="False" />
-            <local:MyLoading Visibility="Collapsed" x:Name="LoadLiteLoader" StateChanged="__On_LoadLiteLoader_StateChanged" HasAnimation="False" />
-            <local:MyLoading Visibility="Collapsed" x:Name="LoadFabric" StateChanged="__On_LoadFabric_StateChanged" HasAnimation="False" />
-            <local:MyLoading Visibility="Collapsed" x:Name="LoadFabricApi" StateChanged="__On_LoadFabricApi_StateChanged" HasAnimation="False" />
-            <local:MyLoading Visibility="Collapsed" x:Name="LoadOptiFabric" StateChanged="__On_LoadOptiFabric_StateChanged" HasAnimation="False" />
+            <local:MyLoading Visibility="Collapsed" x:Name="LoadOptiFine" StateChanged="LoadOptiFine_StateChanged" HasAnimation="False" />
+            <local:MyLoading Visibility="Collapsed" x:Name="LoadForge" StateChanged="LoadForge_StateChanged" HasAnimation="False" />
+            <local:MyLoading Visibility="Collapsed" x:Name="LoadNeoForge" StateChanged="LoadNeoForge_StateChanged" HasAnimation="False" />
+            <local:MyLoading Visibility="Collapsed" x:Name="LoadLiteLoader" StateChanged="LoadLiteLoader_StateChanged" HasAnimation="False" />
+            <local:MyLoading Visibility="Collapsed" x:Name="LoadFabric" StateChanged="LoadFabric_StateChanged" HasAnimation="False" />
+            <local:MyLoading Visibility="Collapsed" x:Name="LoadFabricApi" StateChanged="LoadFabricApi_StateChanged" HasAnimation="False" />
+            <local:MyLoading Visibility="Collapsed" x:Name="LoadOptiFabric" StateChanged="LoadOptiFabric_StateChanged" HasAnimation="False" />
         </local:MyCard>
     </Grid>
 </local:MyPageRight>

@@ -38,7 +38,7 @@
             <TextBlock Text="科技" Foreground="{DynamicResource ColorBrush2}" FontSize="11" />
         </Border>-->
     </StackPanel>
-    <TextBlock x:Name="LabInfo" MouseEnter="__On_LabInfo_MouseEnter" Grid.Row="2" Grid.Column="4" VerticalAlignment="Bottom" Margin="0,0,3,0.5"
+    <TextBlock x:Name="LabInfo" MouseEnter="LabInfo_MouseEnter" Grid.Row="2" Grid.Column="4" VerticalAlignment="Bottom" Margin="0,0,3,0.5"
                TextTrimming="CharacterEllipsis" FontSize="12" Foreground="{StaticResource ColorBrushGray3}"
                IsHitTestVisible="True" SnapsToDevicePixels="False" UseLayoutRounding="False"
                ToolTipService.InitialShowDelay="100">

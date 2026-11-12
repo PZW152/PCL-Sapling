@@ -29,7 +29,7 @@
                             <RowDefinition Height="28" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="默认版本隔离" Margin="0,0,25,0" />
-                        <local:MyComboBox local:SettingService.Key="LaunchArgumentIndieV2" x:Name="ComboArgumentIndieV2" SelectionChanged="__On_ComboArgumentIndieV2_SelectionChanged"
+                        <local:MyComboBox local:SettingService.Key="LaunchArgumentIndieV2" x:Name="ComboArgumentIndieV2" SelectionChanged="ComboArgumentIndie_SelectionChanged"
                                           Grid.Row="0" Grid.ColumnSpan="2" Grid.Column="1"
                                           ToolTip="当安装新版本时，据此自动设置新版本的隔离选项。&#xa;若想调整已有版本的隔离策略，请前往它的版本设置。">
                             <local:MyComboBoxItem Content="关闭" 
@@ -61,7 +61,7 @@
                         </local:MyTextBox>
                         <TextBlock VerticalAlignment="Center" Grid.Row="6" HorizontalAlignment="Left" Text="启动器可见性" Margin="0,0,25,0" />
                         <local:MyComboBox local:SettingService.Key="LaunchArgumentVisible" 
-                                          x:Name="ComboArgumentVisibie" SelectionChanged="__On_ComboArgumentVisibie_SelectionChanged" Grid.Row="6" Grid.ColumnSpan="2" Grid.Column="1">
+                                          x:Name="ComboArgumentVisibie" SelectionChanged="ComboArgumentVisibie_SizeChanged" Grid.Row="6" Grid.ColumnSpan="2" Grid.Column="1">
                             <local:MyComboBoxItem Content="游戏启动后立即关闭" />
                             <local:MyComboBoxItem Content="游戏启动后隐藏，游戏退出后自动关闭" local:SettingService.Value="2" />
                             <local:MyComboBoxItem Content="游戏启动后隐藏，游戏退出后重新打开" local:SettingService.Value="3" />
@@ -82,7 +82,7 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <local:MyComboBox local:SettingService.Key="LaunchArgumentWindowType" x:Name="ComboArgumentWindowType" SelectionChanged="__On_ComboArgumentWindowType_SelectionChanged">
+                            <local:MyComboBox local:SettingService.Key="LaunchArgumentWindowType" x:Name="ComboArgumentWindowType" SelectionChanged="WindowTypeUIRefresh">
                                 <local:MyComboBoxItem Content="全屏" />
                                 <local:MyComboBoxItem Content="默认" />
                                 <local:MyComboBoxItem Content="与启动器尺寸一致" />
@@ -165,11 +165,11 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <local:MyRadioBox local:SettingService.Key="LaunchRamType" local:SettingService.Value="0" 
-                                          Text="自动配置" Width="110" Checked="True" x:Name="RadioRamType0" Check="__On_RadioRamType0_Check" Margin="0,0,20,0" 
+                                          Text="自动配置" Width="110" Checked="True" x:Name="RadioRamType0" Check="RadioRamType0_Check" Margin="0,0,20,0" 
                                           ToolTip="根据安装的 Mod 量与电脑剩余内存，动态调整为游戏分配的内存" />
                         <local:MyRadioBox local:SettingService.Key="LaunchRamType" local:SettingService.Value="1" 
-                                          Grid.Row="2" Text="自定义" x:Name="RadioRamType1" Check="__On_RadioRamType1_Check" Margin="0,0,20,0" />
-                        <local:MySlider Grid.Row="2" Grid.Column="1" IsEnabled="False" x:Name="SliderRamCustom" Change="__On_SliderRamCustom_Change" local:SettingService.Key="LaunchRamCustom" MaxValue="49" Value="13" />
+                                          Grid.Row="2" Text="自定义" x:Name="RadioRamType1" Check="RadioRamType1_Check" Margin="0,0,20,0" />
+                        <local:MySlider Grid.Row="2" Grid.Column="1" IsEnabled="False" x:Name="SliderRamCustom" Change="SliderRamCustom_Change" local:SettingService.Key="LaunchRamCustom" MaxValue="49" Value="13" />
                         <!--<local:MyTextBox Grid.Row="2" Grid.Column="3" Width="100" VerticalAlignment="Center" Margin="30,0,0,0" Text="2048 MB" />-->
                     </Grid>
                     <Grid x:Name="PanRamDisplay" Margin="0,11,2,0" SnapsToDevicePixels="True" Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="1">
@@ -191,15 +191,15 @@
                                 </LinearGradientBrush>
                             </Rectangle.Fill>
                         </Rectangle>
-                        <Rectangle Grid.Row="1" StrokeThickness="0" Grid.Column="1" Fill="{DynamicResource ColorBrush3}" Opacity="0.5" x:Name="RectRamGame" SizeChanged="__On_RectRamGame_SizeChanged" />
-                        <Rectangle x:Name="RectRamEmpty" SizeChanged="__On_RectRamEmpty_SizeChanged" Grid.Row="1" StrokeThickness="0" Grid.Column="2" Fill="{DynamicResource ColorBrush6}" Opacity="0.7" />
+                        <Rectangle Grid.Row="1" StrokeThickness="0" Grid.Column="1" Fill="{DynamicResource ColorBrush3}" Opacity="0.5" x:Name="RectRamGame" SizeChanged="RectRamGame_SizeChanged" />
+                        <Rectangle x:Name="RectRamEmpty" SizeChanged="RectRamEmpty_SizeChanged" Grid.Row="1" StrokeThickness="0" Grid.Column="2" Fill="{DynamicResource ColorBrush6}" Opacity="0.7" />
                         <TextBlock x:Name="LabRamUsedTitle" Text="已使用内存" Grid.ColumnSpan="3" Opacity="0.7" TextTrimming="None" Margin="2,0,0,5" FontSize="11" HorizontalAlignment="Left" />
                         <TextBlock x:Name="LabRamGameTitle" Text="游戏分配" Opacity="0.7" Grid.ColumnSpan="3" TextTrimming="None" Margin="2,0,0,5" FontSize="11" HorizontalAlignment="Left" />
                         <StackPanel Grid.Row="2" Orientation="Horizontal" Grid.ColumnSpan="3" Margin="2,3,0,0" HorizontalAlignment="Left">
                             <TextBlock x:Name="LabRamUsed" Text="4.7 GB" FontSize="16" Foreground="Black" TextTrimming="None" />
                             <TextBlock x:Name="LabRamTotal" Text=" / 7.9 GB" FontSize="16" Foreground="Black" TextTrimming="None" />
                         </StackPanel>
-                        <TextBlock Grid.Row="2" x:Name="LabRamGame" SizeChanged="__On_LabRamGame_SizeChanged" Text="2.5 GB" Grid.ColumnSpan="3" TextTrimming="None" Margin="2,3,0,0" FontSize="16" Foreground="Black" HorizontalAlignment="Left" />
+                        <TextBlock Grid.Row="2" x:Name="LabRamGame" SizeChanged="LabRamGame_SizeChanged" Text="2.5 GB" Grid.ColumnSpan="3" TextTrimming="None" Margin="2,3,0,0" FontSize="16" Foreground="Black" HorizontalAlignment="Left" />
                     </Grid>
                 </StackPanel>
             </local:MyCard>
@@ -227,7 +227,7 @@
                                           x:Name="RadioSkinType3" Height="22" Grid.Column="3" 
                                           Text="正版皮肤" ToolTip="使用某个正版玩家的皮肤" />
                         <local:MyRadioBox local:SettingService.Key="LaunchSkinType" local:SettingService.Value="4" 
-                                          x:Name="RadioSkinType4" PreviewCheck="__On_RadioSkinType4_PreviewCheck" Height="22" Grid.Column="4" 
+                                          x:Name="RadioSkinType4" PreviewCheck="RadioSkinType3_Check" Height="22" Grid.Column="4" 
                                           Text="自定义" ToolTip="以资源包的形式加载自定义皮肤。&#xa;使用此方式更换的皮肤在多人游戏中仅自己可见，且会替换游戏中所有的角色。" />
                     </Grid>
                     <Grid x:Name="PanSkinID" Margin="0,14,0,2" Visibility="Collapsed">
@@ -246,8 +246,8 @@
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                             </Grid.ColumnDefinitions>
-                            <local:MyButton x:Name="BtnSkinSave" Click="__On_BtnSkinSave_Click" Text="保存皮肤" MinWidth="140" Padding="13,0" Margin="0,0,20,0" Grid.Row="1" />
-                            <local:MyButton x:Name="BtnSkinCache" Click="__On_BtnSkinCache_Click" Text="刷新" MinWidth="140" Padding="13,0" Margin="0,0,20,0" ToolTip="刷新并重新下载 PCL 当前显示的皮肤" Grid.Row="1" Grid.Column="1" />
+                            <local:MyButton x:Name="BtnSkinSave" Click="OnBtnSkinSave_Click" Text="保存皮肤" MinWidth="140" Padding="13,0" Margin="0,0,20,0" Grid.Row="1" />
+                            <local:MyButton x:Name="BtnSkinCache" Click="OnBtnSkinCache_Click" Text="刷新" MinWidth="140" Padding="13,0" Margin="0,0,20,0" ToolTip="刷新并重新下载 PCL 当前显示的皮肤" Grid.Row="1" Grid.Column="1" />
                         </Grid>
                     </Grid>
                     <Grid x:Name="PanSkinChange" Margin="0,14,0,2" Height="35" Visibility="Collapsed">
@@ -255,8 +255,8 @@
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                         </Grid.ColumnDefinitions>
-                        <local:MyButton x:Name="BtnSkinChange" Click="__On_BtnSkinChange_Click" Text="更改皮肤" MinWidth="140" Padding="13,0" Margin="0,0,20,0" />
-                        <local:MyButton x:Name="BtnSkinDelete" Click="__On_BtnSkinDelete_Click" Text="重置皮肤" MinWidth="140" Padding="13,0" Margin="0,0,20,0" ColorType="Red" Grid.Column="1" />
+                        <local:MyButton x:Name="BtnSkinChange" Click="OnBtnSkinChange_Click" Text="更改皮肤" MinWidth="140" Padding="13,0" Margin="0,0,20,0" />
+                        <local:MyButton x:Name="BtnSkinDelete" Click="OnBtnSkinDelete_Click" Text="重置皮肤" MinWidth="140" Padding="13,0" Margin="0,0,20,0" ColorType="Red" Grid.Column="1" />
                     </Grid>
                 </StackPanel>
             </local:MyCard>
@@ -282,17 +282,17 @@
                     </Grid.RowDefinitions>
                     <StackPanel VerticalAlignment="Center" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,25,0">
                         <TextBlock Text="Java 虚拟机参数" VerticalAlignment="Center" />
-                        <local:MyIconButton Height="23" Margin="0,1,0,0" x:Name="BtnAdvanceJvmReset" Click="__On_BtnAdvanceJvmReset_Click" VerticalAlignment="Center" 
+                        <local:MyIconButton Height="23" Margin="0,1,0,0" x:Name="BtnAdvanceJvmReset" Click="BtnAdvanceJvmReset_Click" VerticalAlignment="Center" 
                                         ToolTip="还原" ToolTipService.InitialShowDelay="200"
                                         Logo="M530 0c287 0 521 229 521 511s-233 511-521 511c-233 0-436-151-500-368a63 63 0 0 1 44-79 65 65 0 0 1 80 43c48 162 200 276 375 276 215 0 390-171 390-383s-174-383-390-383c-103 0-199 39-270 106l21-5a63 63 0 0 1 33 123l-157 42a65 65 0 0 1-90-42l-49-183a65 65 0 1 1 126-33l6 26A524 524 0 0 1 530 0z" LogoScale="0.9" />
                     </StackPanel>
-                    <local:MyTextBox local:SettingService.Key="LaunchAdvanceJvm" x:Name="TextAdvanceJvm" TextChanged="__On_TextAdvanceJvm_TextChanged" ValidatedTextChanged="__On_TextAdvanceJvm_ValidatedTextChanged" Grid.ColumnSpan="2" Grid.Column="1" 
+                    <local:MyTextBox local:SettingService.Key="LaunchAdvanceJvm" x:Name="TextAdvanceJvm" TextChanged="OnTextAdvanceJvm_TextChanged" ValidatedTextChanged="TextAdvanceJvm_TextChanged" Grid.ColumnSpan="2" Grid.Column="1" 
                                      ToolTip="启动 Minecraft 时使用的额外 JVM 参数，除非有确定把握，否则请不要修改。&#xa;&#xa;支持 Minecraft 版本 JSON 中的字符串替换标记，例如 ${library_directory}。&#xa;也支持使用 PCL 的替换标记。" MaxLength="4000"
                                      Height="100" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" Padding="0,5" VerticalScrollBarVisibility="Auto" />
                     <TextBlock Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Left" Text="游戏参数" Margin="0,0,25,0" />
-                    <local:MyTextBox local:SettingService.Key="LaunchAdvanceGame" x:Name="TextAdvanceGame" TextChanged="__On_TextAdvanceGame_TextChanged" Grid.Row="2" Grid.ColumnSpan="2" Grid.Column="1" ToolTip="文本框中的内容将会被直接拼合在启动参数的末尾。&#xa;例如，输入 --demo 则会以试玩模式启动游戏。&#xa;&#xa;支持 Minecraft 版本 JSON 中的字符串替换标记，例如 ${library_directory}。&#xa;也支持使用 PCL 的替换标记。" />
+                    <local:MyTextBox local:SettingService.Key="LaunchAdvanceGame" x:Name="TextAdvanceGame" TextChanged="TextAdvanceGame_TextChanged" Grid.Row="2" Grid.ColumnSpan="2" Grid.Column="1" ToolTip="文本框中的内容将会被直接拼合在启动参数的末尾。&#xa;例如，输入 --demo 则会以试玩模式启动游戏。&#xa;&#xa;支持 Minecraft 版本 JSON 中的字符串替换标记，例如 ${library_directory}。&#xa;也支持使用 PCL 的替换标记。" />
                     <TextBlock Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Left" Text="启动前执行命令" Margin="0,0,25,0" />
-                    <local:MyTextBox local:SettingService.Key="LaunchAdvanceRun" x:Name="TextAdvanceRun" TextChanged="__On_TextAdvanceRun_TextChanged" Grid.Row="4" Grid.ColumnSpan="2" Grid.Column="1" HintText=""
+                    <local:MyTextBox local:SettingService.Key="LaunchAdvanceRun" x:Name="TextAdvanceRun" TextChanged="TextAdvanceRun_TextChanged" Grid.Row="4" Grid.ColumnSpan="2" Grid.Column="1" HintText=""
                                      ToolTip="在 MC 启动前执行特定命令或程序，语法与 Windows 的命令提示符一致。&#xa;&#xa;你可以用替换标记来动态改变其内容或实现相对路径。例如：&#xa; · &quot;{verpath}test.exe&quot; ：运行版本文件夹下的 test.exe 程序&#xa; · &quot;{java}java.exe&quot; -jar &quot;{verpath}test.jar&quot; ：用 Java 运行版本文件夹下的 test.jar&#xa; · notepad &quot;{verindie}options.txt&quot; ：使用记事本打开该版本的设置文件&#xa;&#xa;涉及路径的操作最好都打上双引号，以避免路径中的空格导致运行失败。&#xa;执行命令时，命令行所在的目录是当前的 .minecraft 文件夹。" />
                     <local:MyCheckBox local:SettingService.Key="LaunchAdvanceRunWait" x:Name="CheckAdvanceRunWait" Grid.Row="5" Grid.Column="1" Visibility="Collapsed"
                                       Text="等待命令执行完成后再继续启动" Margin="0,8,0,7" />
@@ -311,7 +311,7 @@
                             <!--<local:MyComboBoxItem Content="Java 8 (1.8.0_171)，64 位：C:\Program Files (x86)\Common Files\Oracle\Java\javapath\javaw.exe" IsSelected="True" ToolTip="C:\Program Files (x86)\Common Files\Oracle\Java\javapath\javaw.exe" />-->
                         </local:MyComboBox>
                         <TextBlock x:Name="LabAdvanceJava" Grid.Column="0" Margin="8.5,0,21.5,0" IsHitTestVisible="False" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                        <local:MyIconButton Margin="5,2,0,2" Grid.Column="1" x:Name="BtnAdvanceJavaSearch" Click="__On_BtnAdvanceJavaSearch_Click"
+                        <local:MyIconButton Margin="5,2,0,2" Grid.Column="1" x:Name="BtnAdvanceJavaSearch" Click="OnBtnAdvanceJavaSearch_Click"
                             Logo="M512.0 838.3c-80.2 0-153.4-29.3-210.2-77.4l75.5-75.5c11.5-11.5 25.8-22.0 25.8-37.0a27.2 27.2 0 0 0-27.1-27.1H104.0c-27.1 0-27.1 23.9-27.1 27.1v271.9a27.1 27.1 0 0 0 27.1 27.1c15.0 0 27.8-16.6 42.5-31.2l77.9-77.9c76.6 67.7 177.1 108.9 287.4 108.9 221.7 0 404.5-166.0 431.2-380.6h-109.8c-25.9 154.2-159.7 271.9-321.3 271.9zM919.9 76.6c-15.0 0-27.8 16.6-42.5 31.3L799.5 185.8c-76.5-67.7-177.1-108.9-287.4-108.9-221.8 0-404.5 166.1-431.3 380.6H190.6c25.9-154.2 159.7-271.9 321.4-271.9 80.2 0 153.4 29.3 210.1 77.4l-75.5 75.5c-11.6 11.5-25.8 22.0-25.8 37.1a27.2 27.2 0 0 0 27.1 27.1h271.9c27.1 0 27.1-23.9 27.1-27.1V103.8a27.1 27.1 0 0 0-27.1-27.1z" />
                     </Grid>
                     <TextBlock VerticalAlignment="Center" Grid.Row="9" HorizontalAlignment="Left" Text="内存管理" Margin="0,0,25,0" />
@@ -333,7 +333,7 @@
                 </Grid>
             </local:MyCard>
             <local:MyExtraTextButton HorizontalAlignment="Center" Margin="0,-5,0,15"
-                x:Name="BtnSwitch" Click="__On_BtnSwitch_Click" Text="版本独立设置"
+                x:Name="BtnSwitch" Click="BtnSwitch_Click" Text="版本独立设置"
                 LogoScale="0.9" Logo="M73 584L920 584 608 896C579 925 579 972 608 1001 637 1030 683 1030 712 1001L1149 565C1164 550 1170 531 1170 511 1170 492 1164 472 1149 457L712 21C683-7 637-7 608 21 579 50 579 97 608 126L920 438 73 438C33 438 0 471 0 511 0 551 33 584 73 584Z" />
         </StackPanel>
     </local:MyScrollViewer>

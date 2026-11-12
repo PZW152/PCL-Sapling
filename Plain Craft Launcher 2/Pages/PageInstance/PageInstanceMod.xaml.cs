@@ -18,6 +18,14 @@ namespace PCL
 {
     public partial class PageInstanceMod : IRefreshable
     {
+        #region 事件
+
+        private void OnBtnManageOpen_Click(object sender, MouseButtonEventArgs e) => BtnManageOpen_Click(sender, e);
+        private void BtnHintOpen_Click(object sender, MouseButtonEventArgs e) => BtnManageOpen_Click(sender, e);
+        private void Load_StateChanged(object sender, MyLoading.MyLoadingState e, MyLoading.MyLoadingState e2) => UnselectedAllWithAnimation();
+
+        #endregion
+
 
         #region 初始化
 
@@ -599,8 +607,9 @@ namespace PCL
         }
 
         // 点击筛选项触发的改变
-        private void ChangeFilter(MyRadioButton sender, bool raiseByMouse)
+        private void ChangeFilter(object RawSender, bool raiseByMouse)
         {
+            var sender = (MyRadioButton)RawSender;
             Filter = (FilterType)Coerce.ToInt(sender.Tag);
             RefreshUI();
         }
@@ -610,8 +619,9 @@ namespace PCL
         #region 下边栏
 
         // 启用 / 禁用
-        private void BtnSelectED_Click(MyIconTextButton sender, ModBase.RouteEventArgs e)
+        private void BtnSelectED_Click(object RawSender, ModBase.RouteEventArgs e)
         {
+            var sender = (MyIconTextButton)RawSender;
             EDMods(LocalResourceLoaders.LocalResourceLoader.Output.Where(m => SelectedMods.Contains(m.EnabledName)), !sender.Equals(this.BtnSelectDisable));
             ChangeAllSelected(false);
         }
@@ -708,7 +718,7 @@ namespace PCL
         }
 
         // 更新
-        private void BtnSelectUpdate_Click()
+        private void BtnSelectUpdate_Click(object sender, ModBase.RouteEventArgs e)
         {
             var UpdateList = LocalResourceLoaders.LocalResourceLoader.Output.Where(m => SelectedMods.Contains(m.EnabledName) && m.HasUpdate).ToList();
             if (!UpdateList.Any())
@@ -856,7 +866,7 @@ namespace PCL
         }
 
         // 删除
-        private void BtnSelectDelete_Click()
+        private void BtnSelectDelete_Click(object sender, ModBase.RouteEventArgs e)
         {
             DeleteMods(LocalResourceLoaders.LocalResourceLoader.Output.Where(m => SelectedMods.Contains(m.EnabledName)));
             ChangeAllSelected(false);
@@ -938,7 +948,7 @@ namespace PCL
         }
 
         // 取消选择
-        private void BtnSelectCancel_Click()
+        private void BtnSelectCancel_Click(object sender, ModBase.RouteEventArgs e)
         {
             ChangeAllSelected(false);
         }
@@ -1044,7 +1054,7 @@ namespace PCL
             }
         }
         private List<LocalResourceFile> SearchResult;
-        public void SearchRun()
+        public void SearchRun(object sender, EventArgs e)
         {
             if (IsSearching)
             {

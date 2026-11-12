@@ -14,6 +14,28 @@ namespace PCL
 {
     public partial class PageInstanceSetup
     {
+        #region 事件
+
+        private void SliderRamCustom_Change(object sender, bool e) => RefreshRam();
+        private void RadioRamType0_Check(object sender, ModBase.RouteEventArgs e) => RefreshRam();
+        private void RadioRamType1_Check(object sender, ModBase.RouteEventArgs e) => RefreshRam();
+        private void RadioRamType2_Check(object sender, ModBase.RouteEventArgs e) => RefreshRam();
+        private void RectRamGame_SizeChanged(object sender, SizeChangedEventArgs e) => RefreshRamText();
+        private void RectRamEmpty_SizeChanged(object sender, SizeChangedEventArgs e) => RefreshRamText();
+        private void LabRamGame_SizeChanged(object sender, SizeChangedEventArgs e) => RefreshRamText();
+        private void TextArgumentJavaRange_ValidatedTextChanged(object sender, RoutedEventArgs e) => ReloadCurrentJava();
+        private void TextArgumentJavaRange_TextChanged(object sender, TextChangedEventArgs e) => UpdateJavaRelatedUi();
+        private void BtnArgumentJavaSearch_Click(object sender, EventArgs e) => BtnAdvanceJavaSearch_Click();
+        private void TextAdvanceJvm_TextChanged(object sender, TextChangedEventArgs e) => ReplaceEnter((MyTextBox)sender, e);
+        private void TextAdvanceGame_TextChanged(object sender, TextChangedEventArgs e) => ReplaceEnter((MyTextBox)sender, e);
+        private void ComboArgumentJava_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ReloadCurrentJava();
+            UpdateJavaRelatedUi();
+        }
+
+        #endregion
+
 
         private bool LoadedFirst = false;
 
@@ -326,7 +348,7 @@ namespace PCL
         }
 
         // 自动替换标点
-        private void TextServerEnter_Change()
+        private void TextServerEnter_Change(object sender, TextChangedEventArgs e)
         {
             string NewText = this.TextServerEnter.Text.Replace("：", ":").Replace("。", ".");
             if ((NewText ?? "") == (this.TextServerEnter.Text ?? ""))
@@ -338,7 +360,7 @@ namespace PCL
 
         // 全局
         private int ComboServerLoginLast;
-        private void ComboServerLogin_Changed()
+        private void ComboServerLogin_Changed(object sender, SelectionChangedEventArgs e)
         {
             if (ModAnimation.AniControlEnabled != 0)
                 return;

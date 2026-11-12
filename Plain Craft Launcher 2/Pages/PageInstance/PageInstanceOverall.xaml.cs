@@ -14,6 +14,18 @@ namespace PCL
 {
     public partial class PageInstanceOverall
     {
+        #region 事件
+
+        private void OnBtnDisplayDesc_Click(object sender, MouseButtonEventArgs e) => BtnDisplayDesc_Click(sender, e);
+        private void OnBtnDisplayRename_Click(object sender, MouseButtonEventArgs e) => BtnDisplayRename_Click(sender, e);
+        private void ItemDisplayLogoCustom_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e) => ComboDisplayLogo_SelectionChanged();
+        private void OnComboDisplayLogo_SelectionChanged(object sender, SelectionChangedEventArgs e) => ComboDisplayLogo_SelectionChanged();
+        private void OnBtnDisplayStar_Click(object sender, MouseButtonEventArgs e) => BtnDisplayStar_Click(sender, e);
+        private void OnBtnManageCheck_Click(object sender, MouseButtonEventArgs e) => BtnManageCheck_Click(sender, e);
+        private void OnBtnManageDelete_Click(object sender, MouseButtonEventArgs e) => BtnManageDelete_Click(sender, e);
+
+        #endregion
+
 
         private bool IsLoad = false;
 
@@ -260,7 +272,7 @@ namespace PCL
         #region 卡片：快捷方式
 
         // 版本文件夹
-        private void BtnFolderVersion_Click()
+        private void BtnFolderVersion_Click(object sender, MouseButtonEventArgs e)
         {
             OpenInstanceFolder(PageInstanceLeft.Instance);
         }
@@ -270,7 +282,7 @@ namespace PCL
         }
 
         // 存档文件夹
-        private void BtnFolderSaves_Click()
+        private void BtnFolderSaves_Click(object sender, MouseButtonEventArgs e)
         {
             string Folder = PageInstanceLeft.Instance.PathIndie + @"saves\";
             DirectoryUtils.Create(Folder);
@@ -278,7 +290,7 @@ namespace PCL
         }
 
         // Mod 文件夹
-        private void BtnFolderMods_Click()
+        private void BtnFolderMods_Click(object sender, MouseButtonEventArgs e)
         {
             string Folder = PageInstanceLeft.Instance.PathIndie + @"mods\";
             DirectoryUtils.Create(Folder);
@@ -298,7 +310,7 @@ namespace PCL
         #region 卡片：管理
 
         // 导出启动脚本
-        private void BtnManageScript_Click()
+        private void BtnManageScript_Click(object sender, MouseButtonEventArgs e)
         {
             try
             {

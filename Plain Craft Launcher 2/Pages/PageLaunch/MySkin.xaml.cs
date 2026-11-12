@@ -17,6 +17,14 @@ namespace PCL
 {
     public partial class MySkin
     {
+        #region 事件
+
+        private void OnBtnSkinSave_Click(object sender, RoutedEventArgs e) => BtnSkinSave_Click();
+        private void BtnSkinRefresh_Click(object sender, RoutedEventArgs e) => RefreshClick();
+        private void OnBtnSkinCape_Click(object sender, RoutedEventArgs e) => BtnSkinCape_Click();
+
+        #endregion
+
 
         // 事件
         public event ClickEventHandler Click;
@@ -118,8 +126,9 @@ namespace PCL
                 Logger.Error(ex, "保存皮肤失败", LogBehavior.Toast);
             }
         }
-        private void BtnSkinSave_Checked(MyMenuItem sender, RoutedEventArgs e)
+        private void BtnSkinSave_Checked(object RawSender, RoutedEventArgs e)
         {
+            var sender = (MyMenuItem)RawSender;
             sender.IsEnabled = string.IsNullOrEmpty(Address);
         }
 

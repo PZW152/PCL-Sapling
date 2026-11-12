@@ -14,6 +14,13 @@ namespace PCL
 {
     public partial class MyMsgLogin
     {
+        #region 事件
+
+        private void OnBtn1_Click(object sender, MouseButtonEventArgs e) => Btn1_Click();
+        private void OnBtn3_Click(object sender, MouseButtonEventArgs e) => Btn3_Click();
+
+        #endregion
+
         private JObject Data;
         private string UserCode; // 需要用户在网页上输入的设备代码
         private string DeviceCode; // 用于轮询的设备代码

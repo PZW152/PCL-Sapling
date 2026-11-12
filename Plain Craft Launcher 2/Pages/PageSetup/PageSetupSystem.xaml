@@ -20,7 +20,7 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="最大线程数" Margin="0,0,25,0" />
-                        <local:MySlider x:Name="SliderDownloadThread" PreviewChange="__On_SliderDownloadThread_PreviewChange" Grid.Row="0" local:SettingService.Key="ToolDownloadThread" MaxValue="255" Value="63" Grid.Column="1"
+                        <local:MySlider x:Name="SliderDownloadThread" PreviewChange="SliderDownloadThread_PreviewChange" Grid.Row="0" local:SettingService.Key="ToolDownloadThread" MaxValue="255" Value="63" Grid.Column="1"
                                         ToolTip="线程数越多，限速的文件下载越快，但过高的线程数会造成下载时非常严重的卡顿。&#xa;一般而言，64 线程已可以保证足够的下载速度。" />
                         <TextBlock VerticalAlignment="Center" Grid.Row="1" HorizontalAlignment="Left" Text="速度限制" Margin="0,0,25,0" />
                         <local:MySlider x:Name="SliderDownloadSpeed" Grid.Row="1" local:SettingService.Key="ToolDownloadSpeed" MaxValue="42" Value="42" Grid.Column="1"
@@ -103,8 +103,8 @@
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                         </Grid.ColumnDefinitions>
-                        <local:MyButton Grid.Column="0" x:Name="BtnSystemSettingExp" Click="__On_BtnSystemSettingExp_Click" MinWidth="140" Text="导出设置" Padding="13,0" Margin="0,0,20,0" />
-                        <local:MyButton Grid.Column="1" x:Name="BtnSystemSettingImp" Click="__On_BtnSystemSettingImp_Click" MinWidth="140" Text="导入设置" Padding="13,0" Margin="0,0,20,0" />
+                        <local:MyButton Grid.Column="0" x:Name="BtnSystemSettingExp" Click="BtnSystemSettingExp_Click" MinWidth="140" Text="导出设置" Padding="13,0" Margin="0,0,20,0" />
+                        <local:MyButton Grid.Column="1" x:Name="BtnSystemSettingImp" Click="BtnSystemSettingImp_Click" MinWidth="140" Text="导入设置" Padding="13,0" Margin="0,0,20,0" />
                     </Grid>
                 </Grid>
             </local:MyCard>
@@ -126,7 +126,7 @@
                             <ColumnDefinition />
                         </Grid.ColumnDefinitions>
                         <local:MyCheckBox Grid.Column="0" Text="禁止在下载时从其他文件夹复制文件" Height="22" x:Name="CheckDebugSkipCopy" local:SettingService.Key="SystemDebugSkipCopy" ToolTip="在下载时不直接复制其他 MC 文件夹中已经存在的相同文件，而是重新下载文件。&#xa;只建议在测试下载速度时开启。" />
-                        <local:MyCheckBox Grid.Column="1" Text="调试模式" Height="22" x:Name="CheckDebugMode" Change="__On_CheckDebugMode_Change" local:SettingService.Key="SystemDebugMode" ToolTip="显示调试信息与更多错误信息。&#xa;这会导致启动器性能略有下降，若无特殊需要不建议开启。" />
+                        <local:MyCheckBox Grid.Column="1" Text="调试模式" Height="22" x:Name="CheckDebugMode" Change="CheckDebugMode_Change" local:SettingService.Key="SystemDebugMode" ToolTip="显示调试信息与更多错误信息。&#xa;这会导致启动器性能略有下降，若无特殊需要不建议开启。" />
                         <local:MyCheckBox Grid.Column="2" Text="添加延迟" Height="22" x:Name="CheckDebugDelay" local:SettingService.Key="SystemDebugDelay" ToolTip="在各个环节添加随机的延迟，拖慢加载速度，以测试部分功能是否正常运行。&#xa;这会严重影响启动器运行，若无特殊需要不建议开启。" />
                     </Grid>
                 </StackPanel>

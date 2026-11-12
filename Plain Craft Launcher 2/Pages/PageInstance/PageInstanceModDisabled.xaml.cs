@@ -5,6 +5,14 @@ namespace PCL
 {
     public partial class PageInstanceModDisabled
     {
+        #region 事件
+
+        private void OnBtnDownload_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => BtnDownload_Click(sender, e);
+        private void OnBtnVersion_Click(object sender, System.Windows.Input.MouseButtonEventArgs e) => BtnVersion_Click(sender, e);
+        private void OnBtnDownload_Loaded(object sender, RoutedEventArgs e) => BtnDownload_Loaded();
+
+        #endregion
+
         public PageInstanceModDisabled()
         {
             this.InitializeComponent();

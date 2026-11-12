@@ -16,12 +16,61 @@ namespace PCL
 {
     public partial class PageDownloadInstall
     {
+        #region 事件
+
+        private void BtnBack_Click(object sender, EventArgs e) => ExitSelectPage();
+        private void CardOptiFine_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
+        private void CardForge_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
+        private void CardNeoForge_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
+        private void CardFabric_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
+        private void CardFabricApi_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
+        private void CardOptiFabric_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
+        private void CardLiteLoader_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
+        private void OnBtnStart_Click(object sender, MouseButtonEventArgs e) => BtnStart_Click();
+        private void LoadOptiFine_StateChanged(object sender, MyLoading.MyLoadingState e, MyLoading.MyLoadingState e2)
+        {
+            ReloadSelected();
+            OptiFine_Loaded();
+        }
+        private void LoadForge_StateChanged(object sender, MyLoading.MyLoadingState e, MyLoading.MyLoadingState e2)
+        {
+            ReloadSelected();
+            Forge_Loaded();
+        }
+        private void LoadNeoForge_StateChanged(object sender, MyLoading.MyLoadingState e, MyLoading.MyLoadingState e2)
+        {
+            ReloadSelected();
+            NeoForge_Loaded();
+        }
+        private void LoadFabric_StateChanged(object sender, MyLoading.MyLoadingState e, MyLoading.MyLoadingState e2)
+        {
+            ReloadSelected();
+            Fabric_Loaded();
+        }
+        private void LoadFabricApi_StateChanged(object sender, MyLoading.MyLoadingState e, MyLoading.MyLoadingState e2)
+        {
+            ReloadSelected();
+            FabricApi_Loaded();
+        }
+        private void LoadOptiFabric_StateChanged(object sender, MyLoading.MyLoadingState e, MyLoading.MyLoadingState e2)
+        {
+            ReloadSelected();
+            OptiFabric_Loaded();
+        }
+        private void LoadLiteLoader_StateChanged(object sender, MyLoading.MyLoadingState e, MyLoading.MyLoadingState e2)
+        {
+            ReloadSelected();
+            LiteLoader_Loaded();
+        }
+
+        #endregion
+
         public PageDownloadInstall()
         {
             this.Initialized += (_, __) => LoaderInit();
             this.Loaded += (_, __) => Init();
             this.InitializeComponent();
-            MyTextBox.ValidateChanged += __On_TextSelectName_ValidateChanged; // VB 中以 Handles 訂閱的是靜態事件
+            MyTextBox.ValidateChanged += TextSelectName_ValidateChanged; // VB 中以 Handles 訂閱的是靜態事件
         }
 
         public void ControlInit()

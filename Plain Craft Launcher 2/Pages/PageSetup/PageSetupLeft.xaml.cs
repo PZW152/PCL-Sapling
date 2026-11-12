@@ -7,6 +7,15 @@ namespace PCL
 {
     public partial class PageSetupLeft
     {
+        #region 事件
+
+        private void ItemLaunch_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((MyListItem)sender, e);
+        private void ItemSystem_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((MyListItem)sender, e);
+        private void ItemAbout_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((MyListItem)sender, e);
+        private void ItemUI_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((MyListItem)sender, e);
+
+        #endregion
+
 
         private bool IsLoad = false;
         private bool IsPageSwitched = false; // 如果在 Loaded 前切换到其他页面，会导致触发 Loaded 时再次切换一次

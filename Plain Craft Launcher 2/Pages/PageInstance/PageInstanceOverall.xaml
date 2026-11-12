@@ -30,9 +30,9 @@
                             <RowDefinition Height="28" />
                         </Grid.RowDefinitions>
                         <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="图标" Margin="0,0,25,0" />
-                        <local:MyComboBox Grid.Column="1" x:Name="ComboDisplayLogo" SelectionChanged="__On_ComboDisplayLogo_SelectionChanged">
+                        <local:MyComboBox Grid.Column="1" x:Name="ComboDisplayLogo" SelectionChanged="OnComboDisplayLogo_SelectionChanged">
                             <local:MyComboBoxItem Content="自动" IsSelected="True" Tag="" />
-                            <local:MyComboBoxItem Content="自定义..." x:Name="ItemDisplayLogoCustom" PreviewMouseLeftButtonUp="__On_ItemDisplayLogoCustom_PreviewMouseLeftButtonUp" Tag="PCL\Logo.png" />
+                            <local:MyComboBoxItem Content="自定义..." x:Name="ItemDisplayLogoCustom" PreviewMouseLeftButtonUp="ItemDisplayLogoCustom_PreviewMouseLeftButtonUp" Tag="PCL\Logo.png" />
                             <local:MyComboBoxItem Content="圆石" Tag="pack://application:,,,/images/Blocks/CobbleStone.png" />
                             <local:MyComboBoxItem Content="命令方块" Tag="pack://application:,,,/images/Blocks/CommandBlock.png" />
                             <local:MyComboBoxItem Content="金块" Tag="pack://application:,,,/images/Blocks/GoldBlock.png" />
@@ -47,7 +47,7 @@
                             <local:MyComboBoxItem Content="狐狸（NeoForge）" Tag="pack://application:,,,/images/Blocks/NeoForge.png" />
                         </local:MyComboBox>
                         <TextBlock VerticalAlignment="Center" Grid.Row="2" HorizontalAlignment="Left" Text="分类" Margin="0,0,25,0" />
-                        <local:MyComboBox Grid.Column="1" Grid.Row="2" x:Name="ComboDisplayType" SelectionChanged="__On_ComboDisplayType_SelectionChanged">
+                        <local:MyComboBox Grid.Column="1" Grid.Row="2" x:Name="ComboDisplayType" SelectionChanged="ComboDisplayType_SelectionChanged">
                             <local:MyComboBoxItem Content="自动" IsSelected="True" />
                             <local:MyComboBoxItem Content="从版本列表中隐藏" ToolTip="该版本默认将不会在版本列表中显示。&#xa;在版本列表页面按下 F11，即可查看所有隐藏的版本。" />
                             <local:MyComboBoxItem Content="可安装 Mod 的版本" />
@@ -62,18 +62,18 @@
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                         </Grid.ColumnDefinitions>
-                        <local:MyButton x:Name="BtnDisplayRename" Click="__On_BtnDisplayRename_Click" Text="修改版本名" MinWidth="140" Padding="13,0" Margin="0,0,20,0" />
-                        <local:MyButton x:Name="BtnDisplayDesc" Click="__On_BtnDisplayDesc_Click" Text="修改版本描述" MinWidth="140" Padding="13,0" Margin="0,0,20,0" Grid.Column="1" />
-                        <local:MyButton x:Name="BtnDisplayStar" Click="__On_BtnDisplayStar_Click" Text="加入收藏夹" MinWidth="140" Padding="13,0" Margin="0,0,20,0" Grid.Column="2" />
+                        <local:MyButton x:Name="BtnDisplayRename" Click="OnBtnDisplayRename_Click" Text="修改版本名" MinWidth="140" Padding="13,0" Margin="0,0,20,0" />
+                        <local:MyButton x:Name="BtnDisplayDesc" Click="OnBtnDisplayDesc_Click" Text="修改版本描述" MinWidth="140" Padding="13,0" Margin="0,0,20,0" Grid.Column="1" />
+                        <local:MyButton x:Name="BtnDisplayStar" Click="OnBtnDisplayStar_Click" Text="加入收藏夹" MinWidth="140" Padding="13,0" Margin="0,0,20,0" Grid.Column="2" />
                     </Grid>
                 </StackPanel>
             </local:MyCard>
             <local:MyCard Margin="0,0,0,15" Title="快捷方式" x:Name="PanFolder">
                 <WrapPanel Margin="25,30,25,20">
-                    <local:MyButton x:Name="BtnFolderVersion" Click="__On_BtnFolderVersion_Click" Text="版本文件夹" MinWidth="140" Padding="13,0" Margin="0,13,20,0" Height="35" />
-                    <local:MyButton x:Name="BtnFolderSaves" Click="__On_BtnFolderSaves_Click" Text="存档文件夹" MinWidth="140" Padding="13,0" Margin="0,13,20,0" Height="35"/>
-                    <local:MyButton x:Name="BtnFolderMods" Click="__On_BtnFolderMods_Click" Text="Mod 文件夹" MinWidth="140" Padding="13,0" Margin="0,13,20,0" Height="35"/>
-                    <local:MyButton x:Name="BtnFolderScreen" Click="__On_BtnFolderScreen_Click" Text="截图文件夹" MinWidth="140" Padding="13,0" Margin="0,13,20,0" Height="35" />
+                    <local:MyButton x:Name="BtnFolderVersion" Click="BtnFolderVersion_Click" Text="版本文件夹" MinWidth="140" Padding="13,0" Margin="0,13,20,0" Height="35" />
+                    <local:MyButton x:Name="BtnFolderSaves" Click="BtnFolderSaves_Click" Text="存档文件夹" MinWidth="140" Padding="13,0" Margin="0,13,20,0" Height="35"/>
+                    <local:MyButton x:Name="BtnFolderMods" Click="BtnFolderMods_Click" Text="Mod 文件夹" MinWidth="140" Padding="13,0" Margin="0,13,20,0" Height="35"/>
+                    <local:MyButton x:Name="BtnFolderScreen" Click="BtnFolderScreen_Click" Text="截图文件夹" MinWidth="140" Padding="13,0" Margin="0,13,20,0" Height="35" />
                 </WrapPanel>
             </local:MyCard>
             <local:MyCard Margin="0,0,0,15" Title="高级管理" x:Name="PanManage">
@@ -84,9 +84,9 @@
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                         </Grid.ColumnDefinitions>
-                        <local:MyButton x:Name="BtnManageScript" Click="__On_BtnManageScript_Click" Text="导出启动脚本" MinWidth="140" Padding="13,0" Margin="0,0,20,0" />
-                        <local:MyButton x:Name="BtnManageCheck" Click="__On_BtnManageCheck_Click" Text="补全文件" MinWidth="140" Padding="13,0" Margin="0,0,20,0" Grid.Column="1" ToolTip="校验版本依赖文件是否完整，并重新下载 Assets 索引与缺失、校验失败的文件。&#xa;若游戏缺失音效，请尝试此项。" />
-                        <local:MyButton x:Name="BtnManageDelete" Click="__On_BtnManageDelete_Click" Text="删除版本" MinWidth="140" Padding="13,0" Margin="0,0,20,0" Grid.Column="2" ColorType="Red" />
+                        <local:MyButton x:Name="BtnManageScript" Click="BtnManageScript_Click" Text="导出启动脚本" MinWidth="140" Padding="13,0" Margin="0,0,20,0" />
+                        <local:MyButton x:Name="BtnManageCheck" Click="OnBtnManageCheck_Click" Text="补全文件" MinWidth="140" Padding="13,0" Margin="0,0,20,0" Grid.Column="1" ToolTip="校验版本依赖文件是否完整，并重新下载 Assets 索引与缺失、校验失败的文件。&#xa;若游戏缺失音效，请尝试此项。" />
+                        <local:MyButton x:Name="BtnManageDelete" Click="OnBtnManageDelete_Click" Text="删除版本" MinWidth="140" Padding="13,0" Margin="0,0,20,0" Grid.Column="2" ColorType="Red" />
                     </Grid>
                 </StackPanel>
             </local:MyCard>

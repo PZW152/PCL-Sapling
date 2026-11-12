@@ -682,7 +682,7 @@ namespace PCL
         }
 
         // 自适应（#4465）
-        private void PanTitle_SizeChanged()
+        private void PanTitle_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             // 0：全部舒展：Auto - Auto - (Auto) - 1*
             // 1：压缩 Subtitle：Auto - 1* - (Auto) - 0
