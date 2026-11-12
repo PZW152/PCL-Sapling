@@ -273,7 +273,7 @@
                                 <local:MyCheckBox.Tag>
                                     <local:ExportOption 
                                 Title="PCL 个性化内容"
-                                Description="功能隐藏设置、主页、背景音乐和图片等"
+                                Description="个性化与功能隐藏等设置"
                                 DefaultChecked="True" />
                                 </local:MyCheckBox.Tag>
                             </local:MyCheckBox>

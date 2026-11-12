@@ -47,8 +47,8 @@
 
   <ItemGroup>
     <ApplicationDefinition Include="Application.xaml" />
-    <Page Include="**\*.xaml" Exclude="Application.xaml;Resources\Custom.xaml;Controls\MySliderDot.xaml;bin\**;obj\**" />
-    <None Include="Resources\Custom.xaml;Controls\MySliderDot.xaml" />
+    <Page Include="**\*.xaml" Exclude="Application.xaml;Controls\MySliderDot.xaml;bin\**;obj\**" />
+    <None Include="Controls\MySliderDot.xaml" />
   </ItemGroup>
 
   <ItemGroup>

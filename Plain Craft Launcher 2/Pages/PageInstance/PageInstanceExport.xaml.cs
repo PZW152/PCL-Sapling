@@ -694,16 +694,10 @@ namespace PCL
             // 复制 PCL 个性化内容
             if (IncludePCLCustom)
             {
-                if (DirectoryUtils.Exists(Paths.Base + @"PCL\Pictures\"))
-                    DirectoryUtils.Copy(Paths.Base + @"PCL\Pictures\", CacheFolder + @"PCL\Pictures\");
-                if (FileUtils.Exists(Paths.Base + @"PCL\Custom.xaml"))
-                    FileUtils.Copy(Paths.Base + @"PCL\Custom.xaml", CacheFolder + @"PCL\Custom.xaml");
                 if (FileUtils.Exists(Paths.Base + @"PCL\Setup.ini"))
                     FileUtils.Copy(Paths.Base + @"PCL\Setup.ini", CacheFolder + @"PCL\Setup.ini");
                 if (FileUtils.Exists(Paths.Base + @"PCL\hints.txt"))
                     FileUtils.Copy(Paths.Base + @"PCL\hints.txt", CacheFolder + @"PCL\hints.txt");
-                if (FileUtils.Exists(Paths.Base + @"PCL\Logo.png"))
-                    FileUtils.Copy(Paths.Base + @"PCL\Logo.png", CacheFolder + @"PCL\Logo.png");
             }
         })
             {

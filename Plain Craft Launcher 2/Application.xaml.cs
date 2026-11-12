@@ -93,7 +93,7 @@ namespace PCL
                 // 初始化文件结构
                 try
                 {
-                    DirectoryUtils.Create(Paths.Base + @"PCL\Pictures\");
+                    DirectoryUtils.Create(Paths.Base + @"PCL\");
                     ModBase.CheckPermissionWithException(Paths.Base + @"PCL\");
                 }
                 catch (Exception)
@@ -192,7 +192,8 @@ namespace PCL
             try
             {
                 bool MutexCreatedNew;
-                PclMutex = new Mutex(true, "PCL_Sapling_SingletonMutex", out MutexCreatedNew); // 与原版 PCL 分开，两者可以同时打开
+                // 与原版 PCL 分开，两者可以同时打开；开发中的版本也与正式版分开，可以和正在使用的正式版同时运行
+                PclMutex = new Mutex(true, "PCL_Sapling_SingletonMutex" + (ModBase.BuildType == ModBase.BuildTypes.Release ? "" : "_" + ModBase.BuildType), out MutexCreatedNew);
                 if (MutexCreatedNew)
                     return;
                 Logger.Warn("已有一个 PCL 实例正在运行");

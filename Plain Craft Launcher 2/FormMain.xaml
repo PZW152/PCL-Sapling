@@ -95,8 +95,6 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition />
                 </Grid.RowDefinitions>
-                <Canvas x:Name="ImgBack" IsHitTestVisible="False" Grid.Row="1" RenderOptions.BitmapScalingMode="LowQuality"
-                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
                 <Grid x:Name="PanTitle" MouseLeftButtonDown="FormDragMove" Height="48">
                     <Grid.Background>
                         <LinearGradientBrush EndPoint="1,0" StartPoint="0,0">
@@ -118,8 +116,6 @@
                         <Path x:Name="ShapeTitleSapling" Data="M32,33 C32,22 40,15 50,14 C50,25 43,33 32,33 Z M32,40 C32,32 25,27 15,27 C15,36 22,41 32,40 Z M30,31 H34 V48 H42 A2,2 0 0 1 42,52 H22 A2,2 0 0 1 22,48 H30 Z"
                               Visibility="{Binding Visibility, ElementName=ShapeTitleLogo}" Fill="White" Stretch="Uniform" Width="17" Height="17"
                               SnapsToDevicePixels="False" UseLayoutRounding="False" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="65,0,0,2" />
-                        <TextBlock x:Name="LabTitleLogo" Visibility="Collapsed" SnapsToDevicePixels="False" UseLayoutRounding="False" IsHitTestVisible="False" HorizontalAlignment="Left" Margin="18,0,0,0" Foreground="White" FontSize="17" VerticalAlignment="Center" />
-                        <local:MyImage x:Name="ImageTitleLogo" SnapsToDevicePixels="False" UseLayoutRounding="False" IsHitTestVisible="False" HorizontalAlignment="Left" Margin="7" VerticalAlignment="Center" Visibility="Collapsed" />
                         <StackPanel Grid.Column="1" x:Name="PanTitleSelect" HorizontalAlignment="Left" Height="27" VerticalAlignment="Center" Orientation="Horizontal" Margin="13,0">
                             <local:MyRadioButton x:Name="BtnTitleSelect0" Check="BtnTitleSelect_Click" Text="启动" Tag="0" Margin="5,0" Checked="True" Padding="2,0"
                                              LogoScale="0.9" Logo="M52.1,164.5c-1.4,0-3.1-0.5-4.2-1.3c-2.6-1.7-4-4.2-4-7V43.8c0-2.9,1.6-5.8,4.1-7c1.2-0.8,2.7-1.2,4.1-1.2c1.5,0,2.9,0.4,4.2,1.2L153.1,93c0,0,0.1,0,0.1,0.1c2.6,1.7,4,4.2,4,7c0,3-1.7,5.8-4.2,7.1l-96.8,56.2C55.1,164,53.5,164.5,52.1,164.5z M60.4,142.1l72.1-42.1L60.4,58.2V142.1z" />

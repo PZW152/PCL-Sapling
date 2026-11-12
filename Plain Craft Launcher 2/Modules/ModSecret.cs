@@ -154,19 +154,12 @@ namespace PCL
             Brush.GradientStops.Add(new GradientStop() { Offset = 1d, Color = new ModBase.MyColor().FromHSL2(ColorHue + Deltas[2], ColorSat, 48 + ColorLightAdjust) });
             ModMain.FrmMain.PanTitle.Background = Brush;
             ModMain.FrmMain.PanTitle.Background.Freeze();
-            // 主页面背景
-            if (Settings.Get<bool>("UiBackgroundColorful"))
-            {
-                Brush = new LinearGradientBrush() { EndPoint = new Point(0.1d, 1d), StartPoint = new Point(0.9d, 0d) };
-                Brush.GradientStops.Add(new GradientStop() { Offset = -0.1d, Color = new ModBase.MyColor().FromHSL2(ColorHue - 15, ColorSat * 0.8d, 91d) });
-                Brush.GradientStops.Add(new GradientStop() { Offset = 0.4d, Color = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.8d, 91d) });
-                Brush.GradientStops.Add(new GradientStop() { Offset = 1.1d, Color = new ModBase.MyColor().FromHSL2(ColorHue + 15, ColorSat * 0.8d, 91d) });
-                ModMain.FrmMain.PanForm.Background = Brush;
-            }
-            else
-            {
-                ModMain.FrmMain.PanForm.Background = new ModBase.MyColor(245d, 245d, 245d);
-            }
+            // 主页面背景：随主题色变化的彩色渐变
+            Brush = new LinearGradientBrush() { EndPoint = new Point(0.1d, 1d), StartPoint = new Point(0.9d, 0d) };
+            Brush.GradientStops.Add(new GradientStop() { Offset = -0.1d, Color = new ModBase.MyColor().FromHSL2(ColorHue - 15, ColorSat * 0.8d, 91d) });
+            Brush.GradientStops.Add(new GradientStop() { Offset = 0.4d, Color = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.8d, 91d) });
+            Brush.GradientStops.Add(new GradientStop() { Offset = 1.1d, Color = new ModBase.MyColor().FromHSL2(ColorHue + 15, ColorSat * 0.8d, 91d) });
+            ModMain.FrmMain.PanForm.Background = Brush;
             ModMain.FrmMain.PanForm.Background.Freeze();
         });
         }

@@ -80,18 +80,6 @@ namespace PCL.My.Resources
         /// <summary>
         /// 查找 System.Byte[] 类型的本地化资源。
         /// </summary>
-        internal static byte[] Custom
-        {
-            get
-            {
-                var obj = ResourceManager.GetObject("Custom", resourceCulture);
-                return (byte[])obj;
-            }
-        }
-
-        /// <summary>
-        /// 查找 System.Byte[] 类型的本地化资源。
-        /// </summary>
         internal static byte[] ForgeInstaller
         {
             get
