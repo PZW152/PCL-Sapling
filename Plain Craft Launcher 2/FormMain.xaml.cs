@@ -399,6 +399,7 @@ namespace PCL
             }
             // 刷新主题
             ModSecret.ThemeRefresh(Settings.Get<int>("UiLauncherTheme"));
+            ModNet.ShouldValidateSslCertificateOnLogin(Settings.Get<bool>("ToolDownloadCert")); // 原先只在切换选项时生效，重启后失效
             // 注册拖拽事件（不能直接加 Handles，否则没用；#6340）
             this.AddHandler(DragDrop.DragEnterEvent, new DragEventHandler(HandleDrag), handledEventsToo: true);
             this.AddHandler(DragDrop.DragOverEvent, new DragEventHandler(HandleDrag), handledEventsToo: true);

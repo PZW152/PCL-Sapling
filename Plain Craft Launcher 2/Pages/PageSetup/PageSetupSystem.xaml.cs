@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using MeloongCore;
 using MeloongCore.Extensions;
+using MeloongCore.Wpf;
 using Newtonsoft.Json.Linq;
 
 namespace PCL
@@ -85,13 +89,78 @@ namespace PCL
 
         #region 导出 / 导入设置
 
+        /// <summary>
+        /// 把可导出的设置写入文件（不含登录信息、本机路径、版本独立设置）。
+        /// </summary>
+        public static void ExportSettings(string Target)
+        {
+            var Values = Settings.Entries.Values
+                .Where(s => SettingsTransfer.IsTransferable(s.Key, s.Encrypted, s.Source == Settings.Sources.Instance))
+                .Select(s => new KeyValuePair<string, object>(s.Key, Settings.Get(s.Key)));
+            File.WriteAllText(Target, SettingsTransfer.Export(Values, DateTime.Now), new UTF8Encoding(false));
+        }
+        /// <summary>
+        /// 从文件导入设置，返回导入的项数。文件格式不对时抛出 FormatException。
+        /// </summary>
+        public static int ImportSettings(string Source)
+        {
+            var Values = SettingsTransfer.Parse(File.ReadAllText(Source));
+            int Count = 0;
+            foreach (var Pair in Values)
+            {
+                if (!Settings.Entries.TryGetValue(Pair.Key, out var Entry))
+                    continue; // 新版本的设置项，当前版本不认识
+                if (!SettingsTransfer.IsTransferable(Entry.Key, Entry.Encrypted, Entry.Source == Settings.Sources.Instance))
+                    continue;
+                try
+                {
+                    Settings.Set(Entry.Key, Coerce.ChangeType(Pair.Value.ToObject<object>(), Entry.Type));
+                    Count += 1;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, $"导入设置项 {Pair.Key} 失败");
+                }
+            }
+            return Count;
+        }
+
         private void BtnSystemSettingExp_Click(object sender, MouseButtonEventArgs e)
         {
-            ModMain.Hint("该功能尚在开发中！");
+            string Target = Dialogs.SaveFile("导出设置", "PCL 设置.json", filter: new[] { ("json", "PCL 设置文件") });
+            if (string.IsNullOrEmpty(Target))
+                return;
+            try
+            {
+                ExportSettings(Target);
+                ModMain.Hint("设置已导出。文件中不包含登录信息，可以放心分享。", ModMain.HintType.Green);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "导出设置失败", LogBehavior.Alert);
+            }
         }
         private void BtnSystemSettingImp_Click(object sender, MouseButtonEventArgs e)
         {
-            ModMain.Hint("该功能尚在开发中！");
+            string Source = Dialogs.SelectFile("导入设置", false, filter: new[] { (new[] { "json" }, "PCL 设置文件") }).FirstOrDefault();
+            if (string.IsNullOrEmpty(Source))
+                return;
+            try
+            {
+                int Count = ImportSettings(Source);
+                ModAnimation.AniControlEnabled += 1;
+                Reload();
+                ModAnimation.AniControlEnabled -= 1;
+                ModMain.Hint($"已导入 {Count} 项设置。部分设置需要重启启动器后生效。", ModMain.HintType.Green);
+            }
+            catch (FormatException ex)
+            {
+                ModMain.MyMsgBox(ex.Message, "无法导入");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "导入设置失败", LogBehavior.Alert);
+            }
         }
 
         #endregion
