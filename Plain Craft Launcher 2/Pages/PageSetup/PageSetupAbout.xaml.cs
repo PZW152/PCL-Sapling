@@ -51,14 +51,14 @@ namespace PCL
         private void BtnAboutDataFolder_Click(object sender, MouseButtonEventArgs e) => ModBase.OpenExplorer(Paths.Base + @"PCL\");
         private void BtnAboutLicenses_Click(object sender, MouseButtonEventArgs e)
         {
-            if (ModMain.MyMsgBox("本修改版基于 PCL（《PCL 分发有限许可》）修改，并使用以下第三方组件：" + ModBase.CrLf + ModBase.CrLf +
-                    "· MeloongCore（Apache-2.0）" + ModBase.CrLf +
-                    "· Newtonsoft.Json（MIT）" + ModBase.CrLf +
-                    "· Ookii.Dialogs.Wpf（BSD-3-Clause）" + ModBase.CrLf +
-                    "· ThrottleDebounce（Apache-2.0）" + ModBase.CrLf +
-                    "· Imazen.WebP（MIT）与 libwebp（BSD-3-Clause）" + ModBase.CrLf +
-                    "· OpenCC 字词资料（Apache-2.0）" + ModBase.CrLf +
-                    "· PolySharp（MIT）", "第三方许可", "查看完整说明", "确定") == 1)
+            if (ModMain.MyMsgBox("本修改版基于 PCL（《PCL 分发有限许可》）修改，融合了 Sapling（同一作者）的功能，并使用以下第三方内容：" + ModBase.CrLf + ModBase.CrLf +
+                    "· MeloongCore、ThrottleDebounce、OpenCC 字词资料（Apache-2.0）" + ModBase.CrLf +
+                    "· LWJGL Unsafe Agent（Apache-2.0）、Transformer Discovery Service（GPL-3.0）：来自 HMCL" + ModBase.CrLf +
+                    "· Quilt 图标：来自 PCL CE（Apache-2.0）" + ModBase.CrLf +
+                    "· Java Launch Wrapper、Newtonsoft.Json、Imazen.WebP（MIT）" + ModBase.CrLf +
+                    "· Ookii.Dialogs.Wpf、libwebp（BSD-3-Clause）" + ModBase.CrLf +
+                    "· Forge Install Bootstrapper（bangbang93，随 PCL 原版分发）" + ModBase.CrLf +
+                    "· iconmonstr、Iconfont 图标", "第三方许可", "查看完整说明", "确定") == 1)
                 ModBase.OpenWebsite(ModBase.RepoUrl + "/blob/main/THIRD-PARTY-NOTICES.md");
         }
 

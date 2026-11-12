@@ -33,337 +33,34 @@ namespace PCL
 
         #region 基础
 
-        // 更新日志
-        private void ShowUpdateLog(int LastVersion)
+        // 更新日志（樹苗修改版自己的，不再显示 PCL 原版的更新内容）
+        /// <summary>
+        /// 当前版本相对上一个版本的主要变化。发布新版本时与 CHANGELOG.md 一起更新。
+        /// </summary>
+        private const string SaplingUpdateNotes =
+            "· 首页改为主角卡：当前版本、游玩时间，以及「继续玩」最近的世界和服务器\n" +
+            "· 游戏运行时在首页显示实时游戏日志\n" +
+            "· 没有版本时，一键下载最新正式版并进入游戏\n" +
+            "· 支持安装 Quilt 与 Quilt 整合包\n" +
+            "· 截图管理、清理未使用的游戏文件、桌面快捷方式一键启动\n" +
+            "· 界面支持简体与繁体中文，切换即时生效\n" +
+            "· 精简了很少用到的设置，改用推荐值";
+        /// <summary>
+        /// 更新到新的樹苗修改版后显示一次更新内容。全新安装时不显示。
+        /// </summary>
+        private static void ShowSaplingUpdateLog()
         {
-            int FeatureCount = 0;
-            int BugCount = 0;
-            var FeatureList = new List<KeyValuePair<int, string>>();
-            // 统计更新日志条目
-            if (ModBase.BuildType == ModBase.BuildTypes.Release)
+            string Last = Settings.Get<string>("SystemSaplingLastVersion");
+            if (Last == ModBase.VersionBaseName)
+                return;
+            Settings.Set("SystemSaplingLastVersion", ModBase.VersionBaseName);
+            if (string.IsNullOrEmpty(Last) || ModBase.BuildType != ModBase.BuildTypes.Release)
+                return;
+            ModBase.RunInDedicatedThread(() =>
             {
-                if (LastVersion < 415) // Release 2.99.0.1
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(4, "删除：MC 下载功能相关入口"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "优化：为设置更新添加部分黑名单"));
-                }
-                if (LastVersion < 413) // Release 2.99.0.0
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(5, "删除：为遵守相关法律法规，PCL 不再提供 MC 下载功能，非常抱歉 qwq……"));
-                }
-                if (LastVersion < 411) // Release 2.14.0.0
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(4, "新增：允许修改、添加、移除、更新已安装版本的各个组件，可从版本设置中进入"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：启动游戏时允许按 Esc 取消"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：允许复制主页的启动日志中的内容"));
-                    FeatureCount += 19;
-                    BugCount += 26;
-                }
-                if (LastVersion < 408) // Release 2.13.1.1
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：版本设置中，添加打开截图文件夹的快捷方式"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：导出整合包时，可以勾选导出光影设置文件"));
-                    FeatureCount += 23;
-                    BugCount += 28;
-                }
-                if (LastVersion < 406) // Release 2.13.0.1
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(4, "新增：重做 Java 管理与相关设置，允许调整 Java 优先级、指定 Java 版本范围等"));
-                    FeatureList.Add(new KeyValuePair<int, string>(3, "优化：导出整合包时允许自动导出版本文件夹中的 Java"));
-                    FeatureList.Add(new KeyValuePair<int, string>(3, "优化：重做弹出提示的样式以及动画，以更符合现代 UI 审美"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：可能无法安装 OptiFine 26.1.2"));
-                    FeatureCount += 35;
-                    BugCount += 17;
-                }
-                if (LastVersion < 404) // Release 2.12.8.2
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：Windows 7 无法正常联网"));
-                    FeatureCount += 1;
-                    BugCount += 2;
-                }
-                if (LastVersion < 402) // Release 2.12.8.1
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：升级框架到 .NET Framework 4.8"));
-                    FeatureCount += 35;
-                    BugCount += 21;
-                }
-                if (LastVersion < 398) // Release 2.12.7.3
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：下载游戏、整合包的稳定性"));
-                    FeatureCount += 1;
-                    BugCount += 5;
-                }
-                if (LastVersion < 391) // Release 2.12.6.2
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：会为部分 Forge / NeoForge 选择不支持的 Java"));
-                    BugCount += 4;
-                }
-                if (LastVersion < 389) // Release 2.12.6.1
-                {
-                    if (LastVersion == 387)
-                        FeatureList.Add(new KeyValuePair<int, string>(2, "修复：无法使用 Java 25+ 启动 Forge"));
-                    FeatureCount += 4;
-                    BugCount += 3;
-                }
-                if (LastVersion < 387) // Release 2.12.6
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(3, "优化：降低 Minecraft 的内存占用"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "修复：Minecraft 使用 Java 25+ 时的一个性能问题"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "修复：无法下载 NeoForge 26.1"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "修复：部分关键词搜不到资源，特别是中文 Mod 搜索经常没有结果"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：老版本 Windows 无法启动游戏"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：连接 Mojang 的服务可能失败，提示错误码 421"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：无法访问爱发电"));
-                    FeatureCount += 24;
-                    BugCount += 19;
-                }
-                if (LastVersion < 383) // Release 2.12.3
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "修复：部分关键词搜不到资源，特别是中文 Mod 搜索经常没有结果"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "修复：下载可能完全卡住，或是下载进度反复回退"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "新增：内存管理设置，可以选择 G1GC、ZGC 或分代 ZGC"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "优化：来自 Modrinth 的文件下载速度"));
-                    FeatureCount += 15;
-                    BugCount += 16;
-                }
-                if (LastVersion < 381) // Release 2.12.2
-                {
-                    FeatureCount += 3;
-                    BugCount += 13;
-                }
-                if (LastVersion < 379) // Release 2.12.1
-                {
-                    if (LastVersion >= 376)
-                    {
-                        FeatureList.Add(new KeyValuePair<int, string>(5, "删除：暂时隐藏联机入口……不过只是暂时关闭，它还会回来的！"));
-                    }
-                    FeatureList.Add(new KeyValuePair<int, string>(3, "新增：适配新的 Minecraft 版本号系统与 Unobfuscated 版本"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：巨幅优化各个下载页面和 Mod 管理页面的性能"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "优化：更换披风时会显示当前使用的披风"));
-                    FeatureCount += 33;
-                    BugCount += 29;
-                }
-                if (LastVersion < 376) // Release 2.11.2
-                {
-                    // FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "新增：联机功能！"))
-                    FeatureCount += 32;
-                    BugCount += 21;
-                }
-            }
-            else
-            {
-                // 5：          FEAT+
-                // 4：     IMP+ FEAT*
-                // 3：BUG+ IMP* FEAT-
-                // 2：BUG* IMP-
-                // 1：BUG-
-                if (LastVersion < 416) // Snapshot 2.99.0.1
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(4, "删除：MC 下载功能相关入口"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "优化：为设置更新添加部分黑名单"));
-                }
-                if (LastVersion < 414) // Snapshot 2.99.0.0
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(5, "删除：为遵守相关法律法规，PCL 不再提供 MC 下载功能，非常抱歉 qwq……"));
-                }
-                if (LastVersion < 412) // Snapshot 2.14.0.0
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(4, "新增：允许修改、添加、移除、更新已安装版本的各个组件，可从版本设置中进入"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：启动游戏时允许按 Esc 取消"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：允许复制主页的启动日志中的内容"));
-                    FeatureCount += 19;
-                    BugCount += 26;
-                }
-                if (LastVersion < 410) // Snapshot 2.13.1.1
-                {
-                    if (LastVersion == 409)
-                        FeatureList.Add(new KeyValuePair<int, string>(1, "修复：更新 Mod 时可能更新成另一个 Mod 加载器的版本"));
-                    FeatureCount += 2;
-                    BugCount += 6;
-                }
-                if (LastVersion < 409) // Snapshot 2.13.1.0
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：版本设置中，添加打开截图文件夹的快捷方式"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：导出整合包时，可以勾选导出光影设置文件"));
-                    FeatureCount += 21;
-                    BugCount += 22;
-                }
-                if (LastVersion < 407) // Snapshot 2.13.0.1
-                {
-                    if (LastVersion == 405)
-                    {
-                        FeatureList.Add(new KeyValuePair<int, string>(1, "修复：使用部分主页预设时崩溃"));
-                        FeatureList.Add(new KeyValuePair<int, string>(1, "修复：无法删除部分文件夹"));
-                        FeatureList.Add(new KeyValuePair<int, string>(1, "修复：版本设置中指定的 Java 无法被保存"));
-                        FeatureCount += 1;
-                        BugCount += 3;
-                    }
-                    FeatureCount += 2;
-                }
-                if (LastVersion < 405) // Snapshot 2.13.0.0
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(4, "新增：重做 Java 管理与相关设置，允许调整 Java 优先级、指定 Java 版本范围等"));
-                    FeatureList.Add(new KeyValuePair<int, string>(3, "优化：导出整合包时允许自动导出版本文件夹中的 Java"));
-                    FeatureList.Add(new KeyValuePair<int, string>(3, "优化：重做弹出提示的样式以及动画，以更符合现代 UI 审美"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：可能无法安装 OptiFine 26.1.2"));
-                    FeatureCount += 35;
-                    BugCount += 17;
-                }
-                if (LastVersion < 403) // Snapshot 2.12.8.2
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：Windows 7 无法正常联网"));
-                    FeatureCount += 1;
-                    BugCount += 2;
-                }
-                if (LastVersion < 401) // Snapshot 2.12.8.1
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：可能无法更换披风"));
-                    FeatureCount += 8;
-                    BugCount += 6;
-                }
-                if (LastVersion < 399) // Snapshot 2.12.8.0
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：升级框架到 .NET Framework 4.8"));
-                    FeatureCount += 28;
-                    BugCount += 19;
-                }
-                if (LastVersion < 397) // Snapshot 2.12.7.3
-                {
-                    if (LastVersion >= 393 && LastVersion < 397)
-                        FeatureList.Add(new KeyValuePair<int, string>(1, "修复：无法使用自定义隐藏主题"));
-                }
-                if (LastVersion < 395) // Snapshot 2.12.7.2
-                {
-                    if (LastVersion == 393)
-                        FeatureList.Add(new KeyValuePair<int, string>(2, "修复：部分个性化功能失效"));
-                }
-                if (LastVersion < 393) // Snapshot 2.12.7.1
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：允许永久关闭启动页面的快照版提示"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：下载游戏、整合包的稳定性"));
-                    FeatureCount += 1;
-                    BugCount += 5;
-                }
-                if (LastVersion < 390) // Snapshot 2.12.6.2
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：会为部分 Forge / NeoForge 选择不支持的 Java"));
-                    BugCount += 4;
-                }
-                if (LastVersion < 388) // Snapshot 2.12.6.1
-                {
-                    if (LastVersion == 386)
-                        FeatureList.Add(new KeyValuePair<int, string>(2, "修复：无法使用 Java 25+ 启动 Forge"));
-                    FeatureCount += 4;
-                    BugCount += 3;
-                }
-                if (LastVersion < 386) // Snapshot 2.12.6
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "修复：Minecraft 使用 Java 25+ 时的一个性能问题"));
-                    if (LastVersion == 384 || LastVersion == 385)
-                        FeatureList.Add(new KeyValuePair<int, string>(2, "修复：无法正常重命名游戏版本"));
-                    if (LastVersion == 385)
-                        FeatureList.Add(new KeyValuePair<int, string>(1, "修复：无法显示 Modrinth 整合包的版本列表"));
-                    BugCount += 1;
-                }
-                if (LastVersion < 385) // Snapshot 2.12.5
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "修复：无法下载 NeoForge 26.1"));
-                    if (LastVersion == 384)
-                    {
-                        FeatureList.Add(new KeyValuePair<int, string>(2, "修复：下载可能失败，提示任务管理刷新线程出错"));
-                        FeatureList.Add(new KeyValuePair<int, string>(2, "修复：无法保存选择的 Minecraft 文件夹"));
-                        FeatureList.Add(new KeyValuePair<int, string>(1, "修复：使用中文搜索 Mod 时，部分结果会忽略筛选条件"));
-                    }
-                    FeatureCount += 3;
-                    BugCount += 6;
-                }
-                if (LastVersion < 384) // Snapshot 2.12.4
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(3, "优化：降低 Minecraft 的内存占用"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "修复：部分关键词搜不到资源，特别是中文 Mod 搜索经常没有结果"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：老版本 Windows 无法启动游戏"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：连接 Mojang 的服务可能失败，提示错误码 421"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "修复：无法访问爱发电"));
-                    FeatureCount += 21;
-                    BugCount += 14;
-                }
-                if (LastVersion < 382) // Snapshot 2.12.3
-                {
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "修复：下载可能完全卡住，或是下载进度反复回退"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "新增：内存管理设置，可以选择 G1GC、ZGC 或分代 ZGC"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "优化：来自 Modrinth 的文件下载速度"));
-                    FeatureCount += 15;
-                    BugCount += 16;
-                }
-                if (LastVersion < 380) // Snapshot 2.12.2
-                {
-                    FeatureCount += 3;
-                    BugCount += 13;
-                }
-                if (LastVersion < 378) // Snapshot 2.12.1
-                {
-                    if (LastVersion >= 377)
-                    {
-                        FeatureList.Add(new KeyValuePair<int, string>(1, "修复：在版本列表中存在 OptiFine 时可能无法加载版本列表"));
-                        BugCount += 2;
-                    }
-                }
-                if (LastVersion < 377) // Snapshot 2.12.0
-                {
-                    if (LastVersion >= 373)
-                    {
-                        FeatureList.Add(new KeyValuePair<int, string>(5, "删除：暂时隐藏联机入口……不过只是暂时关闭，它还会回来的！"));
-                    }
-                    FeatureList.Add(new KeyValuePair<int, string>(3, "新增：适配新的 Minecraft 版本号系统与 Unobfuscated 版本"));
-                    FeatureList.Add(new KeyValuePair<int, string>(2, "优化：巨幅优化各个下载页面和 Mod 管理页面的性能"));
-                    FeatureList.Add(new KeyValuePair<int, string>(1, "优化：更换披风时会显示当前使用的披风"));
-                    FeatureCount += 33;
-                    BugCount += 29;
-                }
-                if (LastVersion < 375) // Snapshot 2.11.2
-                {
-                    // If LastVersion >= 373 Then
-                    // FeatureList.Add(New KeyValuePair(Of Integer, String)(3, "优化：对联机进行了各种各样的优化，以改善稳定性"))
-                    // FeatureList.Add(New KeyValuePair(Of Integer, String)(2, "优化：若有加入者的网络环境比房主更好，会提示可以让那位加入者担任房主"))
-                    // End If
-                    FeatureCount += 16;
-                    BugCount += 4;
-                }
-                if (LastVersion < 374) // Snapshot 2.11.1
-                {
-                    // If LastVersion >= 373 Then
-                    // FeatureList.Add(New KeyValuePair(Of Integer, String)(3, "优化：使用离线登录也可以直接加入联机房间了"))
-                    // FeatureList.Add(New KeyValuePair(Of Integer, String)(3, "优化：会从所有共享节点中自动选择负载最低的进行中继连接"))
-                    // FeatureList.Add(New KeyValuePair(Of Integer, String)(2, "优化：若复制了邀请码，则可以直接快速加入房间"))
-                    // FeatureList.Add(New KeyValuePair(Of Integer, String)(2, "优化：关闭 PCL 时总是会提示是否退出联机，防止在关闭 PCL 时无意地关闭或退出了房间"))
-                    // FeatureList.Add(New KeyValuePair(Of Integer, String)(2, "新增：允许自定义要连接的节点"))
-                    // End If
-                    FeatureCount += 9;
-                    BugCount += 7;
-                }
-                if (LastVersion < 373) // Snapshot 2.11.0
-                {
-                    // FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "新增：联机功能！"))
-                    FeatureCount += 7;
-                    BugCount += 10;
-                }
-            }
-            // 整理更新日志文本
-            var ContentList = new List<string>();
-            var SortedFeatures = FeatureList.OrderByDescending(f => f.Key).ToList();
-            if (!SortedFeatures.Any() && FeatureCount == 0 && BugCount == 0)
-                ContentList.Add("没有更新日志……");
-            for (int i = 0, loopTo = Math.Min(9, SortedFeatures.Count - 1); i <= loopTo; i++) // 最多取 10 项
-                ContentList.Add(SortedFeatures[i].Value);
-            if (SortedFeatures.Count > 10)
-                FeatureCount += SortedFeatures.Count - 10;
-            if (FeatureCount > 0 || BugCount > 0)
-            {
-                ContentList.Add((FeatureCount > 0 ? FeatureCount + " 项小调整与修改" : "") + (FeatureCount > 0 && BugCount > 0 ? "，" : "") + (BugCount > 0 ? "修复了 " + BugCount + " 个 Bug" : "") + "，详见完整更新日志");
-            }
-            string Content = "· " + ContentList.Join(ModBase.CrLf + "· ");
-            // 输出更新日志
-            ModBase.RunInDedicatedThread(() => ModMain.MyMsgBox(Content, "PCL 已更新至" + ModBase.VersionDisplay, "确定"), "UpdateLog Output");
+                if (ModMain.MyMsgBox(SaplingUpdateNotes.Replace("\n", ModBase.CrLf), "PCL 樹苗修改版已更新至 " + ModBase.VersionBaseName, "确定", "完整更新日志") == 2)
+                    ModBase.OpenWebsite(ModBase.RepoUrl + "/releases");
+            }, "UpdateLog Output");
         }
 
         // 窗口加载
@@ -388,6 +85,7 @@ namespace PCL
                 // 触发降级
                 DowngradeSub(LastVersion);
             }
+            ShowSaplingUpdateLog();
             // 版本隔离设置迁移
             if (!Settings.HasSaved("LaunchArgumentIndieV2"))
             {
@@ -525,10 +223,10 @@ namespace PCL
             ModBase.RunInDedicatedThread(() =>
         {
             // EULA 提示
-            const int EulaVersion = 2;
+            const int EulaVersion = 3; // 3：改为樹苗修改版自己的用户协议
             if (Settings.Get<int>("SystemEulaVersion") < EulaVersion)
             {
-                switch (ModMain.MyMsgBox(Settings.Get<int>("SystemEulaVersion") == 0 ? "在使用 PCL 前，请先阅读用户协议与免责声明。" : $"PCL 的用户协议与免责声明已更新。{ModBase.CrLf}请阅读更新后的用户协议与免责声明。", "协议授权", "同意", "拒绝", "查看用户协议与免责声明", Button3Action: () => ModBase.OpenWebsite("https://shimo.im/docs/rGrd8pY8xWkt6ryW")))
+                switch (ModMain.MyMsgBox(Settings.Get<int>("SystemEulaVersion") == 0 ? "在使用 PCL 樹苗修改版前，请先阅读用户协议、免责声明与隐私说明。" : $"樹苗修改版有自己的用户协议了。{ModBase.CrLf}它说明了本修改版与 PCL 官方的关系、免责声明与隐私说明，请阅读后再继续使用。", "协议授权", "同意", "拒绝", "查看用户协议", Button3Action: () => ModBase.OpenWebsite(ModBase.RepoUrl + "/blob/main/TERMS.md"), IsWarn: false))
                 {
                     case 1:
                         {
@@ -629,12 +327,6 @@ namespace PCL
                 Settings.Reset("LaunchAdvanceJvm");
                 Logger.Info("已重置 JVM 参数设置");
             }
-            // 输出更新日志
-            if (LastVersionCode <= 0)
-                return;
-            if (HighestVersionCode >= ModBase.VersionCode)
-                return;
-            ShowUpdateLog(HighestVersionCode);
         }
         private void DowngradeSub(int LastVersionCode)
         {
@@ -716,7 +408,7 @@ namespace PCL
                 if (!IsLogShown)
                 {
                     try { ModMain.FeedbackInfo(); } catch { }
-                    try { Logger.Info("请在 https://github.com/Meloong-Git/PCL/issues 提交错误报告，以便于作者解决此问题！"); } catch { }
+                    try { Logger.Info($"请在 {ModBase.RepoUrl}/issues 提交错误报告（不要提交到 PCL 原版仓库），以便于作者解决此问题！"); } catch { }
                     IsLogShown = true;
                     try { ModBase.StartProcess(Paths.Base + @"PCL\Log1.txt"); } catch { }
                 }

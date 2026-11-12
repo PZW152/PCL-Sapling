@@ -20,7 +20,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock x:Name="LabHeroName" Grid.Row="0" FontSize="20" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis" Text="欢迎使用 PCL 树苗修改版" Margin="0,0,110,0" />
+                        <TextBlock x:Name="LabHeroName" Grid.Row="0" FontSize="20" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis" Text="欢迎使用 PCL 樹苗修改版" Margin="0,0,110,0" />
                         <Border x:Name="PanHeroRunning" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" CornerRadius="13" Padding="10,4,12,5" Background="#33FFFFFF" Visibility="Collapsed">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse x:Name="ShapeHeroRunning" Width="8" Height="8" Fill="#7CF29A" VerticalAlignment="Center" Margin="0,1,7,0" />

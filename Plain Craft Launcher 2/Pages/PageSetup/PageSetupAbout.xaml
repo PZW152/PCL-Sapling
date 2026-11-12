@@ -60,6 +60,36 @@
                     </WrapPanel>
                 </StackPanel>
             </local:MyCard>
+            <local:MyCard Margin="0,0,0,15" Title="樹苗修改版的参考与致谢">
+                <Grid Margin="21,40,21,16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="45" />
+                        <RowDefinition Height="45" />
+                        <RowDefinition Height="45" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="40" />
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="150" />
+                    </Grid.ColumnDefinitions>
+                    <local:MyListItem Title="Sapling（樹苗）" Margin="-5,0,15,0" IsHitTestVisible="False" Info="PZW152 的另一个启动器。本修改版融合了它的功能与界面设计，由同一作者授权使用" Grid.Row="0" Grid.Column="1" />
+                    <local:MyListItem Title="PCL Community（PCL CE）" Margin="-5,0,15,0" IsHitTestVisible="False" Info="PCL 社区版。参考了它的部分功能，Quilt 图标取自 PCL CE（Apache-2.0）" Grid.Row="1" Grid.Column="1" />
+                    <local:MyButton Text="打开 PCL CE" Grid.Row="1" Grid.Column="2" Height="35" local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/PCL-Community/PCL-CE" />
+                    <local:MyListItem Title="HMCL" Margin="-5,0,15,0" IsHitTestVisible="False" Info="LWJGL Unsafe Agent 与 Transformer Discovery Service 来自 HMCL 项目" Grid.Row="2" Grid.Column="1" />
+                    <local:MyButton Text="打开 HMCL" Grid.Row="2" Grid.Column="2" Height="35" local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/HMCL-dev/HMCL" />
+                    <Image Source="/Plain Craft Launcher 2;component/Images/Heads/Sapling.png" Grid.Row="0" Margin="3">
+                        <Image.Clip>
+                            <EllipseGeometry Center="17 17" RadiusX="17" RadiusY="17" />
+                        </Image.Clip>
+                    </Image>
+                    <Image Source="/Plain Craft Launcher 2;component/Images/Heads/Logo.png" Grid.Row="1" Margin="3">
+                        <Image.Clip>
+                            <EllipseGeometry Center="17 17" RadiusX="17" RadiusY="17" />
+                        </Image.Clip>
+                    </Image>
+                    <Image Source="/Plain Craft Launcher 2;component/Images/Blocks/CommandBlock.png" Grid.Row="2" Margin="5" />
+                </Grid>
+            </local:MyCard>
             <local:MyCard Margin="0,0,0,15" Title="特别鸣谢">
                 <Grid Margin="21,40,21,16">
                     <Grid.RowDefinitions>
@@ -140,15 +170,15 @@
             <local:MyCard Margin="0,0,0,15" Title="法律信息" IsSwapped="True" CanSwap="True">
                 <StackPanel Margin="25,39,23,20">
                     <TextBlock Text="隐私声明与个人信息保护政策" TextWrapping="Wrap" Margin="0,6,0,4" FontWeight="Bold" />
-                    <TextBlock Margin="0,0,0,2" LineHeight="17" Text="PCL 没有收集个人信息，所以这里其实啥都不用写……&#xa;留个这个其实只是为了让你知道 PCL 没有收集个人信息，诶嘿。" TextWrapping="Wrap" />
+                    <TextBlock Margin="0,0,0,2" LineHeight="17" Text="樹苗修改版不收集个人信息，也没有统计或遥测。&#xa;它只会连接下载、登录和更新所需的服务：Mojang、Microsoft、Modrinth、CurseForge、各 Mod 加载器的官方源，以及 GitHub（检查更新）。详见用户协议中的隐私说明。" TextWrapping="Wrap" />
                     <TextBlock Text="其他信息" TextWrapping="Wrap" Margin="0,10,0,4" FontWeight="Bold" />
-                    <TextBlock Margin="0,0,0,2" LineHeight="17" Text="Copyright © 成都瓜皮龙科技有限公司&#13;计算机软件著作权登记号：2020SR0875133&#13;违法违规行为举报投诉邮箱：admin@meloong.com&#13;非 MINECRAFT 官方产品。未经 MOJANG 或 MICROSOFT 批准，也不与 MOJANG 或 MICROSOFT 关联。" TextWrapping="Wrap" />
+                    <TextBlock Margin="0,0,0,2" LineHeight="17" Text="PCL：Copyright © 成都瓜皮龙科技有限公司（计算机软件著作权登记号：2020SR0875133）&#13;樹苗修改版的修改部分：Copyright © PZW152&#13;本修改版与 PCL 官方无关，请不要就本修改版的问题联系 PCL 原作者。&#13;非 MINECRAFT 官方产品。未经 MOJANG 或 MICROSOFT 批准，也不与 MOJANG 或 MICROSOFT 关联。" TextWrapping="Wrap" />
                     <StackPanel Orientation="Horizontal" Height="35" HorizontalAlignment="Left" Margin="0,12,0,0">
                         <local:MyButton Text="用户协议与免责声明" Width="170" Padding="13,0" Margin="0,0,20,0" ColorType="Highlight" 
-                                        local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://shimo.im/docs/rGrd8pY8xWkt6ryW#anchor-RnU9" />
+                                        local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/PZW152/PCL-Sapling/blob/main/TERMS.md" />
                         <local:MyButton Text="PCL 分发有限许可" Width="170" Padding="13,0" Margin="0,0,20,0" 
                                         local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://shimo.im/docs/rGrd8pY8xWkt6ryW#anchor-X0bo" />
-                        <local:MyButton Text="开源代码" Width="140" Padding="13,0" local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/Hex-Dragon/PCL2" />
+                        <local:MyButton Text="PCL 原版源代码" Width="150" Padding="13,0" local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/Meloong-Git/PCL" />
                     </StackPanel>
                 </StackPanel>
             </local:MyCard>
@@ -161,6 +191,12 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="60" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="60" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="60" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="60" />
                         <RowDefinition Height="Auto" />
@@ -230,13 +266,6 @@
                     <local:MyButton Grid.Row="13" Grid.Column="2" MinWidth="140" Text="查看来源网站" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
                                     local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://www.iconfont.cn/" />
 
-                    <!--<TextBlock Grid.Row="14" Grid.Column="0" Text="EasyTier" TextWrapping="Wrap" FontWeight="Bold" />
-                    <TextBlock Grid.Row="14" Grid.Column="2" Grid.ColumnSpan="2" Text="Copyright © 2024-present Easytier Programme within The Commons Conservancy&#xa;Licensed under the GNU Lesser General Public License." TextWrapping="Wrap" />
-                    <local:MyButton Grid.Row="15" Grid.Column="2" MinWidth="140" Text="查看来源网站" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
-                                    local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://easytier.cn/" />
-                    <local:MyButton Grid.Row="15" Grid.Column="3" MinWidth="140" Text="查看许可文档" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
-                                    local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/EasyTier/EasyTier/blob/main/LICENSE" />-->
-
                     <TextBlock Grid.Row="14" Grid.Column="0" Text="ThrottleDebounce" TextWrapping="Wrap" FontWeight="Bold" />
                     <TextBlock Grid.Row="14" Grid.Column="2" Grid.ColumnSpan="2" Text="Copyright © 2026 Ben Hutchison&#xa;Licensed under the Apache License, Version 2.0." TextWrapping="Wrap" />
                     <local:MyButton Grid.Row="15" Grid.Column="2" MinWidth="140" Text="查看来源网站" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
@@ -244,12 +273,12 @@
                     <local:MyButton Grid.Row="15" Grid.Column="3" MinWidth="140" Text="查看许可文档" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
                                     local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://licenses.nuget.org/Apache-2.0" />
 
-                    <TextBlock Grid.Row="16" Grid.Column="0" Text="CacheCow" TextWrapping="Wrap" FontWeight="Bold" />
-                    <TextBlock Grid.Row="16" Grid.Column="2" Grid.ColumnSpan="2" Text="Copyright © Ali Kheyrollahi&#xa;Licensed under the MIT License." TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="16" Grid.Column="0" Text="MeloongCore" TextWrapping="Wrap" FontWeight="Bold" />
+                    <TextBlock Grid.Row="16" Grid.Column="2" Grid.ColumnSpan="2" Text="Copyright © Meloong-Git contributors&#xa;Licensed under the Apache License, Version 2.0." TextWrapping="Wrap" />
                     <local:MyButton Grid.Row="17" Grid.Column="2" MinWidth="140" Text="查看来源网站" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
-                                    local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/aliostad/CacheCow" />
+                                    local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/Meloong-Git/MeloongCore" />
                     <local:MyButton Grid.Row="17" Grid.Column="3" MinWidth="140" Text="查看许可文档" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
-                                    local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://licenses.nuget.org/MIT" />
+                                    local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://www.apache.org/licenses/LICENSE-2.0" />
 
                     <TextBlock Grid.Row="18" Grid.Column="0" Text="Transformer Discovery Service" TextWrapping="Wrap" FontWeight="Bold" />
                     <TextBlock Grid.Row="18" Grid.Column="2" Grid.ColumnSpan="2" Text="Copyright © 2020 huangyuhui &lt;huanghongxun2008@126.com&gt; and contributors&#xa;Licensed under the GNU General Public License, Version 3 or later, with additional terms.&#xa;本组件作为独立组件分发，可依 GPL 复制、修改及再分发。" TextWrapping="Wrap" />
@@ -257,6 +286,25 @@
                                     local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/HMCL-dev/HMCL/tree/main/minecraft/libraries/HMCLTransformerDiscoveryService" />
                     <local:MyButton Grid.Row="19" Grid.Column="3" MinWidth="140" Text="查看许可文档" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
                                     local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/HMCL-dev/HMCL/blob/main/LICENSE" />
+
+                    <TextBlock Grid.Row="20" Grid.Column="0" Text="OpenCC" TextWrapping="Wrap" FontWeight="Bold" />
+                    <TextBlock Grid.Row="20" Grid.Column="2" Grid.ColumnSpan="2" Text="Copyright © Carbo Kuo (BYVoid) and contributors&#xa;繁体中文转换表的字词资料。Licensed under the Apache License, Version 2.0." TextWrapping="Wrap" />
+                    <local:MyButton Grid.Row="21" Grid.Column="2" MinWidth="140" Text="查看来源网站" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
+                                    local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/BYVoid/OpenCC" />
+                    <local:MyButton Grid.Row="21" Grid.Column="3" MinWidth="140" Text="查看许可文档" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
+                                    local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://www.apache.org/licenses/LICENSE-2.0" />
+
+                    <TextBlock Grid.Row="22" Grid.Column="0" Text="PCL CE（Quilt 图标）" TextWrapping="Wrap" FontWeight="Bold" />
+                    <TextBlock Grid.Row="22" Grid.Column="2" Grid.ColumnSpan="2" Text="Copyright © PCL Community&#xa;Licensed under the Apache License, Version 2.0." TextWrapping="Wrap" />
+                    <local:MyButton Grid.Row="23" Grid.Column="2" MinWidth="140" Text="查看来源网站" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
+                                    local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/PCL-Community/PCL-CE" />
+                    <local:MyButton Grid.Row="23" Grid.Column="3" MinWidth="140" Text="查看许可文档" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
+                                    local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://www.apache.org/licenses/LICENSE-2.0" />
+
+                    <TextBlock Grid.Row="24" Grid.Column="0" Text="Forge Install Bootstrapper" TextWrapping="Wrap" FontWeight="Bold" />
+                    <TextBlock Grid.Row="24" Grid.Column="2" Grid.ColumnSpan="2" Text="作者 bangbang93。随 PCL 原版一同分发，原项目没有声明许可。" TextWrapping="Wrap" />
+                    <local:MyButton Grid.Row="25" Grid.Column="2" MinWidth="140" Text="查看来源网站" Padding="13,0" Margin="0,7,20,18" HorizontalAlignment="Left"
+                                    local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://github.com/bangbang93/forge-install-bootstrapper" />
                 </Grid>
             </local:MyCard>
         </StackPanel>

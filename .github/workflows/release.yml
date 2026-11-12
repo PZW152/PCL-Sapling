@@ -30,6 +30,20 @@ jobs:
         fi
         echo "version=$tag" >> $GITHUB_ENV
 
+    - name: Check secrets
+      shell: bash
+      env:
+        CLIENT_ID: ${{ secrets.CLIENT_ID }}
+        CF_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+      run: |
+        if [ -z "$CLIENT_ID" ]; then
+          echo "缺少 CLIENT_ID secret，發佈出去的版本將無法微軟登入，已停止發佈"
+          exit 1
+        fi
+        if [ -z "$CF_KEY" ]; then
+          echo "::warning::缺少 CURSEFORGE_API_KEY secret，這個版本只能從 Modrinth 搜尋與下載資源"
+        fi
+
     - name: Test
       run: dotnet run --project "PCL.Tests\PCL.Tests.csproj" -c Debug
 

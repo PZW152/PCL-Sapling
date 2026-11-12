@@ -132,7 +132,7 @@ namespace PCL
             if (Instance is null)
             {
                 // 还没有任何版本：欢迎语
-                this.LabHeroName.Text = "欢迎使用 PCL 树苗修改版";
+                this.LabHeroName.Text = "欢迎使用 PCL 樹苗修改版";
                 this.LabHeroName.Visibility = Visibility.Visible;
                 this.BoxHeroVersion.Visibility = Visibility.Collapsed;
                 this.LabHeroWelcome.Visibility = Visibility.Visible;

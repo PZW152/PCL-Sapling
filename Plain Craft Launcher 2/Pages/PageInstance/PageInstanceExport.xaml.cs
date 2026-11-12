@@ -432,7 +432,7 @@ namespace PCL
                 ConfigLines.Add("# 是否打包正式版 PCL，以便没有启动器的玩家安装整合包。");
                 ConfigLines.Add("IncludeLauncher:" + this.CheckOptionsPcl.Checked);
                 ConfigLines.Add("");
-                ConfigLines.Add("# 是否打包 PCL 个性化内容，例如功能隐藏设置、主页、背景音乐和图片等。");
+                ConfigLines.Add("# 是否打包 PCL 的启动器设置，例如主题与语言。");
                 ConfigLines.Add("IncludeLauncherCustom:" + this.CheckOptionsPclCustom.Checked);
                 ConfigLines.Add("");
                 ConfigLines.Add("# 是否将 Mod、资源包、光影包的文件直接放入整合包中，这样在导入时就无需联网下载它们。");
