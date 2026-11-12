@@ -172,6 +172,20 @@ namespace PCL
                 ModMain.FrmSelectLeft.PanList.Children.Add(ItemInstall);
                 ItemInstall.Click += (_, __) => ModModpack.ModpackInstall();
 
+                // 导入其他启动器的实例
+                var ItemImport = new MyListItem()
+                {
+                    IsScaleAnimationEnabled = false,
+                    Type = MyListItem.CheckType.Clickable,
+                    Title = "导入其他启动器的实例",
+                    Height = 34d,
+                    ToolTip = "把 Prism Launcher 或 MultiMC 的实例导入到当前选择的 Minecraft 文件夹，原实例不会被修改",
+                    Logo = ItemInstall.Logo,
+                    LogoScale = ItemInstall.LogoScale
+                };
+                ModMain.FrmSelectLeft.PanList.Children.Add(ItemImport);
+                ItemImport.Click += (_, __) => ModModpack.ImportOtherLauncherInstance();
+
                 // 边距
                 ModMain.FrmSelectLeft.PanList.Children.Add(new FrameworkElement() { Height = 10d, IsHitTestVisible = false });
 

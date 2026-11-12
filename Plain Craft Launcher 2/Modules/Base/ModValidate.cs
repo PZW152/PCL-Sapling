@@ -349,7 +349,7 @@ namespace PCL
                 if (Str.EndsWithF("."))
                     return "文件夹名不能以小数点结尾！";
                 // 检查特殊字符
-                string CharactCheck = new ValidateExcept(Path.GetInvalidFileNameChars() + (UseMinecraftCharCheck ? "!;" : ""), "文件夹名不可包含 % 字符！").Validate(Str);
+                string CharactCheck = new ValidateExcept(new string(Path.GetInvalidFileNameChars()) + (UseMinecraftCharCheck ? "!;" : ""), "文件夹名不可包含 % 字符！").Validate(Str);
                 if (!string.IsNullOrEmpty(CharactCheck))
                     return CharactCheck;
                 // 检查特殊字符串
@@ -424,7 +424,7 @@ namespace PCL
                 if (Str.EndsWithF("."))
                     return "文件名不能以小数点结尾！";
                 // 检查特殊字符
-                string CharactCheck = new ValidateExcept(Path.GetInvalidFileNameChars() + (UseMinecraftCharCheck ? "!;" : ""), "文件名不可包含 % 字符！").Validate(Str);
+                string CharactCheck = new ValidateExcept(new string(Path.GetInvalidFileNameChars()) + (UseMinecraftCharCheck ? "!;" : ""), "文件名不可包含 % 字符！").Validate(Str);
                 if (!string.IsNullOrEmpty(CharactCheck))
                     return CharactCheck;
                 // 检查特殊字符串
@@ -512,7 +512,7 @@ namespace PCL
                 if (!string.IsNullOrEmpty(SubLengthCheck))
                     return "文件夹路径存在错误！";
                 // 检查特殊字符
-                string CharactCheck = new ValidateExcept(Path.GetInvalidFileNameChars() + (UseMinecraftCharCheck ? "!;" : ""), "路径中存在无效字符！").Validate(SubStr);
+                string CharactCheck = new ValidateExcept(new string(Path.GetInvalidFileNameChars()) + (UseMinecraftCharCheck ? "!;" : ""), "路径中存在无效字符！").Validate(SubStr);
                 if (!string.IsNullOrEmpty(CharactCheck))
                     return CharactCheck;
                 // 检查头部空格

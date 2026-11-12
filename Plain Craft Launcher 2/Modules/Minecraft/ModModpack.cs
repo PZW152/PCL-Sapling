@@ -34,6 +34,52 @@ namespace PCL
             ModBase.RunInThread(() => { try { ModpackInstall(File); } catch (Exception ex) { ex.ThrowIfCanceled(); Logger.Error(ex, "手动安装整合包失败", LogBehavior.Alert); } });
         }
         /// <summary>
+    /// 弹窗要求选择 Prism Launcher / MultiMC 的实例文件夹，并把它导入为 PCL 的版本。
+    /// 原文件夹不会被修改：会先打包为临时整合包，再按 MMC 整合包的流程安装。
+    /// </summary>
+        public static void ImportOtherLauncherInstance()
+        {
+            string Default = null;
+            foreach (string Candidate in new[] { Path.Combine(Paths.AppData, "PrismLauncher", "instances"), Path.Combine(Paths.AppData, "MultiMC", "instances") })
+            {
+                if (DirectoryUtils.Exists(Candidate))
+                {
+                    Default = Candidate;
+                    break;
+                }
+            }
+            string Folder = Dialogs.SelectFolder("选择 Prism Launcher 或 MultiMC 的实例文件夹", false, Default).FirstOrDefault();
+            if (string.IsNullOrEmpty(Folder))
+                return;
+            if (!InstanceImport.IsMmcInstance(Folder))
+            {
+                ModMain.MyMsgBox("这个文件夹不是 Prism Launcher 或 MultiMC 的实例。" + ModBase.CrLf + "实例文件夹里应该有 mmc-pack.json 和 instance.cfg。" + ModBase.CrLf + ModBase.CrLf +
+                    "如果是 PCL、HMCL 等启动器的游戏，请在“文件夹列表”中直接添加它的 .minecraft 文件夹，无需导入。", "无法导入");
+                return;
+            }
+            string Name = InstanceImport.GetDisplayName(Folder);
+            var Validate = new ValidateFolderName(ModMinecraft.McFolderSelected + "versions");
+            if (!string.IsNullOrEmpty(Validate.Validate(Name)))
+                Name = ModMain.MyMsgBoxInput("输入版本名称", "", Name, new Collection<ValidateType>() { Validate });
+            if (string.IsNullOrEmpty(Name))
+                return;
+            ModBase.RunInThread(() =>
+            {
+                try
+                {
+                    ModMain.Hint("正在读取实例 " + Name + "……");
+                    string Zip = ModMain.RequestTaskTempFolder() + "import.zip";
+                    InstanceImport.PackFolder(Folder, Zip);
+                    ModpackInstall(Zip, Name);
+                }
+                catch (Exception ex)
+                {
+                    ex.ThrowIfCanceled();
+                    Logger.Error(ex, "导入其他启动器的实例失败", LogBehavior.Alert);
+                }
+            });
+        }
+        /// <summary>
     /// 构建并启动安装给定的整合包文件的加载器，并返回该加载器。若失败则抛出异常。
     /// 必须在工作线程执行。
     /// </summary>
@@ -195,7 +241,7 @@ namespace PCL
                     case 2:
                         {
                             Logger.Info("整合包种类：MMC");
-                            return InstallPackMMC(File, Archive, ArchiveBaseFolder);
+                            return InstallPackMMC(File, Archive, ArchiveBaseFolder, InstanceName);
                         }
                     case 3:
                         {
@@ -821,7 +867,7 @@ namespace PCL
         }
 
         // MMC
-        private static ModLoader.LoaderCombo<string> InstallPackMMC(string FileAddress, ZipArchive Archive, string ArchiveBaseFolder)
+        private static ModLoader.LoaderCombo<string> InstallPackMMC(string FileAddress, ZipArchive Archive, string ArchiveBaseFolder, string RequestedName = null)
         {
             // 读取 Json 文件
             JObject PackJson;
@@ -836,12 +882,12 @@ namespace PCL
                 throw new Exception("MMC 整合包安装信息存在问题", ex);
             }
             // 获取版本名
-            string InstanceName = PackInstance.RegexSeek(@"(?<=\nname\=)[^\n]+") ?? "";
+            // instance.cfg 可能使用 Windows 换行，名称末尾的 \r 要去掉，否则名称不合法
+            string PackName = (PackInstance.RegexSeek(@"(?<=\nname\=)[^\n]+") ?? "").Trim();
+            string InstanceName = string.IsNullOrEmpty(RequestedName) ? PackName : RequestedName;
             var Validate = new ValidateFolderName(ModMinecraft.McFolderSelected + "versions");
             if (!string.IsNullOrEmpty(Validate.Validate(InstanceName)))
-                InstanceName = "";
-            if (string.IsNullOrEmpty(InstanceName))
-                InstanceName = ModMain.MyMsgBoxInput("输入版本名称", "", "", new Collection<ValidateType>() { Validate });
+                InstanceName = ModMain.MyMsgBoxInput("输入版本名称", "", PackName, new Collection<ValidateType>() { Validate });
             if (string.IsNullOrEmpty(InstanceName))
                 throw new OperationCanceledException();
             string VersionFolder = Path.Combine(ModMinecraft.McFolderSelected, "versions", InstanceName) + @"\";
