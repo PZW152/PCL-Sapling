@@ -459,7 +459,6 @@ namespace PCL
         private void FormMain_Loaded(object sender, RoutedEventArgs e)
         {
             ModBase.ApplicationStartTick = ModBase.GetTimeMs();
-            TourHook.Start(this); // 臨時測試鉤子
             ModBase.Handle = new WindowInteropHelper(this).Handle;
             // 读取设置
             PageSetupUI.HiddenRefresh();
