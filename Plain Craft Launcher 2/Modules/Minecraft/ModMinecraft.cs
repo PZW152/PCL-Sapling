@@ -2050,65 +2050,7 @@ namespace PCL
     /// 检查是否符合 Json 中的 Rules。
     /// </summary>
     /// <param name="RuleToken">Json 中的 "rules" 项目。</param>
-        public static bool McJsonRuleCheck(JToken RuleToken)
-        {
-            if (RuleToken is null)
-                return true;
-
-            // 初始化
-            bool Required = false;
-            foreach (JToken Rule in RuleToken)
-            {
-
-                // 单条条件验证
-                bool IsRightRule = true; // 是否为正确的规则
-                if (Rule["os"] is not null) // 操作系统
-                {
-                    if (Rule["os"]["name"] is not null) // 操作系统名称
-                    {
-                        string OsName = Rule["os"]["name"].ToString();
-                        if (OsName == "unknown")
-                        {
-                        }
-                        else if (OsName == "windows")
-                        {
-                            if (Rule["os"]["version"] is not null) // 操作系统版本
-                            {
-                                IsRightRule = IsRightRule && OSVersion.RegexCheck(Rule["os"]["version"].ToString());
-                            }
-                        }
-                        else
-                        {
-                            IsRightRule = false;
-                        }
-                    }
-                    if (Rule["os"]["arch"] is not null) // 操作系统架构
-                    {
-                        IsRightRule = IsRightRule && Rule["os"]["arch"].ToString() != "x86" && !Rule["os"]["arch"].Contains("arm");
-                    }
-                }
-                if (!(Rule["features"] == null)) // 标签
-                {
-                    IsRightRule = IsRightRule && Rule["features"]["is_demo_user"] == null; // 反选是否为 Demo 用户
-                    if (((JObject)Rule["features"]).Properties().Any(j => j.Name.Contains("quick_play")))
-                    {
-                        IsRightRule = false; // 不开 Quick Play，让玩家自己加去
-                    }
-                }
-
-                // 反选确认
-                if (Rule["action"].ToString() == "allow")
-                {
-                    if (IsRightRule)
-                        Required = true; // allow
-                }
-                else if (IsRightRule)
-                    Required = false; // disallow
-
-            }
-            return Required;
-        }
-        private static string OSVersion = Environment.OSVersion.Version.ToString();
+        public static bool McJsonRuleCheck(JToken RuleToken) => LaunchRules.Check(RuleToken);
 
         /// <summary>
     /// 递归获取 Minecraft 某一版本的完整支持库列表。
@@ -2422,13 +2364,9 @@ namespace PCL
     /// <param name="WithHead">是否包含 Lib 文件夹头部，若不包含，则会类似以 com\xxx\ 开头。</param>
         public static string McLibGet(string Original, bool WithHead = true, bool IgnoreLiteLoader = false, string CustomMcFolder = null)
         {
-            CustomMcFolder = CustomMcFolder ?? McFolderSelected;
             // 有时候原始的有四段，例如 net.minecraftforge:forge:1.21.4-54.0.34:client
-            // 文件夹名应该忽略最后一段（client），但文件名需要保留
-            // 参见 #7306（以及 #5376 也是因为这里没有处理好导致的）
-            string[] Splited = Original.Split(":");
-            string Result = (WithHead ? CustomMcFolder + @"libraries\" : "") + $@"{Splited[0].Replace(".", @"\")}\{Splited[1]}\{Splited[2]}\{Splited.Skip(1).Join("-")}.jar";
-            return Result;
+            // 文件夹名应该忽略最后一段（client），但文件名需要保留（#7306、#5376）
+            return (WithHead ? (CustomMcFolder ?? McFolderSelected) + @"libraries\" : "") + MavenCoordinate.Parse(Original).RelativePath;
         }
 
         /// <summary>

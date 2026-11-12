@@ -1019,25 +1019,12 @@ namespace PCL
                                                          // 替换
             McLaunchLog("=================== 启动参数开始 ===================");
             var Replacements = McLaunchArgumentsReplace(Arguments).ToList();
-            string Argument = "";
-            foreach (var RawArg in Arguments)
-            {
-                var Arg = RawArg;
-                // 应用替换标记
-                foreach (var Replacement in Replacements)
-                    Arg = Arg.Replace(Replacement.Key, Replacement.Value);
-                // 为带特殊字符的参数添加双引号
-                if (Arg.IndexOfAny(new[] { '&', '|', '<', '>', '^', ' ' }) >= 0 && !Arg.StartsWithF("\"") && !Arg.EndsWithF("\""))
-                {
-                    Arg = $"\"{Arg.Replace("\"", @"\""")}\""; // 转义在原本参数中间的双引号
-                }
-                // 输出
+            var FinalArguments = LaunchArgumentBuilder.Build(Arguments, Replacements);
+            foreach (var Arg in FinalArguments)
                 McLaunchLog(Arg);
-                Argument += Arg + " ";
-            }
             McLaunchLog("=================== 启动参数结束 ===================");
             // 输出
-            McLaunchArgument = Argument.TrimEnd();
+            McLaunchArgument = string.Join(" ", FinalArguments);
         }
 
         /// <summary>

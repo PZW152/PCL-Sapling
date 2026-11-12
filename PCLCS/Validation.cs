@@ -1,11 +1,12 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MeloongCore;
 using MeloongCore.Extensions;
 
-namespace PCL
+namespace PCLCS
 {
     // 提供不同的输入验证方法，名称以 Validate 开头
     public static class ModValidate
@@ -520,7 +521,7 @@ namespace PCL
                 if (SubStr.EndsWithF("."))
                     return "文件夹名不能以小数点结尾！";
                 // 检查特殊字符串
-                string InvalidStrCheck = new ValidateExceptSame(new[] { "CON", "PRN", "AUX", "CLOCK$", "NUL", "COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT0", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" }, "文件夹名不可为 %！").Validate(SubStr);
+                string InvalidStrCheck = new ValidateExceptSame(new[] { "CON", "PRN", "AUX", "CLOCK$", "NUL", "COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT0", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" }, "文件夹名不可为 %！", true).Validate(SubStr); // Windows 不区分大小写
                 if (!string.IsNullOrEmpty(InvalidStrCheck))
                     return InvalidStrCheck;
             }
