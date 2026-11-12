@@ -15,6 +15,7 @@ namespace PCL
 {
     public partial class PageSetupSystem
     {
+        private void BtnSystemCleanup_Click(object sender, MouseButtonEventArgs e) => ModCleanup.Start();
         private void BtnSystemUpdate_Click(object sender, MouseButtonEventArgs e) => ModBase.RunInBackgroundAsync(() => ModUpdate.CheckAsync(true), "手动检查更新");
 
 
