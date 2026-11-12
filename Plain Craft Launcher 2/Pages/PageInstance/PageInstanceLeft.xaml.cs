@@ -17,6 +17,7 @@ namespace PCL
         private void ItemSetup_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
         private void ItemModify_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
         private void ItemExport_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
+        private void ItemScreenshot_Check(object sender, ModBase.RouteEventArgs e) => PageCheck((FrameworkElement)sender, e);
 
         #endregion
 
@@ -107,6 +108,12 @@ namespace PCL
                         if (ModMain.FrmInstanceExport is null)
                             ModMain.FrmInstanceExport = new PageInstanceExport();
                         return ModMain.FrmInstanceExport;
+                    }
+                case FormMain.PageSubType.InstanceScreenshot:
+                    {
+                        if (ModMain.FrmInstanceScreenshot is null)
+                            ModMain.FrmInstanceScreenshot = new PageInstanceScreenshot();
+                        return ModMain.FrmInstanceScreenshot;
                     }
                 case FormMain.PageSubType.InstanceModify:
                     {
@@ -201,6 +208,12 @@ namespace PCL
                     {
                         ModMain.FrmInstanceExport?.RefreshAll();
                         this.ItemExport.Checked = true;
+                        break;
+                    }
+                case FormMain.PageSubType.InstanceScreenshot:
+                    {
+                        ModMain.FrmInstanceScreenshot?.Reload();
+                        this.ItemScreenshot.Checked = true;
                         break;
                     }
                 case FormMain.PageSubType.InstanceModify:

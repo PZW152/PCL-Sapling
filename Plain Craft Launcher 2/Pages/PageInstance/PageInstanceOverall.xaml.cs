@@ -465,7 +465,9 @@ namespace PCL
                 Item.Click += (sender, e) => LaunchInto(Instance, World.Folder, null);
                 var BtnBackup = new MyIconButton { Logo = ModBase.Logo.IconButtonSave, LogoScale = 1.05d, ToolTip = "备份这个世界" };
                 BtnBackup.Click += (sender, e) => BackupWorld(Instance, World.Folder);
-                Item.Buttons = new[] { BtnBackup };
+                var BtnDelete = new MyIconButton { Logo = ModBase.Logo.IconButtonDelete, LogoScale = 1.1d, ToolTip = "删除这个世界" };
+                BtnDelete.Click += (sender, e) => DeleteWorld(Instance, World.Folder);
+                Item.Buttons = new[] { BtnBackup, BtnDelete };
                 this.PanSaves.Children.Add(Item);
             }
             foreach (var Server in Servers)
@@ -488,6 +490,29 @@ namespace PCL
         private static void LaunchInto(ModMinecraft.McInstance Instance, string WorldFolder, string ServerAddress)
         {
             ModLaunch.McLaunchStart(new ModLaunch.McLaunchOptions { Instance = Instance, WorldFolder = WorldFolder, ServerIp = ServerAddress });
+        }
+
+        /// <summary>
+        /// 删除世界（取自 Sapling）：确认后移到回收站，误删时还能找回。
+        /// </summary>
+        private void DeleteWorld(ModMinecraft.McInstance Instance, string Folder)
+        {
+            if (ModMain.MyMsgBox($"确定要删除世界 {Folder} 吗？" + ModBase.CrLf + "世界会被移到回收站，需要时可以从回收站还原。", "删除世界", "删除", "取消", IsWarn: true) != 1)
+                return;
+            ModBase.RunInBackground(() =>
+            {
+                try
+                {
+                    string Path = Instance.PathIndie + @"saves\" + Folder;
+                    DirectoryUtils.Delete(Path, toRecycleBin: true);
+                    ModMain.Hint($"已删除世界 {Folder}", ModMain.HintType.Green);
+                    ModBase.RunInUi(() => { if (PageInstanceLeft.Instance == Instance) RefreshSaves(); });
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "删除世界失败", LogBehavior.Alert);
+                }
+            }, "Delete World");
         }
 
         private void BackupWorld(ModMinecraft.McInstance Instance, string Folder)

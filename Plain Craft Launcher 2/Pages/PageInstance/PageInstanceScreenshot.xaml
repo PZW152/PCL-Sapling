@@ -1,0 +1,40 @@
+<local:MyPageRight
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:PCL"
+    x:Class="PCL.PageInstanceScreenshot"
+    PanScroll="PanBack">
+    <local:MyScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" x:Name="PanBack">
+        <StackPanel x:Name="PanMain" Margin="25,10">
+            <!-- 大图预览 -->
+            <local:MyCard x:Name="CardPreview" Margin="0,15,0,0" Title="预览" Visibility="Collapsed">
+                <StackPanel Margin="25,40,25,15">
+                    <Border CornerRadius="4" ClipToBounds="True" Background="#22000000">
+                        <Image x:Name="ImgPreview" Stretch="Uniform" MaxHeight="330" RenderOptions.BitmapScalingMode="HighQuality" />
+                    </Border>
+                    <TextBlock x:Name="LabPreview" Margin="0,10,0,0" HorizontalAlignment="Center" Foreground="{DynamicResource ColorBrushGray3}" />
+                    <WrapPanel Margin="0,10,0,0" HorizontalAlignment="Center">
+                        <local:MyButton x:Name="BtnPrevious" Click="BtnPrevious_Click" Text="上一张" MinWidth="110" Height="35" Padding="13,0" Margin="0,0,15,0" />
+                        <local:MyButton x:Name="BtnNext" Click="BtnNext_Click" Text="下一张" MinWidth="110" Height="35" Padding="13,0" Margin="0,0,15,0" />
+                        <local:MyButton Click="BtnOpen_Click" Text="打开" MinWidth="110" Height="35" Padding="13,0" Margin="0,0,15,0" />
+                        <local:MyButton Click="BtnCopy_Click" Text="复制图片" MinWidth="110" Height="35" Padding="13,0" Margin="0,0,15,0" />
+                        <local:MyButton Click="BtnDelete_Click" Text="删除" MinWidth="110" Height="35" Padding="13,0" Margin="0,0,15,0" ColorType="Red" />
+                        <local:MyButton Click="BtnClose_Click" Text="收起" MinWidth="110" Height="35" Padding="13,0" />
+                    </WrapPanel>
+                </StackPanel>
+            </local:MyCard>
+            <!-- 缩略图 -->
+            <local:MyCard x:Name="CardList" Margin="0,15" Title="截图">
+                <StackPanel Margin="25,40,25,15">
+                    <TextBlock x:Name="LabEmpty" Visibility="Collapsed" TextWrapping="Wrap" Margin="0,0,0,10"
+                               Text="这个版本还没有截图。在游戏中按 F2 可以截图。" />
+                    <WrapPanel x:Name="PanThumbs" />
+                    <WrapPanel Margin="0,5,0,0">
+                        <local:MyButton Click="BtnFolder_Click" Text="打开截图文件夹" MinWidth="140" Height="35" Padding="13,0" Margin="0,0,20,0" />
+                        <local:MyButton Click="BtnRefresh_Click" Text="刷新" MinWidth="140" Height="35" Padding="13,0" />
+                    </WrapPanel>
+                </StackPanel>
+            </local:MyCard>
+        </StackPanel>
+    </local:MyScrollViewer>
+</local:MyPageRight>

@@ -1723,8 +1723,13 @@ namespace PCL
                         return Instance.Version.OptiFineCode;
                     return 0;
                 };
+                // 上次游玩时间（取自 Sapling：最近玩过的排在前面）
+                var LastPlayed = Results[CardType].ToDictionary(Instance => Instance, Instance => Coerce.ToLong(ModBase.ReadIni(Instance.PathVersion + @"PCL\Setup.ini", "LastPlayed", "0")));
                 Results[CardType] = Results[CardType].SortByComparison((Left, Right) =>
         {
+            // 最近玩过的
+            if (LastPlayed[Left] != LastPlayed[Right])
+                return LastPlayed[Left] > LastPlayed[Right];
             // 发布时间
             if ((Left.ReleaseTime.Year >= 2000 || Right.ReleaseTime.Year >= 2000) && Left.ReleaseTime != Right.ReleaseTime)
                 return Left.ReleaseTime > Right.ReleaseTime;

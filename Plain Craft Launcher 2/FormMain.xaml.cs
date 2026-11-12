@@ -1267,7 +1267,8 @@ namespace PCL
             InstanceModify = 2,
             InstanceMod = 3,
             InstanceModDisabled = 4,
-            InstanceExport = 5
+            InstanceExport = 5,
+            InstanceScreenshot = 6
         }
         /// <summary>
     /// 获取次级页面的名称。若并非次级页面则返回空字符串，故可以以此判断是否为次级页面。
@@ -1471,7 +1472,7 @@ namespace PCL
                         {
                             if (ModMain.FrmInstanceLeft is null)
                                 ModMain.FrmInstanceLeft = new PageInstanceLeft();
-                            ((MyListItem)ModMain.FrmInstanceLeft.PanItem.Children[(int)SubType]).SetChecked(true, true, Stack == PageCurrent);
+                            ModMain.FrmInstanceLeft.PanItem.Children.OfType<MyListItem>().First(Item => ModBase.Val(Item.Tag) == (int)SubType).SetChecked(true, true, Stack == PageCurrent); // 按编号找，不按位置
                             break;
                         }
                 }

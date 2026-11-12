@@ -491,6 +491,7 @@ namespace PCL
         public static PageInstanceModDisabled FrmInstanceModDisabled;
         public static PageInstanceSetup FrmInstanceSetup;
         public static PageInstanceExport FrmInstanceExport;
+        public static PageInstanceScreenshot FrmInstanceScreenshot;
         public static PageDownloadModify FrmDownloadModify;
 
         // 资源信息分页声明

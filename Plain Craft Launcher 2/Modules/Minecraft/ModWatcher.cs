@@ -466,6 +466,7 @@ namespace PCL
                     long Total = Coerce.ToLong(ModBase.ReadIni(IniPath, "PlayTimeSeconds", "0"));
                     ModBase.WriteIni(IniPath, "PlayTimeSeconds", PlayTime.AddSession(Total, DateTime.Now - StartedAt).ToString());
                     ModBase.WriteIni(IniPath, "LastPlayed", DateTime.Now.Ticks.ToString());
+                    ModMinecraft.McInstanceListForceRefresh = true; // 版本列表按最近游玩排序，需要重新排列
                 }
                 catch (Exception ex)
                 {
