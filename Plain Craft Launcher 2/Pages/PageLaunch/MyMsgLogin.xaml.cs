@@ -112,7 +112,7 @@ namespace PCL
                 this.LabCaption.Text += ModBase.CrLf + ModBase.CrLf + "也可以用手机扫描右侧的二维码，在手机上输入上面的代码完成登录。";
             }
             // 启动工作线程
-            ModBase.RunInNewThread(WorkThread, "MyMsgLogin");
+            ModBase.RunInDedicatedThread(WorkThread, "MyMsgLogin");
         }
 
         private void WorkThread()

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Documents;
 using MeloongCore;
 using MeloongCore.Extensions;
@@ -131,6 +132,19 @@ namespace PCL
                     if (value == ModBase.LoadState.Finished && Settings.Get<bool>("SystemDebugDelay"))
                         Thread.Sleep(ModBase.RandomInteger(100, 2000));
                     _State = value;
+                    // 通知等待者：进入加载时换一个新的信号，离开加载时完成它
+                    lock (ExitSignalLock)
+                    {
+                        if (value == ModBase.LoadState.Loading)
+                        {
+                            if (ExitSignal.Task.IsCompleted)
+                                ExitSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                        }
+                        else
+                        {
+                            ExitSignal.TrySetResult(true);
+                        }
+                    }
                     if (value == ModBase.LoadState.Canceled)
                         CancellationTokenSource?.Cancel();
                     Logger.Log($"加载器 {GetType().Name} {Name} 状态改变：{value}", value == ModBase.LoadState.Failed ? LogLevel.Error : LogLevel.Info);
@@ -163,6 +177,25 @@ namespace PCL
                 }
             }
             private ModBase.LoadState _State = ModBase.LoadState.Waiting;
+            /// <summary>
+            /// 在加载器离开加载状态时完成的信号。不在加载中时为已完成的信号。
+            /// </summary>
+            private TaskCompletionSource<bool> ExitSignal = CompletedSignal();
+            private readonly object ExitSignalLock = new object();
+            private static TaskCompletionSource<bool> CompletedSignal()
+            {
+                var Signal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                Signal.SetResult(true);
+                return Signal;
+            }
+            private Task CurrentExitTask
+            {
+                get
+                {
+                    lock (ExitSignalLock)
+                        return ExitSignal.Task;
+                }
+            }
             public MyLoading.MyLoadingState LoadingState
             {
                 get
@@ -281,68 +314,95 @@ namespace PCL
             public const string WaitForExitTimeoutMessage = "等待加载器执行超时。";
 
             /// <summary>
-        /// 无限期地等待加载器完成，直到结束或抛出异常。若加载器尚未开始，则会开始执行。
-        /// </summary>
+            /// 无限期地等待加载器完成，直到结束或抛出异常。若加载器尚未开始，则会开始执行。
+            /// </summary>
             public void WaitForExit(object Input = null, LoaderBase LoaderToSyncProgress = null, bool IsForceRestart = false, CancellationToken c = default, ProgressProvider p = null)
             {
                 Start(Input, IsForceRestart);
+                // 需要同步进度时每 50ms 醒来一次，否则一直等到状态改变
+                int WakeInterval = LoaderToSyncProgress is null && p is null ? Timeout.Infinite : 50;
                 while (State == ModBase.LoadState.Loading)
                 {
                     if (LoaderToSyncProgress is not null)
                         LoaderToSyncProgress.Progress = Progress;
                     p?.Set(Progress);
                     c.ThrowIfCancellationRequested();
-                    Thread.Sleep(10);
+                    try
+                    {
+                        CurrentExitTask.Wait(WakeInterval, c);
+                    }
+                    catch (AggregateException) { } // 信号只会正常完成，不会出错
                 }
-                if (State == ModBase.LoadState.Finished)
-                {
-                    return;
-                }
-                else if (State == ModBase.LoadState.Canceled)
-                {
-                    throw new OperationCanceledException("加载器执行已中断");
-                }
-                else if (Error == null)
-                {
-                    throw new Exception("未知错误！");
-                }
-                else
-                {
-                    throw new Exception(Error.Message, Error);
-                } // 保留调用堆栈，同时不影响信息输出与单元测试
+                ThrowIfNotFinished(KeepOriginalError: false);
             }
             /// <summary>
-        /// 等待加载器完成，直到结束、抛出异常或超时。若加载器尚未开始，则会开始执行。
-        /// </summary>
-        /// <param name="Timeout">等待的超时时间，以毫秒为单位。</param>
-        /// <param name="TimeoutMessage">若执行超时，将会抛出的异常信息。</param>
+            /// 等待加载器完成，直到结束、抛出异常或超时。若加载器尚未开始，则会开始执行。
+            /// </summary>
+            /// <param name="Timeout">等待的超时时间，以毫秒为单位。</param>
+            /// <param name="TimeoutMessage">若执行超时，将会抛出的异常信息。</param>
             public void WaitForExitTime(int Timeout, object Input = null, string TimeoutMessage = WaitForExitTimeoutMessage, object LoaderToSyncProgress = null, bool IsForceRestart = false)
             {
                 Start(Input, IsForceRestart);
+                var Watch = System.Diagnostics.Stopwatch.StartNew();
                 while (State == ModBase.LoadState.Loading)
                 {
                     if (LoaderToSyncProgress is not null)
                         ((LoaderBase)LoaderToSyncProgress).Progress = Progress;
-                    Thread.Sleep(10);
-                    Timeout -= 10;
-                    if (Timeout < 0)
+                    long Left = Timeout - Watch.ElapsedMilliseconds;
+                    if (Left < 0)
                         throw new TimeoutException(TimeoutMessage);
+                    CurrentExitTask.Wait((int)Math.Min(Left + 1, LoaderToSyncProgress is null ? int.MaxValue : 50));
                 }
-                if (State == ModBase.LoadState.Finished)
+                ThrowIfNotFinished(KeepOriginalError: true);
+            }
+            /// <summary>
+            /// 异步等待加载器完成，直到结束或抛出异常。若加载器尚未开始，则会开始执行。
+            /// </summary>
+            public async Task WaitForExitAsync(object Input = null, bool IsForceRestart = false, CancellationToken c = default)
+            {
+                Start(Input, IsForceRestart);
+                while (State == ModBase.LoadState.Loading)
                 {
-                    return;
+                    await Task.WhenAny(CurrentExitTask, Task.Delay(Timeout.Infinite, c)).ConfigureAwait(false);
+                    c.ThrowIfCancellationRequested();
                 }
-                else if (State == ModBase.LoadState.Canceled)
+                ThrowIfNotFinished(KeepOriginalError: false);
+            }
+            /// <summary>
+            /// 等待加载器离开加载状态，不会启动加载器。
+            /// 若提供 Tick，会在等待期间每隔 TickInterval 毫秒调用一次（例如刷新进度显示）。
+            /// </summary>
+            public void WaitWhileLoading(int TickInterval = Timeout.Infinite, Action Tick = null, CancellationToken c = default)
+            {
+                while (State == ModBase.LoadState.Loading)
                 {
-                    throw new OperationCanceledException("加载器执行已中断");
+                    Tick?.Invoke();
+                    c.ThrowIfCancellationRequested();
+                    try
+                    {
+                        CurrentExitTask.Wait(Tick is null ? Timeout.Infinite : TickInterval, c);
+                    }
+                    catch (AggregateException) { }
                 }
-                else if (Error == null)
+            }
+            /// <summary>
+            /// 加载器结束后，若并非成功完成则抛出对应的异常。
+            /// </summary>
+            /// <param name="KeepOriginalError">直接抛出加载器的原始错误，而不是包装一层以保留调用堆栈。</param>
+            private void ThrowIfNotFinished(bool KeepOriginalError)
+            {
+                switch (State)
                 {
-                    throw new Exception("未知错误！");
-                }
-                else
-                {
-                    throw Error;
+                    case ModBase.LoadState.Finished:
+                        return;
+                    case ModBase.LoadState.Canceled:
+                        throw new OperationCanceledException("加载器执行已中断");
+                    default:
+                        if (Error is null)
+                            throw new Exception("未知错误！");
+                        if (KeepOriginalError)
+                            throw Error;
+                        throw new Exception(Error.Message, Error); // 保留调用堆栈，同时不影响信息输出与单元测试
                 }
             }
 
@@ -376,39 +436,63 @@ namespace PCL
 
             // 线程设定
             protected internal ThreadPriority ThreadPriority;
-            // 执行事件
+            // 执行事件（二者之一）
             protected internal Action<LoaderTask<TIn, TOut>> LoadDelegate;
+            protected internal Func<LoaderTask<TIn, TOut>, Task> LoadDelegateAsync;
             protected internal Func<object> InputDelegate;
+
+            /// <summary>
+            /// 加载器的一次执行。重新开始或取消时，旧的执行会被废弃：其取消令牌被触发，同步执行的线程会被打断。
+            /// </summary>
+            private sealed class LoaderRun
+            {
+                public readonly CancellationTokenSource Cancellation = new CancellationTokenSource();
+                /// <summary>同步执行时所在的线程；执行结束后为 null。</summary>
+                public Thread Thread;
+                public void Stop()
+                {
+                    try
+                    {
+                        Cancellation.Cancel();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn(ex, "触发加载器取消令牌时出错");
+                    }
+                    lock (this)
+                        Thread?.Interrupt(); // 唤醒正在 Sleep 或等待的同步加载函数
+                }
+            }
+            /// <summary>当前有效的执行。</summary>
+            private LoaderRun ActiveRun;
+            /// <summary>代码所属的执行，会随异步调用与新线程一起流动。</summary>
+            private readonly AsyncLocal<LoaderRun> CurrentRun = new AsyncLocal<LoaderRun>();
+
             // 状态指示
             /// <summary>
-        /// 当前执行线程是否应当中断。只应用在加载器的工作线程中判断，不可跨线程调用。
-        /// </summary>
+            /// 当前代码所属的执行是否应当中断：已被取消，或加载器已重新开始。
+            /// 在加载函数及其开启的线程、异步任务中都可使用；在其他地方调用时总是返回 True。
+            /// </summary>
             public bool IsCanceled
             {
                 get
                 {
-                    return IsCanceledWithThread(Thread.CurrentThread);
+                    var Active = ActiveRun;
+                    return Active is null || !ReferenceEquals(CurrentRun.Value, Active) || State == ModBase.LoadState.Canceled;
                 }
             }
             /// <summary>
-        /// 当前执行线程是否应当中断。需要手动提供加载器线程，用于需要跨线程检查的情况。
-        /// </summary>
-            public bool IsCanceledWithThread(Thread Thread)
-            {
-                return LastRunningThread is null || !ReferenceEquals(Thread, LastRunningThread) || State == ModBase.LoadState.Canceled;
-            }
+            /// 当前代码所属执行的取消令牌：在执行被取消、失败或加载器重新开始时触发。
+            /// </summary>
+            public CancellationToken RunToken => CurrentRun.Value?.Cancellation.Token ?? new CancellationToken(true);
             /// <summary>
-        /// 在输入相同时使用原有结果的超时，单位为毫秒。
-        /// </summary>
+            /// 在输入相同时使用原有结果的超时，单位为毫秒。
+            /// </summary>
             public int ReloadTimeout = -1;
             /// <summary>
-        /// 上次完成加载时的时间。
-        /// </summary>
+            /// 上次完成加载时的时间。
+            /// </summary>
             public long LastFinishedTime = 0L;
-            /// <summary>
-        /// 最后一次运行加载器的线程。可能为 Nothing，或线程已结束。
-        /// </summary>
-            public Thread LastRunningThread = null;
             // 输入输出
             public TIn Input = default;
             public TOut Output = default;
@@ -485,17 +569,90 @@ namespace PCL
                     return;
                 }
 
-                // 如果线程是因为判断到 IsCanceled 而提前中止，则代表已有新线程被重启，此时不应当改为 Canceled
-                // 如果线程是在没有 IsCanceled 时手动引发了取消异常，则代表没有重启线程，这通常代表用户手动取消，应当改为 Canceled
-                LastRunningThread = new Thread(() => { try { IsForceRestarting = IsForceRestart; Logger.Trace(() => $"加载线程 {Name} 已{(IsForceRestarting ? "强制" : "")}启动"); LoadDelegate(this); if (IsCanceled) { Logger.Warn($"加载线程 {Name} 已中断但线程正常运行至结束，输出被弃用（最新线程：{(LastRunningThread is null ? -1 : LastRunningThread.ManagedThreadId)}）"); return; } Logger.Trace(() => $"加载线程 {Name} 已完成"); RaisePreviewFinish(); State = ModBase.LoadState.Finished; LastFinishedTime = ModBase.GetTimeMs(); } catch (Exception ex) { if (ex.IsCanceled()) { Logger.Trace(ex, $"加载线程 {Name} 已取消，当前已完成 {Math.Round(Progress * 100d)}%"); if (!IsCanceled) State = ModBase.LoadState.Canceled; } else { Failed(ex); } } }) { Name = "L/" + Name, Priority = ThreadPriority }; // 未中断，本次输出有效
-                try
+                // 开始新的执行
+                // 如果执行是因为判断到 IsCanceled 而提前中止，则代表已有新执行被启动，此时不应当改为 Canceled
+                // 如果执行是在没有 IsCanceled 时手动引发了取消异常，则代表没有重新启动，这通常代表用户手动取消，应当改为 Canceled
+                var Run = new LoaderRun();
+                ActiveRun = Run; // 必须在开始执行前设置，否则执行可能在此之前就结束，导致误判 IsCanceled
+                if (LoadDelegateAsync is not null)
                 {
-                    LastRunningThread.Start(); // 不能使用 RunInNewThread，否则在函数返回前线程就会运行完，导致误判 IsCanceled
+                    Task.Run(async () =>
+                    {
+                        CurrentRun.Value = Run;
+                        OnRunStart(IsForceRestart);
+                        try
+                        {
+                            await LoadDelegateAsync(this).ConfigureAwait(false);
+                            OnRunEnd(null);
+                        }
+                        catch (Exception ex)
+                        {
+                            OnRunEnd(ex);
+                        }
+                    });
                 }
-                catch (ThreadStateException) // 若遇到偶发的 “线程正在运行或被终止”，则等待后重试
+                else
                 {
-                    Thread.Sleep(500);
-                    LastRunningThread.Start();
+                    Task.Factory.StartNew(() =>
+                    {
+                        CurrentRun.Value = Run;
+                        var Current = Thread.CurrentThread;
+                        Current.Name ??= "L/" + Name;
+                        Current.Priority = ThreadPriority;
+                        lock (Run)
+                            Run.Thread = Current;
+                        try
+                        {
+                            OnRunStart(IsForceRestart);
+                            try
+                            {
+                                LoadDelegate(this);
+                                OnRunEnd(null);
+                            }
+                            catch (Exception ex)
+                            {
+                                OnRunEnd(ex);
+                            }
+                        }
+                        finally
+                        {
+                            lock (Run)
+                                Run.Thread = null; // 之后不再打断这个线程
+                        }
+                    }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+                }
+            }
+            private void OnRunStart(bool IsForceRestart)
+            {
+                IsForceRestarting = IsForceRestart;
+                Logger.Trace(() => $"加载器 {Name} 已{(IsForceRestarting ? "强制" : "")}启动");
+            }
+            /// <summary>
+            /// 一次执行结束时调用。Ex 为 null 表示加载函数正常返回。
+            /// </summary>
+            private void OnRunEnd(Exception Ex)
+            {
+                if (Ex is null)
+                {
+                    if (IsCanceled)
+                    {
+                        Logger.Warn($"加载器 {Name} 已中断但加载函数正常运行至结束，输出被弃用");
+                        return;
+                    }
+                    Logger.Trace(() => $"加载器 {Name} 已完成");
+                    RaisePreviewFinish();
+                    State = ModBase.LoadState.Finished;
+                    LastFinishedTime = ModBase.GetTimeMs();
+                }
+                else if (Ex.IsCanceled())
+                {
+                    Logger.Trace(Ex, $"加载器 {Name} 已取消，当前已完成 {Math.Round(Progress * 100d)}%");
+                    if (!IsCanceled)
+                        State = ModBase.LoadState.Canceled;
+                }
+                else
+                {
+                    Failed(Ex);
                 }
             }
             public override void Failed(Exception ex)
@@ -520,16 +677,16 @@ namespace PCL
                 }
                 TriggerThreadInterrupt();
             }
+            /// <summary>
+            /// 废弃当前的执行：触发其取消令牌，并打断同步执行的线程。
+            /// </summary>
             private void TriggerThreadInterrupt()
             {
-                if (LastRunningThread is null)
+                var Run = Interlocked.Exchange(ref ActiveRun, null);
+                if (Run is null)
                     return;
-                if (LastRunningThread.IsAlive)
-                {
-                    LastRunningThread.Interrupt();
-                    Logger.Trace(() => $"加载线程 {Name} 已中断");
-                }
-                LastRunningThread = null;
+                Run.Stop();
+                Logger.Trace(() => $"加载器 {Name} 的执行已中断");
             }
 
             public LoaderTask()
@@ -542,6 +699,15 @@ namespace PCL
                 this.LoadDelegate = LoadDelegate;
                 this.InputDelegate = InputDelegate is null ? null : () => InputDelegate();
                 ThreadPriority = Priority;
+            }
+            /// <summary>
+            /// 使用异步加载函数的加载器。加载函数应在等待时传入 RunToken，以便及时响应取消。
+            /// </summary>
+            public LoaderTask(string Name, Func<LoaderTask<TIn, TOut>, Task> LoadDelegateAsync, Func<TIn> InputDelegate = null)
+            {
+                this.Name = Name;
+                this.LoadDelegateAsync = LoadDelegateAsync;
+                this.InputDelegate = InputDelegate is null ? null : () => InputDelegate();
             }
 
         }

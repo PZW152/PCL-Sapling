@@ -714,7 +714,7 @@ namespace PCL
 
             #region 联网检查
 
-            Loaders.Add(new ModLoader.LoaderTask<List<LocalResourceFile>, Dictionary<LocalResourceFile, List<string>>>("联网获取文件信息", (Loader) =>
+            Loaders.Add(new ModLoader.LoaderTask<List<LocalResourceFile>, Dictionary<LocalResourceFile, List<string>>>("联网获取文件信息", async (Loader) =>
         {
             Loader.Output = new Dictionary<LocalResourceFile, List<string>>();
             if (!CheckHostedAssets)
@@ -728,27 +728,75 @@ namespace PCL
                 return;
             }
 
-            // 分平台获取下载地址
-            int EndedThreadCount = 0;
+            // 分平台获取下载地址：两个平台同时请求，各自收集结果，全部结束后再写入输出
+            var Cancel = Loader.RunToken;
             var FailedExceptions = new List<Exception>();
-
-            // 从 Modrinth 获取信息
-            // 查找对应的文件
-            // 写入下载地址
-            ModBase.RunInNewThread(() => { try { var ModrinthHashes = Loader.Input.Select(m => m.ModrinthHash); JObject ModrinthRaw = (JObject)ModDownload.DlModRequest("https://api.modrinth.com/v2/version_files", HttpMethod.Post, $"{{\"hashes\": [\"{ModrinthHashes.Join("\",\"")}\"], \"algorithm\": \"sha1\"}}", "application/json"); foreach (var ModFile in Loader.Input) { if (!ModrinthRaw.ContainsKey(ModFile.ModrinthHash)) continue; if ((string)(ModrinthRaw[ModFile.ModrinthHash]?["files"]?[0]["hashes"]?["sha1"]) != ModFile.ModrinthHash) continue; Loader.Output.AddIntoValueCollection(ModFile, (string)ModrinthRaw[ModFile.ModrinthHash]["files"][0]["url"]); } Logger.Info($"从 Modrinth 获取到 {ModrinthRaw.Count} 个本地资源项的对应信息"); } catch (Exception ex) { Logger.Warn(ex, "从 Modrinth 获取本地 Mod 信息失败"); FailedExceptions.Add(ex); } finally { EndedThreadCount += 1; Loader.Progress += 0.45d; } }, "Modrinth - " + LoaderName);
-
-            // 从 CurseForge 获取信息
-            // 查找对应的文件
-            // 写入下载地址
-            ModBase.RunInNewThread(() => { try { if (ModrinthUploadMode) return; var CurseForgeHashes = Loader.Input.Select(m => m.CurseForgeHash); JContainer CurseForgeRaw = (JContainer)ModDownload.DlModRequest("https://api.curseforge.com/v1/fingerprints/432", HttpMethod.Post, $"{{\"fingerprints\": [{CurseForgeHashes.Join(",")}]}}", "application/json")["data"]["exactMatches"]; foreach (JObject ResultJson in CurseForgeRaw) { if (!ResultJson.ContainsKey("file")) continue; JObject File = (JObject)ResultJson["file"]; if (string.IsNullOrEmpty((string)File["downloadUrl"])) continue; var ModFile = Loader.Input.FirstOrDefault(m => m.CurseForgeHash == File["fileFingerprint"].ToObject<uint>()); if (ModFile is null) continue; foreach (var Address in ResourceVersion.ParseCurseForgeDownloadUrls(File["downloadUrl"].ToString())) Loader.Output.AddIntoValueCollection(ModFile, Address); } Logger.Info($"从 CurseForge 获取到 {CurseForgeRaw.Count} 个本地资源项的对应信息"); } catch (Exception ex) { Logger.Warn(ex, "从 CurseForge 获取本地 Mod 信息失败"); FailedExceptions.Add(ex); } finally { EndedThreadCount += 1; Loader.Progress += 0.45d; } }, "CurseForge - " + LoaderName); // Modrinth 上传模式下，不从 CurseForge 获取信息
-
-            // 等待线程结束
-            while (EndedThreadCount != 2)
+            var ProgressLock = new object();
+            async System.Threading.Tasks.Task<List<(LocalResourceFile File, string Url)>> FromModrinth()
             {
-                if (Loader.IsCanceled)
-                    return;
-                Thread.Sleep(10);
+                var Found = new List<(LocalResourceFile File, string Url)>();
+                var ModrinthHashes = Loader.Input.Select(m => m.ModrinthHash);
+                JObject ModrinthRaw = (JObject)await ModDownload.DlModRequestAsync("https://api.modrinth.com/v2/version_files", HttpMethod.Post,
+                    $"{{\"hashes\": [\"{ModrinthHashes.Join("\",\"")}\"], \"algorithm\": \"sha1\"}}", "application/json", Cancel).ConfigureAwait(false);
+                foreach (var ModFile in Loader.Input)
+                {
+                    if (!ModrinthRaw.ContainsKey(ModFile.ModrinthHash))
+                        continue;
+                    if ((string)(ModrinthRaw[ModFile.ModrinthHash]?["files"]?[0]["hashes"]?["sha1"]) != ModFile.ModrinthHash)
+                        continue;
+                    Found.Add((ModFile, (string)ModrinthRaw[ModFile.ModrinthHash]["files"][0]["url"]));
+                }
+                Logger.Info($"从 Modrinth 获取到 {ModrinthRaw.Count} 个本地资源项的对应信息");
+                return Found;
             }
+            async System.Threading.Tasks.Task<List<(LocalResourceFile File, string Url)>> FromCurseForge()
+            {
+                var Found = new List<(LocalResourceFile File, string Url)>();
+                if (ModrinthUploadMode)
+                    return Found; // Modrinth 上传模式下，不从 CurseForge 获取信息
+                var CurseForgeHashes = Loader.Input.Select(m => m.CurseForgeHash);
+                JContainer CurseForgeRaw = (JContainer)(await ModDownload.DlModRequestAsync("https://api.curseforge.com/v1/fingerprints/432", HttpMethod.Post,
+                    $"{{\"fingerprints\": [{CurseForgeHashes.Join(",")}]}}", "application/json", Cancel).ConfigureAwait(false))["data"]["exactMatches"];
+                foreach (JObject ResultJson in CurseForgeRaw)
+                {
+                    if (!ResultJson.ContainsKey("file"))
+                        continue;
+                    JObject File = (JObject)ResultJson["file"];
+                    if (string.IsNullOrEmpty((string)File["downloadUrl"]))
+                        continue;
+                    var ModFile = Loader.Input.FirstOrDefault(m => m.CurseForgeHash == File["fileFingerprint"].ToObject<uint>());
+                    if (ModFile is null)
+                        continue;
+                    foreach (var Address in ResourceVersion.ParseCurseForgeDownloadUrls(File["downloadUrl"].ToString()))
+                        Found.Add((ModFile, Address));
+                }
+                Logger.Info($"从 CurseForge 获取到 {CurseForgeRaw.Count} 个本地资源项的对应信息");
+                return Found;
+            }
+            async System.Threading.Tasks.Task<List<(LocalResourceFile File, string Url)>> Collect(Func<System.Threading.Tasks.Task<List<(LocalResourceFile File, string Url)>>> Fetch, string Platform)
+            {
+                try
+                {
+                    return await Fetch().ConfigureAwait(false);
+                }
+                catch (Exception ex) when (!ex.IsCanceled())
+                {
+                    Logger.Warn(ex, $"从 {Platform} 获取本地 Mod 信息失败");
+                    lock (ProgressLock)
+                        FailedExceptions.Add(ex);
+                    return new List<(LocalResourceFile File, string Url)>();
+                }
+                finally
+                {
+                    lock (ProgressLock)
+                        Loader.Progress += 0.45d;
+                }
+            }
+            var Results = await System.Threading.Tasks.Task.WhenAll(Collect(FromModrinth, "Modrinth"), Collect(FromCurseForge, "CurseForge")).ConfigureAwait(false);
+            if (Loader.IsCanceled)
+                return;
+            foreach (var (File, Url) in Results.SelectMany(r => r))
+                Loader.Output.AddIntoValueCollection(File, Url);
 
             // 若失败，确认是否继续
             if (FailedExceptions.Count == 1)

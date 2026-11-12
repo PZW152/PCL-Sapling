@@ -176,7 +176,7 @@ namespace PCL
                 }
                 else
                 {
-                    ModBase.RunInNewThread(() =>
+                    ModBase.RunInBackground(() =>
         {
             Thread.Sleep(30);
             ModBase.RunInUi(() => ChangeValidateResult(IsValidated, false));
@@ -192,7 +192,7 @@ namespace PCL
                 }
                 else
                 {
-                    ModBase.RunInNewThread(() =>
+                    ModBase.RunInBackground(() =>
         {
             bool IsFinished = false;
             while (!IsFinished)

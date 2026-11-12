@@ -367,7 +367,7 @@ namespace PCL
             RemoveFolderFromSetup(Target);
             // 删除文件夹
             // 刷新列表
-            ModBase.RunInNewThread(() => { try { ModMain.Hint("正在" + DeleteText + "文件夹 " + Target.Name + "！", ModMain.HintType.Blue); DirectoryUtils.Delete(Target.Location); if (DeleteText == "清空") DirectoryUtils.Create(Target.Location); ModMain.Hint("已" + DeleteText + "文件夹 " + Target.Name + "！", ModMain.HintType.Green); } catch (Exception ex) { Logger.Error(ex, $"{DeleteText}文件夹 {Target.Name} 失败", LogBehavior.Toast); } finally { ModMinecraft.McFolderListLoader.Start(IsForceRestart: true); } }, "Folder Delete " + ModBase.GetUuid(), ThreadPriority.BelowNormal);
+            ModBase.RunInDedicatedThread(() => { try { ModMain.Hint("正在" + DeleteText + "文件夹 " + Target.Name + "！", ModMain.HintType.Blue); DirectoryUtils.Delete(Target.Location); if (DeleteText == "清空") DirectoryUtils.Create(Target.Location); ModMain.Hint("已" + DeleteText + "文件夹 " + Target.Name + "！", ModMain.HintType.Green); } catch (Exception ex) { Logger.Error(ex, $"{DeleteText}文件夹 {Target.Name} 失败", LogBehavior.Toast); } finally { ModMinecraft.McFolderListLoader.Start(IsForceRestart: true); } }, "Folder Delete " + ModBase.GetUuid(), ThreadPriority.BelowNormal);
         }
         /// <summary>
     /// 从设置的文件夹列表中删除指定的文件夹。

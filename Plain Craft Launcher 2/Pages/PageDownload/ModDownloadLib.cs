@@ -661,8 +661,7 @@ pause";
                         process.BeginOutputReadLine();
                         process.BeginErrorReadLine();
                         // 等待
-                        while (!process.HasExited)
-                            Thread.Sleep(10);
+                        process.WaitForExit();
                         // 输出
                         outputWaitHandle.WaitOne(10000);
                         errorWaitHandle.WaitOne(10000);
@@ -1338,8 +1337,7 @@ pause";
                         process.BeginOutputReadLine();
                         process.BeginErrorReadLine();
                         // 等待
-                        while (!process.HasExited)
-                            Thread.Sleep(10);
+                        process.WaitForExit();
                         // 输出
                         outputWaitHandle.WaitOne(10000);
                         errorWaitHandle.WaitOne(10000);
@@ -1927,7 +1925,7 @@ pause";
             // 获取所有推荐版本列表
             // 内容为："1.15.2":"31.2.0"
             // 保存
-            ModBase.RunInNewThread(() =>
+            ModBase.RunInBackground(() =>
             {
                 try
                 {

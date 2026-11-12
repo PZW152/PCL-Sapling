@@ -237,7 +237,7 @@ namespace PCL
                 resizeUp = true;
             if (downElements.ContainsKey(key))
                 resizeDown = true;
-            ModBase.RunInNewThread(updateSizeLoop, "窗口大小调整检测");
+            ModBase.RunInDedicatedThread(updateSizeLoop, "窗口大小调整检测");
         }
 
         private void updateSizeLoop()

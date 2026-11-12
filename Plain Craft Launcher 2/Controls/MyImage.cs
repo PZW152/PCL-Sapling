@@ -166,7 +166,7 @@ namespace PCL
             {
                 ActualSource = LoadingSource;
             } // 显示加载中图片
-            ModBase.RunInNewThread(() =>
+            ModBase.RunInBackground(() =>
         {
             bool IsLocalFallback = !string.IsNullOrEmpty(FallbackSource) && !FallbackSource.StartsWithF("http");
             try
@@ -207,7 +207,7 @@ namespace PCL
                     Logger.Error(ex, $"下载图片失败（{Source}，备用：{FallbackSource}）", LogBehavior.Toast);
                 }
             }
-        }, "MyImage PicLoader " + ModBase.GetUuid() + "#", ThreadPriority.BelowNormal);
+        }, "MyImage PicLoader " + ModBase.GetUuid() + "#");
         }
 
     }

@@ -838,7 +838,7 @@ namespace PCL
             Logger.Info($"已从正在进行 Mod 更新的文件夹列表移除：{PathMods}");
             UpdatingInstanceModFolders.Remove(PathMods);
             // 清理缓存
-            ModBase.RunInNewThread(() => { try { foreach (var TempFile in FileCopyList.Keys) FileUtils.Delete(TempFile); } catch (Exception ex) { Logger.Warn(ex, "清理 Mod 更新缓存失败"); } }, "Clean Mod Update Cache", ThreadPriority.BelowNormal);
+            ModBase.RunInBackground(() => { try { foreach (var TempFile in FileCopyList.Keys) FileUtils.Delete(TempFile); } catch (Exception ex) { Logger.Warn(ex, "清理 Mod 更新缓存失败"); } }, "Clean Mod Update Cache");
         });
                 // 启动加载器
                 Logger.Info($"开始更新 {ModList.Count()} 个 Mod：{ModList.Select(m => m.File.Name).Join("，")}");

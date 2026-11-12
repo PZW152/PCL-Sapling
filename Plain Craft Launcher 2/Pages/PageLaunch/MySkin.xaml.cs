@@ -273,7 +273,7 @@ namespace PCL
                 ModMain.Hint("正在获取披风列表，请稍候……");
             IsChanging = true;
             // 开始实际获取
-            ModBase.RunInNewThread(() => ChangeCape(), "Cape Change");
+            ModBase.RunInDedicatedThread(() => ChangeCape(), "Cape Change");
         }
         private void ChangeCape(bool IsRetry = false)
         {

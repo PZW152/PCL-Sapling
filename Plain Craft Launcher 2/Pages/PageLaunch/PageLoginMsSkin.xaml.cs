@@ -111,14 +111,13 @@ namespace PCL
             ModMain.Hint("正在更改皮肤……");
             IsChanging = true;
             // 开始实际获取
-            ModBase.RunInNewThread(() => EditSkin(SkinInfo), "Ms Skin Upload");
+            ModBase.RunInBackground(() => EditSkin(SkinInfo), "Ms Skin Upload");
         }
         private void EditSkin(ModMinecraft.McSkinInfo SkinInfo, bool IsRetry = false)
         {
             try
             {
-                while (ModLaunch.McLoginMsLoader.State == ModBase.LoadState.Loading) // 等待登录结束
-                    Thread.Sleep(10);
+                ModLaunch.McLoginMsLoader.WaitWhileLoading(); // 等待登录结束
                 if (ModLaunch.McLoginMsLoader.State == ModBase.LoadState.Failed)
                     throw new Exception("登录失败", ModLaunch.McLoginMsLoader.Error);
                 string AccessToken = Settings.Get<string>("CacheMsV2Access");

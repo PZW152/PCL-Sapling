@@ -110,7 +110,7 @@ namespace PCL
             // 执行事件
             if (!Events.Any())
                 return;
-            ModBase.RunInNewThread(() => { foreach (var e in Events) e.Raise(); }, "执行自定义事件 " + ModBase.GetUuid());
+            ModBase.RunInDedicatedThread(() => { foreach (var e in Events) e.Raise(); }, "执行自定义事件 " + ModBase.GetUuid());
         }
 
     }

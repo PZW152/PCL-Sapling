@@ -1029,6 +1029,15 @@ namespace PCL
     /// </summary>
         public static JToken DlModRequest(string Url, HttpMethod Method = null, string Content = null, string ContentType = null)
         {
+            ModNet.EnsureNotUiThread(Url);
+            return DlModRequestAsync(Url, Method, Content, ContentType).GetAwaiter().GetResult();
+        }
+        /// <summary>
+        /// 请求 Modrinth / CurseForge 官方 API，返回 JToken。
+        /// 失败时以更长的超时再试一次；取消时立即停止。
+        /// </summary>
+        public static async System.Threading.Tasks.Task<JToken> DlModRequestAsync(string Url, HttpMethod Method = null, string Content = null, string ContentType = null, CancellationToken Cancel = default)
+        {
             // 只使用 Modrinth / CurseForge 官方 API
             var Urls = new List<(string Url, int Timeout)>() { (Url, Url.Contains("modrinth") ? 20 : 10), (Url, 30) }; // Modrinth 至少 20s，要不然返回不过来
             var Errors = new List<Exception>();
@@ -1036,10 +1045,11 @@ namespace PCL
             {
                 try
                 {
-                    return ModNet.NetRequestByClient(Source.Url, Method, Content, ContentType, Timeout: Source.Timeout * 1000, Encoding: Encoding.UTF8, RequireJson: true).DeserializeJson();
+                    return (await ModNet.NetRequestByClientAsync(Source.Url, Method, Content, ContentType, Timeout: Source.Timeout * 1000, Encoding: Encoding.UTF8, RequireJson: true, Cancel: Cancel).ConfigureAwait(false)).DeserializeJson();
                 }
                 catch (Exception ex)
                 {
+                    ex.ThrowIfCanceled();
                     Errors.Add(ex);
                 }
             }

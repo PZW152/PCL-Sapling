@@ -172,18 +172,16 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
             string VanillaVersion = TargetMcVersion.VanillaName;
             // 开始网络获取
             Logger.Info($"正在检查 Mod 信息的版本：{VanillaVersion}，加载器 {ModLoaders}");
-            int EndedThreadCount = 0;
             bool IsFailed = false;
-            var CurrentTaskThread = Thread.CurrentThread;
             // 从 Modrinth 获取信息
-            ModBase.RunInNewThread(() =>
+            var ModrinthTask = ModBase.RunInBackgroundAsync(async () =>
         {
             try
             {
                 // 步骤 1：获取 Hash 与对应的工程 ID
                 var ModrinthHashes = Mods.Select(m => m.ModrinthHash).ToList();
-                JObject ModrinthVersion = (JObject)ModDownload.DlModRequest("https://api.modrinth.com/v2/version_files", HttpMethod.Post,
-                    $"{{\"hashes\": [\"{ModrinthHashes.Join("\",\"")}\"], \"algorithm\": \"sha1\"}}", "application/json");
+                JObject ModrinthVersion = (JObject)(await ModDownload.DlModRequestAsync("https://api.modrinth.com/v2/version_files", HttpMethod.Post,
+                    $"{{\"hashes\": [\"{ModrinthHashes.Join("\",\"")}\"], \"algorithm\": \"sha1\"}}", "application/json", Cancel: Loader.RunToken).ConfigureAwait(false));
                 Logger.Info($"从 Modrinth 获取到 {ModrinthVersion.Count} 个本地 Mod 的对应信息");
                 // 步骤 2：尝试读取工程信息缓存，构建其他 Mod 的对应关系
                 if (ModrinthVersion.Count == 0)
@@ -215,14 +213,14 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
                         Entry.ProjectVersion.Version = File.Version; // 使用来自 Modrinth 的版本号
                     }
                 }
-                if (Loader.IsCanceledWithThread(CurrentTaskThread))
+                if (Loader.IsCanceled)
                     return;
                 Logger.Info($"需要从 Modrinth 获取 {ModrinthMapping.Count} 个本地 Mod 的工程信息");
                 // 步骤 3：获取工程信息
                 if (!ModrinthMapping.Any())
                     return;
-                JArray ModrinthProject = (JArray)ModDownload.DlModRequest(
-                    $"https://api.modrinth.com/v2/projects?ids=[\"{ModrinthMapping.Keys.Join("\",\"")}\"]");
+                JArray ModrinthProject = (JArray)(await ModDownload.DlModRequestAsync(
+                    $"https://api.modrinth.com/v2/projects?ids=[\"{ModrinthMapping.Keys.Join("\",\"")}\"]", Cancel: Loader.RunToken).ConfigureAwait(false));
                 foreach (var ProjectJson in ModrinthProject)
                 {
                     var Project = new ResourceProject((JObject)ProjectJson);
@@ -237,8 +235,8 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
                 string UpdateData = ModsToUpdate
                     .Select(m => $"{{\"hash\": \"{m.ModrinthHash}\", \"loaders\": [\"{ModrinthLoaders[m].Join("\",\"")}\"], \"game_versions\": [\"{VanillaVersion}\"]}}")
                     .Join(",");
-                JObject ModrinthUpdate = (JObject)ModDownload.DlModRequest("https://api.modrinth.com/v2/version_files/update_individual", HttpMethod.Post,
-                    $"{{\"algorithm\": \"sha1\", \"hashes\": [{UpdateData}]}}", "application/json");
+                JObject ModrinthUpdate = (JObject)(await ModDownload.DlModRequestAsync("https://api.modrinth.com/v2/version_files/update_individual", HttpMethod.Post,
+                    $"{{\"algorithm\": \"sha1\", \"hashes\": [{UpdateData}]}}", "application/json", Cancel: Loader.RunToken).ConfigureAwait(false));
                 foreach (var Entry in Mods)
                 {
                     if (!ModrinthUpdate.ContainsKey(Entry.ModrinthHash) || Entry.ProjectVersion is null)
@@ -273,13 +271,9 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
                 Logger.Warn(ex, "从 Modrinth 获取本地 Mod 信息失败");
                 IsFailed = true;
             }
-            finally
-            {
-                EndedThreadCount += 1;
-            }
         }, "Mod List Detail Loader Modrinth");
             // 从 CurseForge 获取信息
-            ModBase.RunInNewThread(() =>
+            var CurseForgeTask = ModBase.RunInBackgroundAsync(async () =>
         {
             try
             {
@@ -288,10 +282,10 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
                 foreach (var Entry in Mods)
                 {
                     Hashes.Add(Entry.CurseForgeHash);
-                    if (Loader.IsCanceledWithThread(CurrentTaskThread))
+                    if (Loader.IsCanceled)
                         return;
                 }
-                JContainer CurseForgeRaw = (JContainer)ModDownload.DlModRequest("https://api.curseforge.com/v1/fingerprints/432", HttpMethod.Post, $"{{\"fingerprints\": [{Hashes.Join(",")}]}}", "application/json")["data"]["exactMatches"];
+                JContainer CurseForgeRaw = (JContainer)(await ModDownload.DlModRequestAsync("https://api.curseforge.com/v1/fingerprints/432", HttpMethod.Post, $"{{\"fingerprints\": [{Hashes.Join(",")}]}}", "application/json", Cancel: Loader.RunToken).ConfigureAwait(false))["data"]["exactMatches"];
                 Logger.Info($"从 CurseForge 获取到 {CurseForgeRaw.Count} 个本地 Mod 的对应信息");
                 if (!CurseForgeRaw.Any())
                     return;
@@ -317,14 +311,14 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
                             Entry.ProjectVersion = File;
                     }
                 }
-                if (Loader.IsCanceledWithThread(CurrentTaskThread))
+                if (Loader.IsCanceled)
                     return;
                 Logger.Info($"需要从 CurseForge 获取 {ProjectIdToLocalFiles.Count} 个本地 Mod 的工程信息");
                 if (!ProjectIdToLocalFiles.Any())
                     return;
 
                 // 步骤 3：获取工程信息
-                var CurseForgeProject = ModDownload.DlModRequest("https://api.curseforge.com/v1/mods", HttpMethod.Post, $"{{\"modIds\": [{ProjectIdToLocalFiles.Keys.Join(",")}]}}", "application/json")["data"];
+                var CurseForgeProject = (await ModDownload.DlModRequestAsync("https://api.curseforge.com/v1/mods", HttpMethod.Post, $"{{\"modIds\": [{ProjectIdToLocalFiles.Keys.Join(",")}]}}", "application/json", Cancel: Loader.RunToken).ConfigureAwait(false))["data"];
                 var UpdateFileIds = new Dictionary<int, List<LocalResourceFile>>(); // FileId -> 本地 Mod 文件列表
                 var FileIdToProjectSlug = new Dictionary<int, string>();
                 foreach (var ProjectJson in CurseForgeProject)
@@ -376,7 +370,7 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
                     return;
 
                 // 步骤 4：获取更新文件信息
-                var CurseForgeFiles = ModDownload.DlModRequest("https://api.curseforge.com/v1/mods/files", HttpMethod.Post, $"{{\"fileIds\": [{UpdateFileIds.Keys.Join(",")}]}}", "application/json")["data"];
+                var CurseForgeFiles = (await ModDownload.DlModRequestAsync("https://api.curseforge.com/v1/mods/files", HttpMethod.Post, $"{{\"fileIds\": [{UpdateFileIds.Keys.Join(",")}]}}", "application/json", Cancel: Loader.RunToken).ConfigureAwait(false))["data"];
                 var UpdateFiles = new Dictionary<LocalResourceFile, ResourceVersion>();
                 foreach (var FileJson in CurseForgeFiles)
                 {
@@ -422,18 +416,11 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
                 Logger.Warn(ex, "从 CurseForge 获取本地 Mod 信息失败");
                 IsFailed = true;
             }
-            finally
-            {
-                EndedThreadCount += 1;
-            }
         }, "Mod List Detail Loader CurseForge");
-            // 等待线程结束
-            while (EndedThreadCount != 2)
-            {
-                Thread.Sleep(10);
-                if (Loader.IsCanceled)
-                    return;
-            }
+            // 等待两个平台都获取结束
+            System.Threading.Tasks.Task.WaitAll(ModrinthTask, CurseForgeTask);
+            if (Loader.IsCanceled)
+                return;
             // 保存缓存
             Mods = Mods.Where(m => m.Project is not null).ToList();
             Logger.Info($"联网获取本地 Mod 信息完成，为 {Mods.Count} 个 Mod 更新缓存");

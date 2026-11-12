@@ -501,7 +501,7 @@ namespace PCL
         public void Save_Click(object sender, EventArgs e)
         {
             ResourceVersion File = (ResourceVersion)(sender is MyListItem ? sender.Fe() : sender.ParentFe()).Tag;
-            ModBase.RunInNewThread(() =>
+            ModBase.RunInDedicatedThread(() =>
         {
             try
             {

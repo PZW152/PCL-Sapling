@@ -50,7 +50,7 @@ namespace PCL
             RefreshButtonsUI();
 
             // 加载版本
-            ModBase.RunInNewThread(() =>
+            ModBase.RunInDedicatedThread(() =>
         {
             // 自动整合包安装：准备
             string PackInstallPath = null;

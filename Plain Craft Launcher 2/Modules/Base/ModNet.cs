@@ -23,9 +23,17 @@ namespace PCL
         #region 网络请求
 
         /// <summary>
-    /// 发送一次网络请求并获取返回内容。
-    /// </summary>
+        /// 发送一次网络请求并获取返回内容。
+        /// </summary>
         public static string NetRequestByClient(string Url, HttpMethod Method = null, object Content = null, string ContentType = null, string Accept = "*/*", int Timeout = 25000, string[,] Headers = null, bool RequireJson = false, Encoding Encoding = null, bool SimulateBrowserHeaders = false, bool MakeLog = true)
+        {
+            EnsureNotUiThread(Url);
+            return NetRequestByClientAsync(Url, Method, Content, ContentType, Accept, Timeout, Headers, RequireJson, Encoding, SimulateBrowserHeaders, MakeLog).GetAwaiter().GetResult();
+        }
+        /// <summary>
+        /// 发送一次网络请求并获取返回内容。
+        /// </summary>
+        public static async Task<string> NetRequestByClientAsync(string Url, HttpMethod Method = null, object Content = null, string ContentType = null, string Accept = "*/*", int Timeout = 25000, string[,] Headers = null, bool RequireJson = false, Encoding Encoding = null, bool SimulateBrowserHeaders = false, bool MakeLog = true, CancellationToken Cancel = default)
         {
             if (Method is null)
                 Method = HttpMethod.Get;
@@ -38,7 +46,7 @@ namespace PCL
                     HeaderDictionary["Content-Type"] = ContentType;
                 if (Accept is not null)
                     HeaderDictionary["Accept"] = Accept;
-                string Result = SendRequest(Url, Method, Content, HeaderDictionary, Timeout: Timeout, Encoding: Encoding, SimulateBrowserHeaders: SimulateBrowserHeaders).GetString(Encoding);
+                string Result = (await SendRequestAsync(Url, Method, Content, HeaderDictionary, SimulateBrowserHeaders, Timeout, Encoding, Cancel).ConfigureAwait(false)).GetString(Encoding);
                 // 检查结果是否为完整 JSON（在 #6683 中可能返回空，在被 GFW 截断时可能不完整）
                 // 在此处检查并报错，可以让 NetRequestByClientRetry 等方法进行重试
                 if (RequireJson)
@@ -57,129 +65,115 @@ namespace PCL
             }
             catch (Exception ex)
             {
-                if (MakeLog)
+                if (MakeLog && !ex.IsCanceled())
                     Logger.Warn(ex, $"网络请求失败（{Method.Method}，{Url}）");
                 throw;
             }
         }
         /// <summary>
-    /// 发送网络请求并获取返回内容。
-    /// 会进行至多 45 秒 3 次的尝试，允许最长 30s 的超时。
-    /// </summary>
-    /// <param name="BackupUrl">如果第一次尝试失败，换用的备用 URL。</param>
+        /// 发送网络请求并获取返回内容。
+        /// 会进行至多 45 秒 3 次的尝试，允许最长 30s 的超时。
+        /// </summary>
+        /// <param name="BackupUrl">保留的参数，目前不会使用。</param>
         public static string NetRequestByClientRetry(string Url, HttpMethod Method = null, string BackupUrl = null, object Content = null, string ContentType = null, string Accept = "*/*", string[,] Headers = null, bool RequireJson = false, Encoding Encoding = null, bool SimulateBrowserHeaders = false)
         {
-            int RetryCount = 0;
-            Exception RetryException = null;
+            EnsureNotUiThread(Url);
+            return NetRequestByClientRetryAsync(Url, Method, Content, ContentType, Accept, Headers, RequireJson, Encoding, SimulateBrowserHeaders).GetAwaiter().GetResult();
+        }
+        /// <summary>
+        /// 发送网络请求并获取返回内容。
+        /// 依次以 10s、30s、4s 的超时尝试；第三次只在前两次共耗时 5.5s 以上时才进行（即网络慢而非直接拒绝）。
+        /// 403、404 不重试；429 会等待 10s 再试。
+        /// </summary>
+        public static async Task<string> NetRequestByClientRetryAsync(string Url, HttpMethod Method = null, object Content = null, string ContentType = null, string Accept = "*/*", string[,] Headers = null, bool RequireJson = false, Encoding Encoding = null, bool SimulateBrowserHeaders = false, CancellationToken Cancel = default)
+        {
+            int[] Timeouts = [10000, 30000, 4000];
+            Exception FirstException = null;
             long StartTime = ModBase.GetTimeMs();
-            while (true)
+            for (int RetryCount = 0; ; RetryCount++)
             {
-            try
-            {
-
-                switch (RetryCount)
+                try
                 {
-                    case 0: // 正常尝试
-                        {
-                            return NetRequestByClient(Url, Method, Content, ContentType, Accept, 10000, Headers, RequireJson, Encoding, SimulateBrowserHeaders);
-                        }
-                    case 1: // 慢速重试
-                        {
-                            Thread.Sleep(500);
-                            return NetRequestByClient(Url, Method, Content, ContentType, Accept, 30000, Headers, RequireJson, Encoding, SimulateBrowserHeaders); // 快速重试
-                        }
-
-                    default:
-                        {
-                            if (ModBase.GetTimeMs() - StartTime > 5500L)
-                            {
-                                // 若前两次加载耗费 5 秒以上，才进行重试
-                                Thread.Sleep(500);
-                                return NetRequestByClient(Url, Method, Content, ContentType, Accept, 4000, Headers, RequireJson, Encoding, SimulateBrowserHeaders);
-                            }
-                            else
-                            {
-                                throw RetryException;
-                            }
-                        }
+                    if (RetryCount > 0)
+                        await Task.Delay(500, Cancel).ConfigureAwait(false);
+                    return await NetRequestByClientAsync(Url, Method, Content, ContentType, Accept, Timeouts[RetryCount], Headers, RequireJson, Encoding, SimulateBrowserHeaders, Cancel: Cancel).ConfigureAwait(false);
                 }
-            }
-            catch (Exception ex)
-            {
-                ex.ThrowIfCanceled();
-                if (ex is HttpRequestCodeException)
+                catch (Exception ex)
                 {
-                    if (((HttpRequestCodeException)ex).StatusCode == HttpStatusCode.Forbidden)
+                    ex.ThrowIfCanceled();
+                    if (ex is HttpRequestCodeException CodeEx)
+                    {
+                        if (CodeEx.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.NotFound)
+                            throw;
+                        if ((int)CodeEx.StatusCode == 429)
+                            await Task.Delay(10000, Cancel).ConfigureAwait(false); // Too Many Requests
+                    }
+                    FirstException ??= ex;
+                    if (RetryCount >= 2)
                         throw;
-                    if (((HttpRequestCodeException)ex).StatusCode == HttpStatusCode.NotFound)
-                        throw;
-                    if ((int)((HttpRequestCodeException)ex).StatusCode == 429)
-                        Thread.Sleep(10000); // Too Many Requests
+                    // 前两次失败得很快（通常是直接被拒绝），再试也没有意义
+                    if (RetryCount == 1 && ModBase.GetTimeMs() - StartTime <= 5500L)
+                        throw FirstException;
                 }
-                // 重试：第一次失败记下原因，第二次失败后只在耗时较长时再试一次
-                if (RetryCount == 0)
-                    RetryException = ex;
-                if (RetryCount >= 2)
-                    throw;
-                RetryCount += 1;
-            }
             }
         }
         /// <summary>
-    /// 生成数个线程，同时发送网络请求并获取返回内容。
-    /// 每个线程开始之前会略有延迟。
-    /// </summary>
+        /// 同时发起数个相同的网络请求（每个比上一个晚一些开始），返回最先成功的结果。
+        /// 所有请求都失败时，抛出最后一个失败的原因。
+        /// </summary>
         public static string NetRequestByClientMultiple(string Url, HttpMethod Method = null, int ThreadCount = 3, object Content = null, string ContentType = null, string Accept = "*/*", string[,] Headers = null, bool RequireJson = false, int Timeout = 25000, Encoding Encoding = null, bool SimulateBrowserHeaders = false)
         {
-            var Threads = new List<Thread>();
-            object RequestResult = null;
-            Exception RequestEx = null;
-            int FailCount = 0;
-            for (int i = 1, loopTo = ThreadCount; i <= loopTo; i++)
-            {
-                var th = new Thread(() => { try { RequestResult = NetRequestByClient(Url, Method, Content, ContentType, Accept, Timeout, Headers, RequireJson, Encoding, SimulateBrowserHeaders); } catch (Exception ex) { FailCount += 1; RequestEx = ex; } });
-                th.Start();
-                Threads.Add(th);
-                Thread.Sleep(i * 250);
-                if (RequestResult is not null)
-                    break; // 原 VB 為 GoTo RequestFinished，下方循環的首個判斷會立即進入同一分支
-            }
+            EnsureNotUiThread(Url);
+            return NetRequestByClientMultipleAsync(Url, Method, ThreadCount, Content, ContentType, Accept, Headers, RequireJson, Timeout, Encoding, SimulateBrowserHeaders).GetAwaiter().GetResult();
+        }
+        /// <summary>
+        /// 同时发起数个相同的网络请求（第 i 个在第 i-1 个开始后 i×250ms 开始），返回最先成功的结果。
+        /// 所有请求都失败时，抛出最后一个失败的原因。
+        /// </summary>
+        public static async Task<string> NetRequestByClientMultipleAsync(string Url, HttpMethod Method = null, int Count = 3, object Content = null, string ContentType = null, string Accept = "*/*", string[,] Headers = null, bool RequireJson = false, int Timeout = 25000, Encoding Encoding = null, bool SimulateBrowserHeaders = false, CancellationToken Cancel = default)
+        {
+            using var Others = CancellationTokenSource.CreateLinkedTokenSource(Cancel);
+            var Running = new List<Task<string>>();
+            Task NextStart = Task.CompletedTask; // 到时间开始下一个请求；所有请求都已开始时为 null
+            int Started = 0;
+            Exception LastException = null;
             while (true)
             {
-                if (RequestResult is not null)
+                if (NextStart is not null && NextStart.IsCompleted)
                 {
-
-                    try
-                    {
-                        foreach (var th in Threads)
-                        {
-                            if (th.IsAlive)
-                                th.Interrupt();
-                        }
-                    }
-                    catch
-                    {
-                    }
-                    return Coerce.ToStr(RequestResult);
+                    Started++;
+                    Running.Add(NetRequestByClientAsync(Url, Method, Content, ContentType, Accept, Timeout, Headers, RequireJson, Encoding, SimulateBrowserHeaders, Cancel: Others.Token));
+                    NextStart = Started < Count ? Task.Delay(Started * 250, Cancel) : null;
                 }
-                else if (FailCount == ThreadCount)
+                if (!Running.Any() && NextStart is null)
+                    throw LastException;
+                var Waiting = new List<Task>(Running);
+                if (NextStart is not null)
+                    Waiting.Add(NextStart);
+                var Ended = await Task.WhenAny(Waiting).ConfigureAwait(false);
+                Cancel.ThrowIfCancellationRequested();
+                if (Ended is not Task<string> Request)
+                    continue;
+                Running.Remove(Request);
+                if (Request.Status == TaskStatus.RanToCompletion)
                 {
-                    try
-                    {
-                        foreach (var th in Threads)
-                        {
-                            if (th.IsAlive)
-                                th.Interrupt();
-                        }
-                    }
-                    catch
-                    {
-                    }
-                    throw RequestEx;
+                    // 取消其余的请求，并观察它们的异常
+                    Others.Cancel();
+                    foreach (var Other in Running)
+                        _ = Other.ContinueWith(o => o.Exception, TaskContinuationOptions.OnlyOnFaulted);
+                    return Request.Result;
                 }
-                Thread.Sleep(20);
+                LastException = Request.Exception?.GetBaseException() ?? new OperationCanceledException();
             }
-            return null;
+        }
+
+        /// <summary>
+        /// 同步的网络请求会阻塞当前线程，不允许在 UI 线程中执行（本地回环地址除外）。
+        /// </summary>
+        public static void EnsureNotUiThread(string Url)
+        {
+            if (ModBase.RunInUi() && !Url.Contains("//127."))
+                throw new Exception("在 UI 线程执行了网络请求");
         }
 
         /// <summary>
@@ -221,12 +215,21 @@ namespace PCL
     /// </summary>
         public static void NetDownloadByClient(string Url, string LocalPath, bool SimulateBrowserHeaders = false)
         {
+            EnsureNotUiThread(Url);
+            NetDownloadByClientAsync(Url, LocalPath, SimulateBrowserHeaders).GetAwaiter().GetResult();
+        }
+        /// <summary>
+        /// 通过网络请求直接下载小文件，若文件已存在将被覆盖。最多尝试 3 次。
+        /// 不建议用于下载大文件。
+        /// </summary>
+        public static async Task NetDownloadByClientAsync(string Url, string LocalPath, bool SimulateBrowserHeaders = false, CancellationToken Cancel = default)
+        {
             Logger.Info($"通过网络请求直接下载小文件：{Url} → {LocalPath}");
             for (int RetryCount = 0; ; RetryCount++)
             {
                 try
                 {
-                    FileUtils.Write(LocalPath, SendRequest(Url, HttpMethod.Get, SimulateBrowserHeaders: SimulateBrowserHeaders));
+                    FileUtils.Write(LocalPath, await SendRequestAsync(Url, HttpMethod.Get, SimulateBrowserHeaders: SimulateBrowserHeaders, Cancel: Cancel).ConfigureAwait(false));
                     return;
                 }
                 catch (Exception ex)
@@ -275,12 +278,29 @@ namespace PCL
         // 基础请求函数
         private static byte[] SendRequest(string Url, HttpMethod Method, object Content = null, Dictionary<string, string> Headers = null, bool SimulateBrowserHeaders = false, int Timeout = 25000, Encoding Encoding = null)
         {
-            if (ModBase.RunInUi() && !Url.Contains("//127."))
-                throw new Exception("在 UI 线程执行了网络请求");
+            EnsureNotUiThread(Url);
+            return SendRequestAsync(Url, Method, Content, Headers, SimulateBrowserHeaders, Timeout, Encoding).GetAwaiter().GetResult();
+        }
+        /// <summary>
+        /// 发送请求并读取全部返回内容。发送与读取各自最多等待 Timeout 毫秒。
+        /// 带有磁盘缓存：有效期内直接返回缓存，否则进行缓存协商；网络不可用时沿用上一次成功的内容。
+        /// </summary>
+        private static async Task<byte[]> SendRequestAsync(string Url, HttpMethod Method, object Content = null, Dictionary<string, string> Headers = null, bool SimulateBrowserHeaders = false, int Timeout = 25000, Encoding Encoding = null, CancellationToken Cancel = default)
+        {
             HttpRequestMessage Request = null;
-            CancellationTokenSource CancelToken = null;
             HttpResponseMessage Response = null;
+            CancellationTokenSource StepToken = null;
             bool Cacheable = false;
+            // 每一步（发送、读取）单独计时；超时时释放响应，以中断卡住的读取（.NET Framework 的流读取不响应取消令牌）
+            CancellationToken NewStep()
+            {
+                StepToken?.Dispose();
+                StepToken = CancellationTokenSource.CreateLinkedTokenSource(Cancel);
+                StepToken.CancelAfter(Timeout);
+                StepToken.Token.Register(() => { try { Response?.Dispose(); } catch { } });
+                return StepToken.Token;
+            }
+            bool IsTimeout() => StepToken is not null && StepToken.IsCancellationRequested && !Cancel.IsCancellationRequested;
             try
             {
                 // 构建请求
@@ -288,18 +308,12 @@ namespace PCL
                 Request = new HttpRequestMessage(Method, Url);
                 if (Content is not null && Request.Method != HttpMethod.Get && Request.Method != HttpMethod.Head) // 写入 Content
                 {
-                    if (Content is HttpContent)
+                    Request.Content = Content switch
                     {
-                        Request.Content = ((HttpContent)Content).Clone();
-                    }
-                    else if (Content is byte[])
-                    {
-                        Request.Content = new ByteArrayContent((byte[])Content);
-                    }
-                    else if (Content is not null)
-                    {
-                        Request.Content = new ByteArrayContent((Encoding ?? Encoding.UTF8).GetBytes(Content.ToString()));
-                    }
+                        HttpContent Http => Http.Clone(),
+                        byte[] Bytes => new ByteArrayContent(Bytes),
+                        _ => new ByteArrayContent((Encoding ?? Encoding.UTF8).GetBytes(Content.ToString()))
+                    };
                 }
                 foreach (var Header in Headers ?? new Dictionary<string, string>()) // 写入 Headers
                 {
@@ -323,8 +337,7 @@ namespace PCL
                         return Fresh;
                 }
                 // 发送请求
-                CancelToken = new CancellationTokenSource(Timeout);
-                Response = RequestClient.SendAsync(Request, HttpCompletionOption.ResponseHeadersRead, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
+                Response = await RequestClient.SendAsync(Request, HttpCompletionOption.ResponseHeadersRead, NewStep()).ConfigureAwait(false);
                 if (Cacheable && Response.StatusCode == HttpStatusCode.NotModified)
                 {
                     var Cached = HttpDiskCache.ReadNotModified(Response, Url);
@@ -337,21 +350,16 @@ namespace PCL
                     Retry.Headers.Remove("If-Modified-Since");
                     Request.Dispose();
                     Request = Retry;
-                    CancelToken.Dispose();
-                    CancelToken = new CancellationTokenSource(Timeout);
-                    Response = RequestClient.SendAsync(Request, HttpCompletionOption.ResponseHeadersRead, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
+                    Response = await RequestClient.SendAsync(Request, HttpCompletionOption.ResponseHeadersRead, NewStep()).ConfigureAwait(false);
                 }
                 // 读取响应
                 byte[] ResponseBytes;
-                CancelToken.Dispose();
-                CancelToken = new CancellationTokenSource(Timeout);
-                using (var ResponseStream = Response.Content.ReadAsStreamAsync().GetResultWithTimeout(CancelToken, Timeout))
+                var ReadToken = NewStep();
+                using (var ResponseStream = await Response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                using (var Stream = new MemoryStream())
                 {
-                    using (var Stream = new MemoryStream())
-                    {
-                        ResponseStream.CopyToAsync(Stream, 81920, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
-                        ResponseBytes = Stream.ToArray();
-                    }
+                    await ResponseStream.CopyToAsync(Stream, 81920, ReadToken).ConfigureAwait(false);
+                    ResponseBytes = Stream.ToArray();
                 }
                 if (!Response.IsSuccessStatusCode)
                 {
@@ -362,6 +370,12 @@ namespace PCL
                     HttpDiskCache.Store(Response, Url, ResponseBytes);
                 return ResponseBytes;
             }
+            catch (Exception) when (IsTimeout())
+            {
+                if (TryUseStale(Cacheable, Url, out var Stale))
+                    return Stale;
+                throw new WebException($"连接服务器超时，请稍后再试，或使用 VPN 改善网络环境（{Method}, {Url}）", WebExceptionStatus.Timeout);
+            }
             catch (HttpRequestException ex)
             {
                 // 连接失败（而不是服务器返回了错误码）时，沿用上一次成功的内容
@@ -369,16 +383,10 @@ namespace PCL
                     return Stale;
                 throw;
             }
-            catch (TimeoutException)
-            {
-                if (TryUseStale(Cacheable, Url, out var Stale))
-                    return Stale;
-                throw new WebException($"连接服务器超时，请稍后再试，或使用 VPN 改善网络环境（{Method}, {Url}）", WebExceptionStatus.Timeout);
-            }
             catch (Exception ex)
             {
-                if (!(ex is TaskCanceledException))
-                    ex.ThrowIfCanceled(); // GetResultWithTimeout 会抛出 TaskCanceledException
+                Cancel.ThrowIfCancellationRequested();
+                ex.ThrowIfCanceled();
                 if (ex.IsBadNetwork())
                 {
                     if (TryUseStale(Cacheable, Url, out var Stale))
@@ -393,7 +401,7 @@ namespace PCL
             finally
             {
                 Request?.Dispose();
-                CancelToken?.Dispose();
+                StepToken?.Dispose();
                 Response?.Dispose();
             }
         }
@@ -1823,7 +1831,7 @@ namespace PCL
                 // 整理允许进行查找的文件
                 // 获取 MC 文件夹列表
                 // 平均分配到多个检查线程
-                ModBase.RunInNewThread(() => { try { if (!Files.Any()) { OnFinish(); return; } foreach (NetFile File in Files) { if (File is null) throw new ArgumentException("存在空文件请求！"); foreach (NetSource Source in File.Sources) { if (!(Source.Url.StartsWithF("https://", true) || Source.Url.StartsWithF("http://", true))) { Source.Ex = new ArgumentException("输入的下载链接不正确：" + Source.Url); Source.IsFailed = true; } } if (!File.HasAvailableSource()) throw new ArgumentException("输入的下载链接不正确！"); File.LocalPath = File.LocalPath.Replace("/", @"\"); if (!File.LocalPath.Contains(@":\")) throw new ArgumentException("输入的本地文件地址不正确：" + File.LocalPath); if (File.LocalPath.EndsWithF(@"\")) throw new ArgumentException("请输入含文件名的完整文件路径：" + File.LocalPath); DirectoryUtils.Create(PathUtils.RemoveLastPart(File.LocalPath)); } var NewFiles = NetManager.Start(this); var FilesToCheck = new List<NetFile>(); foreach (var File in NewFiles) { if (File.Check is not null) { FilesToCheck.Add(File); } else { lock (LockState) { File.State = NetState.WaitingToDownload; File.IsCopy = false; } } } if (!FilesToCheck.Any()) return; var Folders = new List<string>(); Folders.Add(Paths.AppData + @".minecraft\"); Folders.AddRange(ModMinecraft.McFolderList.Select(f => f.Location)); Folders = Folders.Distinct().Where(f => DirectoryUtils.Exists(f)).ToList(); int ThreadCount = (FilesToCheck.Count / 40).Clamp(1, 8); if (ThreadCount == 1) { CheckExistingFiles(FilesToCheck, Folders); } else { int BaseSize = FilesToCheck.Count / ThreadCount; int Remainder = FilesToCheck.Count % ThreadCount; int Index = 0; for (int i = 0, loopTo = ThreadCount - 1; i <= loopTo; i++) { int Size = BaseSize + (i < Remainder ? 1 : 0); var ThreadFiles = FilesToCheck.GetRange(Index, Size); Index += Size; ModBase.RunInNewThread(() => CheckExistingFiles(ThreadFiles, Folders), $"下载 文件复制 {Uuid}/{ModBase.GetUuid()}"); } } } catch (Exception ex) { OnFail(new List<Exception>() { new Exception("下载初始化失败", ex) }); } }, "L/下载 " + Uuid); // 创建目标文件夹
+                ModBase.RunInDedicatedThread(() => { try { if (!Files.Any()) { OnFinish(); return; } foreach (NetFile File in Files) { if (File is null) throw new ArgumentException("存在空文件请求！"); foreach (NetSource Source in File.Sources) { if (!(Source.Url.StartsWithF("https://", true) || Source.Url.StartsWithF("http://", true))) { Source.Ex = new ArgumentException("输入的下载链接不正确：" + Source.Url); Source.IsFailed = true; } } if (!File.HasAvailableSource()) throw new ArgumentException("输入的下载链接不正确！"); File.LocalPath = File.LocalPath.Replace("/", @"\"); if (!File.LocalPath.Contains(@":\")) throw new ArgumentException("输入的本地文件地址不正确：" + File.LocalPath); if (File.LocalPath.EndsWithF(@"\")) throw new ArgumentException("请输入含文件名的完整文件路径：" + File.LocalPath); DirectoryUtils.Create(PathUtils.RemoveLastPart(File.LocalPath)); } var NewFiles = NetManager.Start(this); var FilesToCheck = new List<NetFile>(); foreach (var File in NewFiles) { if (File.Check is not null) { FilesToCheck.Add(File); } else { lock (LockState) { File.State = NetState.WaitingToDownload; File.IsCopy = false; } } } if (!FilesToCheck.Any()) return; var Folders = new List<string>(); Folders.Add(Paths.AppData + @".minecraft\"); Folders.AddRange(ModMinecraft.McFolderList.Select(f => f.Location)); Folders = Folders.Distinct().Where(f => DirectoryUtils.Exists(f)).ToList(); int ThreadCount = (FilesToCheck.Count / 40).Clamp(1, 8); if (ThreadCount == 1) { CheckExistingFiles(FilesToCheck, Folders); } else { int BaseSize = FilesToCheck.Count / ThreadCount; int Remainder = FilesToCheck.Count % ThreadCount; int Index = 0; for (int i = 0, loopTo = ThreadCount - 1; i <= loopTo; i++) { int Size = BaseSize + (i < Remainder ? 1 : 0); var ThreadFiles = FilesToCheck.GetRange(Index, Size); Index += Size; ModBase.RunInDedicatedThread(() => CheckExistingFiles(ThreadFiles, Folders), $"下载 文件复制 {Uuid}/{ModBase.GetUuid()}"); } } } catch (Exception ex) { OnFail(new List<Exception>() { new Exception("下载初始化失败", ex) }); } }, "L/下载 " + Uuid); // 创建目标文件夹
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // 没有校验信息，直接开始下载
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // 总是添加官启文件夹，因为 HMCL 会把所有文件存在这里
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // 每个线程至少 40 个文件，最多 8 线程
@@ -2148,12 +2156,12 @@ namespace PCL
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              // 最大线程数检查
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              // 准备中的线程已多于下载中的线程，不再新增
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              // 减少 BMCLAPI 请求频率
-                ModBase.RunInNewThread(() => ThreadStarter(0), "NetManager ThreadStarter 0");
-                ModBase.RunInNewThread(() => ThreadStarter(1), "NetManager ThreadStarter 1");
+                ModBase.RunInDedicatedThread(() => ThreadStarter(0), "NetManager ThreadStarter 0");
+                ModBase.RunInDedicatedThread(() => ThreadStarter(1), "NetManager ThreadStarter 1");
                 // 增加限速余量
                 // 刷新公开属性
                 // 等待 100 ms
-                ModBase.RunInNewThread(() => { try { long NextTick = ModBase.GetTimeMs(); while (true) { if (NetTaskSpeedLimitHigh > 0L) Interlocked.Add(ref NetTaskSpeedLimitLeft, (long)Math.Round(NetTaskSpeedLimitHigh / 10d)); RefreshStat(); NextTick += 100L; long SleepTime = NextTick - ModBase.GetTimeMs(); if (SleepTime > 0L) { Thread.Sleep((int)SleepTime); } else { NextTick = ModBase.GetTimeMs(); } } } catch (Exception ex) { Logger.Error(ex, "下载管理刷新线程出错", LogBehavior.AlertThenCrash); } }, "NetManager StatRefresher"); // 超时，直接追帧，不等待
+                ModBase.RunInDedicatedThread(() => { try { long NextTick = ModBase.GetTimeMs(); while (true) { if (NetTaskSpeedLimitHigh > 0L) Interlocked.Add(ref NetTaskSpeedLimitLeft, (long)Math.Round(NetTaskSpeedLimitHigh / 10d)); RefreshStat(); NextTick += 100L; long SleepTime = NextTick - ModBase.GetTimeMs(); if (SleepTime > 0L) { Thread.Sleep((int)SleepTime); } else { NextTick = ModBase.GetTimeMs(); } } } catch (Exception ex) { Logger.Error(ex, "下载管理刷新线程出错", LogBehavior.AlertThenCrash); } }, "NetManager StatRefresher"); // 超时，直接追帧，不等待
             }
 
             private object DownloadCacheLock = new object();

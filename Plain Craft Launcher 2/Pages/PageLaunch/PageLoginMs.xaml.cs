@@ -96,16 +96,12 @@ namespace PCL
             this.ComboAccounts.IsEnabled = false;
             this.BtnLogin.IsEnabled = false;
             this.BtnLogin.Text = "0%";
-            ModBase.RunInNewThread(() =>
+            ModBase.RunInDedicatedThread(() =>
         {
             try
             {
                 ModLaunch.McLoginMsLoader.Start(GetLoginData(), IsForceRestart: true);
-                while (ModLaunch.McLoginMsLoader.State == ModBase.LoadState.Loading)
-                {
-                    ModBase.RunInUi(() => this.BtnLogin.Text = Math.Round(ModLaunch.McLoginMsLoader.Progress * 100d) + "%");
-                    Thread.Sleep(50);
-                }
+                ModLaunch.McLoginMsLoader.WaitWhileLoading(50, () => ModBase.RunInUi(() => this.BtnLogin.Text = Math.Round(ModLaunch.McLoginMsLoader.Progress * 100d) + "%"));
                 if (ModLaunch.McLoginMsLoader.State == ModBase.LoadState.Finished)
                 {
                     ModBase.RunInUi(() => ModMain.FrmLaunchLeft.RefreshPage(false, true));

@@ -479,7 +479,7 @@ namespace PCL
         private void BackupWorld(ModMinecraft.McInstance Instance, string Folder)
         {
             ModMain.Hint("正在备份世界 " + Folder + "……");
-            ModBase.RunInNewThread(() =>
+            ModBase.RunInBackground(() =>
             {
                 try
                 {

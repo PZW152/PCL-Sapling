@@ -188,11 +188,7 @@ namespace PCL
                 LaunchLoader.Start();
                 // 任务栏进度条
                 ModLoader.LoaderTaskbarAdd(LaunchLoader);
-                while (LaunchLoader.State == ModBase.LoadState.Loading)
-                {
-                    ModMain.FrmLaunchLeft.Dispatcher.Invoke(ModMain.FrmLaunchLeft.LaunchingRefresh);
-                    Thread.Sleep(100);
-                }
+                LaunchLoader.WaitWhileLoading(100, () => ModMain.FrmLaunchLeft.Dispatcher.Invoke(ModMain.FrmLaunchLeft.LaunchingRefresh));
                 ModMain.FrmLaunchLeft.Dispatcher.Invoke(ModMain.FrmLaunchLeft.LaunchingRefresh);
                 // 成功与失败处理
                 switch (LaunchLoader.State)
@@ -279,7 +275,7 @@ namespace PCL
             {
                 if (System.Globalization.CultureInfo.CurrentCulture.Name.StartsWithF("zh") || System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWithF("zh")) // 中文？
                 {
-                    ModBase.RunInNewThread(() => { switch (Settings.Get<int>("SystemLaunchCount")) { case 3: case 8: case 15: case 30: case 50: case 70: case 90: case 110: case 130: case 180: case 220: case 280: case 330: case 380: case 450: case 550: case 660: case 750: case 880: case 950: case 1100: case 1300: case 1500: case 1700: case 1900: { if (ModMain.MyMsgBox("你已经启动了 " + Settings.Get<int>("SystemLaunchCount") + " 次 Minecraft 啦！" + ModBase.CrLf + "如果觉得 Minecraft 还不错，可以购买正版支持一下，毕竟开发游戏也真的很不容易……不要一直白嫖啦。" + ModBase.CrLf + ModBase.CrLf + "在登录一次正版账号后，就不会再出现这个提示了！", "考虑一下正版？", "支持正版游戏！", "下次一定") == 1) { ModBase.OpenWebsite("https://www.xbox.com/zh-cn/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj"); } break; } } }, "Buy Minecraft");
+                    ModBase.RunInDedicatedThread(() => { switch (Settings.Get<int>("SystemLaunchCount")) { case 3: case 8: case 15: case 30: case 50: case 70: case 90: case 110: case 130: case 180: case 220: case 280: case 330: case 380: case 450: case 550: case 660: case 750: case 880: case 950: case 1100: case 1300: case 1500: case 1700: case 1900: { if (ModMain.MyMsgBox("你已经启动了 " + Settings.Get<int>("SystemLaunchCount") + " 次 Minecraft 啦！" + ModBase.CrLf + "如果觉得 Minecraft 还不错，可以购买正版支持一下，毕竟开发游戏也真的很不容易……不要一直白嫖啦。" + ModBase.CrLf + ModBase.CrLf + "在登录一次正版账号后，就不会再出现这个提示了！", "考虑一下正版？", "支持正版游戏！", "下次一定") == 1) { ModBase.OpenWebsite("https://www.xbox.com/zh-cn/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj"); } break; } } }, "Buy Minecraft");
                 }
                 else if (Settings.Get<McLoginType>("LoginType") == McLoginType.Legacy)
                 {
@@ -859,7 +855,7 @@ namespace PCL
                     case HttpStatusCode.NotFound:
                         {
                             Logger.Warn(ex, "微软登录第 6 步汇报 404");
-                            ModBase.RunInNewThread(() => { switch (ModMain.MyMsgBox("请先创建 Minecraft 玩家档案，然后再重新登录。", "登录失败", "创建档案", "取消")) { case 1: { ModBase.OpenWebsite("https://www.minecraft.net/zh-hans/msaprofile/mygames/editprofile"); break; } } }, "Login Failed: Create Profile");
+                            ModBase.RunInDedicatedThread(() => { switch (ModMain.MyMsgBox("请先创建 Minecraft 玩家档案，然后再重新登录。", "登录失败", "创建档案", "取消")) { case 1: { ModBase.OpenWebsite("https://www.minecraft.net/zh-hans/msaprofile/mygames/editprofile"); break; } } }, "Login Failed: Create Profile");
                             throw new OperationCanceledException();
                         }
 
@@ -1983,8 +1979,9 @@ namespace PCL
                     });
                     if (Settings.Get<bool>("LaunchAdvanceRunWait"))
                     {
-                        while (!CustomProcess.HasExited && !Loader.IsCanceled)
-                            Thread.Sleep(10);
+                        while (!Loader.IsCanceled && !CustomProcess.WaitForExit(100))
+                        {
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -2016,8 +2013,9 @@ namespace PCL
                     });
                     if (Settings.Get<bool>("VersionAdvanceRunWait", Instance: ModMinecraft.McInstanceSelected))
                     {
-                        while (!CustomProcess.HasExited && !Loader.IsCanceled)
-                            Thread.Sleep(10);
+                        while (!Loader.IsCanceled && !CustomProcess.WaitForExit(100))
+                        {
+                        }
                     }
                 }
                 catch (Exception ex)

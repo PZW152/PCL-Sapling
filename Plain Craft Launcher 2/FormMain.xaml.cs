@@ -353,7 +353,7 @@ namespace PCL
             }
             string Content = "· " + ContentList.Join(ModBase.CrLf + "· ");
             // 输出更新日志
-            ModBase.RunInNewThread(() => ModMain.MyMsgBox(Content, "PCL 已更新至" + ModBase.VersionDisplay, "确定"), "UpdateLog Output");
+            ModBase.RunInDedicatedThread(() => ModMain.MyMsgBox(Content, "PCL 已更新至" + ModBase.VersionDisplay, "确定"), "UpdateLog Output");
         }
 
         // 窗口加载
@@ -514,7 +514,7 @@ namespace PCL
             ModAnimation.AniStart();
             ModMain.TimerMainStart();
             // 加载池
-            ModBase.RunInNewThread(() =>
+            ModBase.RunInDedicatedThread(() =>
         {
             // EULA 提示
             const int EulaVersion = 2;
@@ -541,7 +541,7 @@ namespace PCL
                 Thread.Sleep(100);
                 ModDownload.DlClientListMojangLoader.Start(1); // PCL 会同时根据这里的加载结果决定是否使用官方源进行下载
                 RunCountSub();
-                ModBase.RunInNewThread(ModMain.TryClearTaskTemp, "TryClearTaskTemp", ThreadPriority.BelowNormal);
+                ModBase.RunInDedicatedThread(ModMain.TryClearTaskTemp, "TryClearTaskTemp", ThreadPriority.BelowNormal);
             }
             catch (Exception ex)
             {
@@ -661,7 +661,7 @@ namespace PCL
             {
                 if (SendWarning && ModMain.MyMsgBox("还有下载任务尚未完成，是否确定退出？", "提示", "确定", "取消") == 2)
                     return;
-                ModBase.RunInNewThread(() =>
+                ModBase.RunInBackground(() =>
         {
             Logger.Info("正在强行停止任务");
             foreach (ModLoader.LoaderBase Task in ModLoader.LoaderTaskbar.ToList())
@@ -1205,7 +1205,7 @@ namespace PCL
         }
         private void FileDrag(IEnumerable<string> FilePathList)
         {
-            ModBase.RunInNewThread(() =>
+            ModBase.RunInDedicatedThread(() =>
         {
             string FilePath = FilePathList.First();
             Logger.Warn($"接受文件拖拽：{FilePath}{(FilePathList.Any() ? $" 等 {FilePathList.Count()} 个文件" : "")}");

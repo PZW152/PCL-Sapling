@@ -126,7 +126,7 @@ namespace PCL
 
                 // 初始化时钟
                 // 设置窗口标题
-                ModBase.RunInNewThread(() => { try { while (State != MinecraftState.Ended && State != MinecraftState.Canceled && (Loader.State != ModBase.LoadState.Canceled || State == MinecraftState.Crashed) && (State != MinecraftState.Crashed || !GameProcess.HasExited)) { TimerWindow(); TimerLog(); for (int i = 1; i <= 3; i++) { if (IsWindowFinished && IsWindowAppeared && !string.IsNullOrEmpty(WindowTitle) && State == MinecraftState.Running && !GameProcess.HasExited) { string RealTitle = WindowTitle.Replace("{date}", DateTime.Now.ToString("yyyy'/'M'/'d")).Replace("{time}", DateTime.Now.ToString("HH':'mm':'ss")); Watcher.SetWindowText((int)WindowHandle, RealTitle); } Thread.Sleep(64); } } if (State == MinecraftState.Crashed) WatcherStateChanged(); WatcherLog("Minecraft 日志监控已退出"); } catch (Exception ex) { Logger.Error(ex, "Minecraft 日志监控主循环出错"); State = MinecraftState.Ended; } }, "Minecraft Watcher PID " + PID);
+                ModBase.RunInDedicatedThread(() => { try { while (State != MinecraftState.Ended && State != MinecraftState.Canceled && (Loader.State != ModBase.LoadState.Canceled || State == MinecraftState.Crashed) && (State != MinecraftState.Crashed || !GameProcess.HasExited)) { TimerWindow(); TimerLog(); for (int i = 1; i <= 3; i++) { if (IsWindowFinished && IsWindowAppeared && !string.IsNullOrEmpty(WindowTitle) && State == MinecraftState.Running && !GameProcess.HasExited) { string RealTitle = WindowTitle.Replace("{date}", DateTime.Now.ToString("yyyy'/'M'/'d")).Replace("{time}", DateTime.Now.ToString("HH':'mm':'ss")); Watcher.SetWindowText((int)WindowHandle, RealTitle); } Thread.Sleep(64); } } if (State == MinecraftState.Crashed) WatcherStateChanged(); WatcherLog("Minecraft 日志监控已退出"); } catch (Exception ex) { Logger.Error(ex, "Minecraft 日志监控主循环出错"); State = MinecraftState.Ended; } }, "Minecraft Watcher PID " + PID);
             }
 
             // 状态
@@ -356,7 +356,7 @@ namespace PCL
                         {
                             // 如果最大化导致屏幕渲染大小不对，那是 MC 的 Bug，不是我的 Bug
                             // ……虽然我很想这样说，但总有人反馈，算了
-                            ModBase.RunInNewThread(() => { try { Thread.Sleep(2000); ShowWindow(WindowHandle, 3U); WatcherLog($"已最大化 Minecraft 窗口：{MinecraftWindowHandle.ToInt64()}"); } catch (Exception ex) { Logger.Warn(ex, "最大化 Minecraft 窗口时出现错误"); } }, "MinecraftWindowMaximize");
+                            ModBase.RunInBackground(() => { try { Thread.Sleep(2000); ShowWindow(WindowHandle, 3U); WatcherLog($"已最大化 Minecraft 窗口：{MinecraftWindowHandle.ToInt64()}"); } catch (Exception ex) { Logger.Warn(ex, "最大化 Minecraft 窗口时出现错误"); } }, "MinecraftWindowMaximize");
                         }
                     }
                     else if (!IsWindowAppeared)
@@ -484,7 +484,7 @@ namespace PCL
                 WatcherLog("Minecraft 已崩溃，将在 2 秒后开始崩溃分析", LogLevel.Error);
                 ModMain.Hint("检测到 Minecraft 出现错误，错误分析已开始……", ModMain.HintType.Red);
                 ModMain.FeedbackInfo();
-                ModBase.RunInNewThread(() => { try { Thread.Sleep(2000); WatcherLog("崩溃分析开始"); var Analyzer = new CrashAnalyzer(Instance); Analyzer.Collect(Instance.PathIndie, LatestLog.ToList()); Analyzer.Prepare(); Analyzer.Analyze(); Analyzer.Output(false, new List<string>() { Instance.PathVersion + Instance.Name + ".json", Paths.Base + @"PCL\Log1.txt", Paths.Base + @"PCL\LatestLaunch.bat" }); } catch (Exception ex) { Logger.Error(ex, "崩溃分析失败"); } }, "Crash Analyzer");
+                ModBase.RunInDedicatedThread(() => { try { Thread.Sleep(2000); WatcherLog("崩溃分析开始"); var Analyzer = new CrashAnalyzer(Instance); Analyzer.Collect(Instance.PathIndie, LatestLog.ToList()); Analyzer.Prepare(); Analyzer.Analyze(); Analyzer.Output(false, new List<string>() { Instance.PathVersion + Instance.Name + ".json", Paths.Base + @"PCL\Log1.txt", Paths.Base + @"PCL\LatestLaunch.bat" }); } catch (Exception ex) { Logger.Error(ex, "崩溃分析失败"); } }, "Crash Analyzer");
             }
 
             // 强制关闭

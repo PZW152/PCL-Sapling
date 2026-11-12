@@ -349,28 +349,27 @@ return true;
 
                 #region 从 CurseForge 和 Modrinth 获取结果列表，存储于 RawResults
 
-                var WorkThreads = new List<Thread>();
+                var WorkTasks = new List<System.Threading.Tasks.Task>(); // 各平台的搜索任务
                 var Errors = new ConcurrentBag<(Exception Ex, ResourcePlatforms Source)>();
 
                 // 在 1.14-，部分老 Mod 没有设置支持的加载器，因此添加 Forge 筛选就会出现遗漏
                 // 所以，在发起请求时不筛选加载器，然后在返回的结果中自行筛除不是 Forge 的 Mod
                 bool IgnoreModLoaderFilter = Request.ModLoaders == ModLoaders.Forge && McVersion.VersionToDrop(Request.GameVersion) < 140;
                 var SearchResults = new ConcurrentBag<ResourceProject>();
-                try
                 {
 
                     // CurseForge 搜索
                     if (Request.Sources.HasFlagF(ResourcePlatforms.CurseForge) && !(Storage.CurseForgeTotal > -1 && Storage.CurseForgeTotal <= Storage.CurseForgeOffset) && (!IsChineseSearch || IsChineseSearch && !string.IsNullOrEmpty(CurseForgeAltSearchText))) // 剩余的未显示的搜索结果不足
                                                                                                                                                                                                                                                                      // 如果是中文搜索，就只在有对应搜索关键词的时候才继续
                     {
-                        WorkThreads.Add(ModBase.RunInNewThread(() =>
+                        WorkTasks.Add(ModBase.RunInBackgroundAsync(async () =>
             {
                 try
                 {
                     // 获取工程列表
                     string CurseForgeUrl = Request.GetCurseForgeAddress(CurseForgeAltSearchText ?? RawSearchText, IgnoreModLoaderFilter);
                     Logger.Info($"开始 CurseForge 搜索：{CurseForgeUrl}");
-                    JObject RequestResult = (JObject)ModDownload.DlModRequest(CurseForgeUrl);
+                    JObject RequestResult = (JObject)(await ModDownload.DlModRequestAsync(CurseForgeUrl, Cancel: Task.RunToken).ConfigureAwait(false));
                     var ProjectList = new List<ResourceProject>();
                     foreach (JObject JsonEntry in RequestResult["data"])
                     {
@@ -402,13 +401,13 @@ return true;
                     if (Request.Sources.HasFlagF(ResourcePlatforms.Modrinth) && !(Storage.ModrinthTotal > -1 && Storage.ModrinthTotal <= Storage.ModrinthOffset) && (!IsChineseSearch || IsChineseSearch && !string.IsNullOrEmpty(ModrinthAltSearchText))) // 剩余的未显示的搜索结果不足
                                                                                                                                                                                                                                                            // 如果是中文搜索，就只在有对应搜索关键词的时候才继续
                     {
-                        WorkThreads.Add(ModBase.RunInNewThread(() =>
+                        WorkTasks.Add(ModBase.RunInBackgroundAsync(async () =>
             {
                 try
                 {
                     string ModrinthUrl = Request.GetModrinthAddress(ModrinthAltSearchText ?? RawSearchText, IgnoreModLoaderFilter);
                     Logger.Info($"开始 Modrinth 搜索：{ModrinthUrl}");
-                    JObject RequestResult = (JObject)ModDownload.DlModRequest(ModrinthUrl);
+                    JObject RequestResult = (JObject)(await ModDownload.DlModRequestAsync(ModrinthUrl, Cancel: Task.RunToken).ConfigureAwait(false));
                     var ProjectList = new List<ResourceProject>();
                     foreach (JObject JsonEntry in RequestResult["hits"])
                         ProjectList.Add(new ResourceProject(JsonEntry));
@@ -433,14 +432,14 @@ return true;
                     if (Request.Sources.HasFlagF(ResourcePlatforms.Modrinth) && !(Storage.ModrinthTotal > -1 && Storage.ModrinthTotal <= Storage.ModrinthOffset) && ModrinthSlugs.Any()) // 剩余的未显示的搜索结果不足
                                                                                                                                                                                          // 有直接获取的 Slug
                     {
-                        WorkThreads.Add(ModBase.RunInNewThread(() =>
+                        WorkTasks.Add(ModBase.RunInBackgroundAsync(async () =>
             {
                 try
                 {
                     string ModrinthUrl = $"https://api.modrinth.com/v2/projects?ids=[\"{ModrinthSlugs.Join("\",\"")}\"]";
                     Logger.Info($"开始 Modrinth 直接获取：{ModrinthUrl}");
 
-                    var ProjectList = new List<ResourceProject>();foreach (JObject JsonEntry in ModDownload.DlModRequest(ModrinthUrl))
+                    var ProjectList = new List<ResourceProject>();foreach (JObject JsonEntry in (await ModDownload.DlModRequestAsync(ModrinthUrl, Cancel: Task.RunToken).ConfigureAwait(false)))
                     {
                         ;
                         // 应用筛选
@@ -460,7 +459,7 @@ return true;
                         var ProjectIds = ProjectList.Select(p => p.Id).Join("\",\"project_id:");
                         var Loaders = Request.ModLoaders.Flags().Select(f => f.ToString().Lower()).Join("\",\"categories:");string FilterUrl = $"https://api.modrinth.com/v2/search?limit={ProjectList.Count}&facets=" + $"[[\"project_id:{ProjectIds}\"],[\"categories:{Loaders}\"],[\"versions:{Request.GameVersion}\"]]";
 
-                        var MatchedIds = ModDownload.DlModRequest(FilterUrl)["hits"].Select(h => h["project_id"].ToString()).ToList();ProjectList.KeepIf(p => MatchedIds.Contains(p.Id));
+                        var MatchedIds = (await ModDownload.DlModRequestAsync(FilterUrl, Cancel: Task.RunToken).ConfigureAwait(false))["hits"].Select(h => h["project_id"].ToString()).ToList();ProjectList.KeepIf(p => MatchedIds.Contains(p.Id));
                     }
                     // 更新结果
                     ProjectList.ForEach(p => SearchResults.Add(p));
@@ -477,12 +476,12 @@ return true;
             }, "Modrinth Get"));
                     }
 
-                    // 等待线程结束
-                    foreach (var Thread in WorkThreads)
+                    // 等待搜索结束
+                    foreach (var Work in WorkTasks)
                     {
-                        Thread.Join();
+                        Work.Wait();
                         if (Task.IsCanceled)
-                            return; // 会自动触发 Finally 以清理线程
+                            return; // 未结束的搜索会自行结束，结果被丢弃
                     }
                     RawResults = new List<ResourceProject>(SearchResults);
 
@@ -528,14 +527,6 @@ return true;
                         {
                             Storage.ErrorMessage = $"无法连接到 Modrinth，所以目前仅显示了来自 CurseForge 的内容，搜索结果可能不全。{ModBase.CrLf}请稍后再试，或使用 VPN 改善网络环境。";
                         }
-                    }
-                }
-                finally
-                {
-                    foreach (var Thread in WorkThreads)
-                    {
-                        if (Thread.IsAlive)
-                            Thread.Interrupt();
                     }
                 }
 

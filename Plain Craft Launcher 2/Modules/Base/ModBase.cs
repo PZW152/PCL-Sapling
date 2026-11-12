@@ -1090,13 +1090,59 @@ namespace PCL
         }
 
         /// <summary>
-    /// 在新的工作线程中执行代码。
-    /// </summary>
-        public static Thread RunInNewThread(Action Action, string Name = null, ThreadPriority Priority = ThreadPriority.Normal)
+        /// 在线程池中执行短时间的后台工作。出错时记录日志（取消不视为出错）。
+        /// 会长时间占用线程的工作（循环、等待用户在弹窗中操作等）请使用 RunInDedicatedThread。
+        /// </summary>
+        public static Task RunInBackground(Action Action, string Name = null)
         {
-            var th = new Thread(() => { try { Action(); } catch (Exception ex) { Logger.Error(ex, $"{Name}：线程执行失败"); } }) { Name = Name ?? "Runtime New Invoke " + GetUuid() + "#", Priority = Priority };
-            th.Start();
-            return th;
+            return Task.Run(() => RunLogged(Action, Name));
+        }
+        /// <summary>
+        /// 在线程池中执行异步的后台工作。出错时记录日志（取消不视为出错）。
+        /// </summary>
+        public static Task RunInBackgroundAsync(Func<Task> Action, string Name = null)
+        {
+            return Task.Run(async () =>
+            {
+                try
+                {
+                    await Action().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    LogBackgroundFailure(ex, Name);
+                }
+            });
+        }
+        /// <summary>
+        /// 在专用线程中执行会长时间占用线程的工作：循环、监视、等待用户在弹窗中操作等。出错时记录日志（取消不视为出错）。
+        /// </summary>
+        public static Task RunInDedicatedThread(Action Action, string Name = null, ThreadPriority Priority = ThreadPriority.Normal)
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                Thread.CurrentThread.Name = Name ?? "Dedicated " + GetUuid() + "#";
+                Thread.CurrentThread.Priority = Priority;
+                RunLogged(Action, Name);
+            }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        }
+        private static void RunLogged(Action Action, string Name)
+        {
+            try
+            {
+                Action();
+            }
+            catch (Exception ex)
+            {
+                LogBackgroundFailure(ex, Name);
+            }
+        }
+        private static void LogBackgroundFailure(Exception ex, string Name)
+        {
+            if (ex.IsCanceled())
+                Logger.Info($"{Name ?? "后台任务"}：已取消");
+            else
+                Logger.Error(ex, $"{Name ?? "后台任务"}：执行失败");
         }
         /// <summary>
     /// 确保在 UI 线程中执行代码。
@@ -1156,7 +1202,7 @@ namespace PCL
         {
             if (RunInUi())
             {
-                RunInNewThread(Action, "Invoke " + GetUuid());
+                RunInBackground(Action, "Invoke " + GetUuid());
             }
             else
             {
