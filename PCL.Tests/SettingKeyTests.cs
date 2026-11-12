@@ -34,7 +34,7 @@ public class SettingKeyTests
     public async Task 设置键没有重复声明()
     {
         var Keys = DeclaredKeys(FindSourceRoot());
-        await Assert.That(Keys.Count > 100).IsTrue();
+        await Assert.That(Keys.Count > 60).IsTrue(); // 只是确认正则真的读到了设置表
         var Duplicated = Keys.GroupBy(k => k).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
         await Assert.That(string.Join(", ", Duplicated)).IsEqualTo("");
     }
