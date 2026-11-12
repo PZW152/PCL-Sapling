@@ -842,6 +842,24 @@ namespace PCL
                 }
                 TriggerPageBack();
             }
+            // Ctrl + 数字切换顶部分页（取自 Sapling）：1 启动、2 下载、3 设置
+            if (Keyboard.Modifiers == ModifierKeys.Control && !(Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase))
+            {
+                var Target = e.Key switch
+                {
+                    Key.D1 or Key.NumPad1 => this.BtnTitleSelect0,
+                    Key.D2 or Key.NumPad2 => this.BtnTitleSelect1,
+                    Key.D3 or Key.NumPad3 => this.BtnTitleSelect3,
+                    _ => null
+                };
+                if (Target is not null)
+                {
+                    if (Target.Visibility == Visibility.Visible && !Target.Checked)
+                        Target.SetChecked(true, true, true);
+                    e.Handled = true;
+                    return;
+                }
+            }
             // 更改隐藏版本可见性
             if (e.Key == Key.F11 && PageCurrent == (PageStackData)PageType.InstanceSelect)
             {

@@ -49,6 +49,17 @@
                     </Image>
                 </Grid>
             </local:MyCard>
+            <local:MyCard Margin="0,0,0,15" Title="反馈与支持">
+                <StackPanel Margin="25,40,25,15">
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,10" Text="遇到问题时，请在本修改版的仓库反馈，不要打扰 PCL 原作者。附上诊断信息可以更快找到原因。" />
+                    <WrapPanel>
+                        <local:MyButton Click="BtnAboutFeedback_Click" Text="反馈问题" MinWidth="140" Height="35" Padding="13,0" Margin="0,0,20,10" ColorType="Highlight" />
+                        <local:MyButton Click="BtnAboutDiagnostics_Click" Text="复制诊断信息" MinWidth="140" Height="35" Padding="13,0" Margin="0,0,20,10" />
+                        <local:MyButton Click="BtnAboutDataFolder_Click" Text="打开数据文件夹" MinWidth="140" Height="35" Padding="13,0" Margin="0,0,20,10" />
+                        <local:MyButton Click="BtnAboutLicenses_Click" Text="第三方许可" MinWidth="140" Height="35" Padding="13,0" Margin="0,0,20,10" />
+                    </WrapPanel>
+                </StackPanel>
+            </local:MyCard>
             <local:MyCard Margin="0,0,0,15" Title="特别鸣谢">
                 <Grid Margin="21,40,21,16">
                     <Grid.RowDefinitions>

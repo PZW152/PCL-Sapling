@@ -26,10 +26,25 @@ namespace PCL
     {
 
         // 开始
+        /// <summary>
+        /// 保留系统的区域格式，但把历法换成公历。
+        /// </summary>
+        private static void UseGregorianCalendar()
+        {
+            var Culture = (System.Globalization.CultureInfo)System.Globalization.CultureInfo.CurrentCulture.Clone();
+            if (Culture.DateTimeFormat.Calendar is System.Globalization.GregorianCalendar)
+                return;
+            var Gregorian = Culture.OptionalCalendars.OfType<System.Globalization.GregorianCalendar>().FirstOrDefault() ?? new System.Globalization.GregorianCalendar();
+            Culture.DateTimeFormat.Calendar = Gregorian;
+            System.Globalization.CultureInfo.CurrentCulture = Culture;
+            System.Globalization.CultureInfo.DefaultThreadCurrentCulture = Culture;
+        }
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             try
             {
+                // 日期一律使用公历：系统使用民国纪年等其他历法时，日期会显示成“115/09/15”
+                UseGregorianCalendar();
                 // 核心初始化
                 MeloongCore.Main.Init("PCL");
                 MeloongCore.Wpf.Main.Init();
