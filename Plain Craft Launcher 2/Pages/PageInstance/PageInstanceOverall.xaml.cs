@@ -78,7 +78,7 @@ namespace PCL
                 long LastTicks = Coerce.ToLong(ModBase.ReadIni(IniPath, "LastPlayed", "0"));
                 string Played = PlayTime.Describe(TimeSpan.FromSeconds(Seconds), LastTicks > 0 ? new DateTime(LastTicks) : null, DateTime.Now);
                 if (Played != "")
-                    InstanceHeaderItem.Info = string.IsNullOrEmpty(InstanceHeaderItem.Info) ? Played : InstanceHeaderItem.Info + "；" + Played;
+                    InstanceHeaderItem.Info = string.IsNullOrEmpty(PageInstanceLeft.Instance.Info) ? Played : PageInstanceLeft.Instance.Info + "；" + Played; // 列表项自带的“上次游玩”在这里换成完整说明
             }
             catch (Exception ex)
             {
@@ -457,7 +457,7 @@ namespace PCL
                 {
                     Title = World.Folder,
                     Info = "单人世界，上次游玩：" + PlayTime.FormatLastPlayed(World.LastPlayed, DateTime.Now),
-                    Logo = "pack://application:,,,/images/Blocks/Grass.png",
+                    Logo = WorldIcon(Instance, World.Folder),
                     Type = MyListItem.CheckType.Clickable,
                     Height = 42d,
                     Tag = World.Folder
@@ -485,6 +485,15 @@ namespace PCL
             }
             this.LabSavesHint.Visibility = Worlds.Any() && !CanQuickPlay ? Visibility.Visible : Visibility.Collapsed;
             this.CardSaves.Visibility = Worlds.Any() || Servers.Any() ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        /// <summary>
+        /// 世界自己的图标（游戏会在存档里保存 icon.png），没有时用草方块。
+        /// </summary>
+        private static string WorldIcon(ModMinecraft.McInstance Instance, string Folder)
+        {
+            string Icon = System.IO.Path.Combine(Instance.PathIndie, "saves", Folder, "icon.png");
+            return System.IO.File.Exists(Icon) ? Icon : "pack://application:,,,/images/Blocks/Grass.png";
         }
 
         private static void LaunchInto(ModMinecraft.McInstance Instance, string WorldFolder, string ServerAddress)

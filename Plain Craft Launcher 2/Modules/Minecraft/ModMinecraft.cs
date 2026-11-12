@@ -1054,13 +1054,31 @@ namespace PCL
                 return (Info + ModLoaderInfo).Replace("_", "-");
             }
 
+            /// <summary>
+            /// 版本列表中描述后面的“上次游玩”（取自 Sapling），例如 “  ·  昨天玩过”。从未游玩时为空。
+            /// </summary>
+            private string LastPlayedSuffix()
+            {
+                try
+                {
+                    long Ticks = Coerce.ToLong(ModBase.ReadIni(PathVersion + @"PCL\Setup.ini", "LastPlayed", "0"));
+                    if (Ticks <= 0)
+                        return "";
+                    string Last = PlayTime.FormatLastPlayed(new DateTime(Ticks), DateTime.Now);
+                    return "  ·  " + Last + (Last.Contains("/") ? " 玩过" : "玩过");
+                }
+                catch
+                {
+                    return "";
+                }
+            }
             public MyVirtualizingElement<MyListItem> ToListItem(Action<MyListItem, EventArgs> ContentHandler = null)
             {
                 return new MyVirtualizingElement<MyListItem>(() =>
         {
             var NewItem = new MyListItem()
             {
-                Info = Info,
+                Info = Info + LastPlayedSuffix(),
                 Height = 42d,
                 Tag = this,
                 SnapsToDevicePixels = true,
