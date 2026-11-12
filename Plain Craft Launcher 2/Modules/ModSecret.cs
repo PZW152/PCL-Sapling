@@ -47,11 +47,12 @@ namespace PCL
                 }
                 else if (SimulateBrowserHeaders)
                 {
-                    Req.Headers.Add("User-Agent", $"PCL-Sapling/{ModBase.VersionBaseName} Mozilla/5.0 AppleWebKit/537.36 Chrome/63.0.3239.132 Safari/537.36");
+                    Req.Headers.TryAddWithoutValidation("User-Agent", $"PCL-Sapling/{ModBase.VersionBaseName} Mozilla/5.0 AppleWebKit/537.36 Chrome/63.0.3239.132 Safari/537.36");
                 }
                 else
                 {
-                    Req.Headers.Add("User-Agent", $"PZW152/PCL-Sapling/{ModBase.VersionBaseName} (+{ModBase.RepoUrl})");
+                    // 产品名/版本号（联系方式）：Modrinth 等 API 要求能识别出是哪个程序发出的请求
+                    Req.Headers.TryAddWithoutValidation("User-Agent", $"PCL-Sapling/{ModBase.VersionBaseName} (+{ModBase.RepoUrl})");
                 }
             }
             if (Url.Contains("api.curseforge.com") || Url.Contains("forgecdn.net"))
