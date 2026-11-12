@@ -663,11 +663,77 @@ namespace PCL
             {
                 ModLaunch.McLaunchStart();
             }
-            else if (this.BtnLaunch.Text == "下载游戏")
+            else if (BtnLaunchState == 2)
             {
-                ModMain.FrmMain.PageChange((FormMain.PageStackData)FormMain.PageType.Download, FormMain.PageSubType.DownloadInstall);
+                if (QuickStartEntry is null)
+                    ModMain.FrmMain.PageChange((FormMain.PageStackData)FormMain.PageType.Download, FormMain.PageSubType.DownloadInstall);
+                else
+                    QuickStart();
             }
         }
+
+        #region 一键开始（取自 Sapling：没有任何版本时，一键安装最新正式版并启动）
+
+        /// <summary>
+        /// 最新正式版在版本列表中的条目；版本列表尚未获取到时为 null，此时按钮仍是“下载游戏”。
+        /// </summary>
+        private JObject QuickStartEntry = null;
+        /// <summary>
+        /// 一键开始安装的版本名；安装完成并被选中后自动启动。
+        /// </summary>
+        private string QuickStartPending = null;
+
+        private void QuickStartPrepare()
+        {
+            ModBase.RunInThread(() =>
+            {
+                try
+                {
+                    ModDownload.DlClientListLoader.WaitForExit();
+                    var Json = ModDownload.DlClientListLoader.Output.Value;
+                    string Latest = Json?["latest"]?["release"]?.ToString();
+                    var Entry = Json?["versions"]?.OfType<JObject>().FirstOrDefault(v => v["id"]?.ToString() == Latest);
+                    if (Entry is null)
+                        return;
+                    ModBase.RunInUi(() =>
+                    {
+                        QuickStartEntry = Entry;
+                        if (BtnLaunchState == 2 && QuickStartPending is null)
+                            this.BtnLaunch.Text = "开始玩 " + Latest;
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, "获取最新正式版失败，启动按钮保持为下载游戏");
+                }
+            });
+        }
+
+        private void QuickStart()
+        {
+            string Latest = QuickStartEntry["id"].ToString();
+            string Name = Latest;
+            for (int i = 2; DirectoryUtils.Exists($@"{ModMinecraft.McFolderSelected}versions\{Name}\"); i++)
+                Name = $"{Latest}-{i}";
+            var Request = new ModDownloadLib.McInstallRequest()
+            {
+                NewInstanceName = Name,
+                InstanceFolder = $@"{ModMinecraft.McFolderSelected}versions\{Name}\",
+                Components = new McComponents(Latest, null, null, null, null, null, null, null),
+                MinecraftJson = QuickStartEntry["url"].ToString()
+            };
+            if (!ModDownloadLib.McInstallStart(Request))
+                return;
+            Logger.Info($"一键开始：安装 {Name}，完成后自动启动");
+            QuickStartPending = Name;
+            BtnLaunchState = -1; // 安装失败或取消后，版本列表刷新时会恢复按钮
+            this.BtnLaunch.Text = "正在下载";
+            this.BtnLaunch.IsEnabled = false;
+            this.LabVersion.Text = $"Minecraft {Latest}，完成后自动启动";
+            ModMain.Hint($"正在下载 Minecraft {Latest}，完成后会自动启动", ModMain.HintType.Blue);
+        }
+
+        #endregion
         private int BtnLaunchState = 0;
         private ModMinecraft.McInstance BtnLaunchInstance = null;
         public void RefreshButtonsUI()
@@ -725,11 +791,14 @@ namespace PCL
                     case 2:
                         {
                             Logger.Info("启动按钮：无 Minecraft 版本，要求下载");
-                            ModMain.FrmLaunchLeft.BtnLaunch.Text = "下载游戏";
+                            ModMain.FrmLaunchLeft.BtnLaunch.Text = QuickStartEntry is null ? "下载游戏" : "开始玩 " + QuickStartEntry["id"];
                             ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = true;
                             ModMain.FrmLaunchLeft.LabVersion.Text = "未找到可用的游戏版本";
                             ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = true;
                             ModMain.FrmLaunchLeft.BtnMore.Visibility = Visibility.Collapsed;
+                            QuickStartPending = null; // 安装失败或取消
+                            if (QuickStartEntry is null)
+                                QuickStartPrepare();
                             break;
                         }
                     case 3:
@@ -739,6 +808,11 @@ namespace PCL
                             ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = true;
                             ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = true;
                             ModMain.FrmLaunchLeft.LabVersion.Text = ModMinecraft.McInstanceSelected.Name;
+                            if (QuickStartPending is not null && ModMinecraft.McInstanceSelected.Name == QuickStartPending)
+                            {
+                                QuickStartPending = null;
+                                ModBase.RunInUi(() => ModLaunch.McLaunchStart(), true); // 等按钮状态更新完再启动
+                            }
                             break;
                         }
                         // FrmLaunchLeft.BtnMore.Visibility = Visibility.Visible '由功能隐藏设置修改

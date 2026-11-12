@@ -2704,9 +2704,12 @@ pause";
                     {
                         ModBase.WriteIni(ModMinecraft.McFolderSelected + "PCL.ini", "InstanceCache", ""); // 清空缓存（合并安装会先生成文件夹，这会在刷新时误判为可以使用缓存）
                         ModMain.Hint(Loader.Name + "成功！", ModMain.HintType.Green);
+                        // 自动选择安装成功的版本：刷新版本列表时会按 PCL.ini 中记录的版本选择
+                        string Folder = Coerce.ToStr(((ModLoader.ILoaderCombo)Loader).InputBoxed).TrimEnd('\\');
+                        if (Folder.StartsWith(ModMinecraft.McFolderSelected + @"versions\", StringComparison.OrdinalIgnoreCase))
+                            ModBase.WriteIni(ModMinecraft.McFolderSelected + "PCL.ini", "Version", Path.GetFileName(Folder));
                         break;
                     }
-                // TODO: 自动选择安装成功的版本
                 case ModBase.LoadState.Failed:
                     {
                         ModMain.MyMsgBox(Loader.Error.GetDisplay(true), Loader.Name + "失败", IsWarn: true);
