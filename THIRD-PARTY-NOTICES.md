@@ -13,5 +13,6 @@ Plain Craft Launcher (PCL) 樹苗修改版基於 PCL 修改，並使用以下第
 | [libwebp](https://chromium.googlesource.com/webm/libwebp) | WebP 解碼 | BSD-3-Clause |
 | [OpenCC](https://github.com/BYVoid/OpenCC) | 繁體轉換表的字詞資料（PCLCS/Lang/zh-Hant.txt） | Apache-2.0 |
 | [PolySharp](https://github.com/Sergio0694/PolySharp) | 在 .NET Framework 上使用新版 C# 語法（編譯時產生的代碼） | MIT |
+| [PCL CE](https://github.com/PCL-Community/PCL-CE) | Quilt 圖示（Images/Blocks/Quilt.png） | Apache-2.0 |
 
 樹苗修改版自己新增的代碼與 Sapling 移植而來的功能由 PZW152 編寫。
