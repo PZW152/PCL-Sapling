@@ -90,7 +90,7 @@ namespace PCL
         /// <summary>
     /// 程序的缓存文件夹路径，以 \ 结尾。
     /// </summary>
-        public static string PathTemp = PathUtils.AddSlashSuffix((string.IsNullOrEmpty(Settings.Get<string>("SystemSystemCache")) ? Path.GetTempPath() + @"PCL\" : Settings.Get<string>("SystemSystemCache")).Replace("/", @"\"));
+        public static string PathTemp = Path.GetTempPath() + @"PCL\";
         /// <summary>
     /// 当前程序的语言。
     /// </summary>

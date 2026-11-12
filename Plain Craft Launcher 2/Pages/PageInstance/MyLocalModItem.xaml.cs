@@ -474,44 +474,22 @@ namespace PCL
             // 标题与描述
             string DescFileName = PathUtils.GetFileNameWithoutExtension(Entry.EnabledName);
             string NewDescription;
-            if (Settings.Get<int>("ToolModLocalNameStyle") == 1)
+            // 标题显示译名，详情显示文件名
+            // 标题
+            if (Entry.Project is null)
             {
-                // 标题显示文件名，详情显示译名
-                // 标题
-                Title = DescFileName;
-                SubTitle = "";
-                // 描述
-                if (Entry.Project is null)
-                {
-                    NewDescription = Entry.Display;
-                }
-                else
-                {
-                    var Titles = Entry.Project.GetControlTitle(false);
-                    NewDescription = Titles.Title + Titles.SubTitle;
-                }
-                NewDescription = NewDescription.Replace("  |  ", " / ");
-                if (Entry.Version is not null)
-                    NewDescription += $" ({Entry.Version})";
+                Title = Entry.Display;
+                SubTitle = Entry.Version is null ? "" : "  |  " + Entry.Version;
             }
             else
             {
-                // 标题显示译名，详情显示文件名
-                // 标题
-                if (Entry.Project is null)
-                {
-                    Title = Entry.Display;
-                    SubTitle = Entry.Version is null ? "" : "  |  " + Entry.Version;
-                }
-                else
-                {
-                    var Titles = Entry.Project.GetControlTitle(false);
-                    Title = Titles.Title;
-                    SubTitle = Titles.SubTitle + (Entry.Version is null ? "" : "  |  " + Entry.Version);
-                }
-                // 描述
-                NewDescription = DescFileName;
+                var Titles = Entry.Project.GetControlTitle(false);
+                Title = Titles.Title;
+                SubTitle = Titles.SubTitle + (Entry.Version is null ? "" : "  |  " + Entry.Version);
             }
+            // 描述
+            NewDescription = DescFileName;
+
             if (Entry.Project is not null)
             {
                 NewDescription += ": " + Entry.Project.Description.ReplaceLineEndings("");

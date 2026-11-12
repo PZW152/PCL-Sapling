@@ -252,8 +252,6 @@ namespace PCL
 
         private static void McLaunchPrecheck()
         {
-            if (Settings.Get<bool>("SystemDebugDelay"))
-                Thread.Sleep(ModBase.RandomInteger(100, 2000));
             // 检查路径
             if (ModMinecraft.McInstanceSelected.PathIndie.Contains("!") || ModMinecraft.McInstanceSelected.PathIndie.Contains(";"))
                 throw new Exception("游戏路径中不可包含 ! 或 ;（" + ModMinecraft.McInstanceSelected.PathIndie + "）");
@@ -1380,7 +1378,7 @@ namespace PCL
             string ArgumentInfo;
             ArgumentInfo = Settings.Get<string>("VersionArgumentInfo", Instance: ModMinecraft.McInstanceSelected);
             if (string.IsNullOrEmpty(ArgumentInfo))
-                ArgumentInfo = Settings.Get<string>("LaunchArgumentInfo");
+                ArgumentInfo = "PCL";
             if (string.IsNullOrEmpty(ArgumentInfo)) // 若自定义信息为空，则必须从参数中去掉该部分，不然 MC 会显示 ${version_type} 或者一个空字符串
             {
                 if (Arguments.Contains("--versionType"))
@@ -2076,24 +2074,6 @@ namespace PCL
             try
             {
                 GameProcess.PriorityBoostEnabled = true;
-                switch (Settings.Get<int>("LaunchArgumentPriority"))
-                {
-                    case 0: // 高
-                        {
-                            GameProcess.PriorityClass = ProcessPriorityClass.AboveNormal;
-                            break;
-                        }
-                    case 2: // 低
-                        {
-                            GameProcess.PriorityClass = ProcessPriorityClass.BelowNormal; // 中
-                            break;
-                        }
-
-                    default:
-                        {
-                            break;
-                        }
-                }
             }
             catch (Exception ex)
             {
@@ -2129,8 +2109,6 @@ namespace PCL
 
             // 获取窗口标题
             string WindowTitle = Settings.Get<string>("VersionArgumentTitle", Instance: ModMinecraft.McInstanceSelected);
-            if (string.IsNullOrEmpty(WindowTitle))
-                WindowTitle = Settings.Get<string>("LaunchArgumentTitle");
             WindowTitle = ModMain.ArgumentReplace(WindowTitle, ReplaceTime: false);
 
             // 初始化等待

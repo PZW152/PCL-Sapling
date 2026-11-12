@@ -30,8 +30,7 @@ namespace PCL
         {
             get
             {
-                int Setting = Settings.Get<int>("SystemDebugAnim");
-                return Setting >= 30 ? 200d : (Setting * 0.1d + 0.1d).Clamp(0.1d, 3d);
+                return 1d;
             }
         }
         /// <summary>

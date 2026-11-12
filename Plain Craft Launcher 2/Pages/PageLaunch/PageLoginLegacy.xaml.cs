@@ -93,14 +93,7 @@ namespace PCL
         }
         private void Skin_Click(object sender, MouseButtonEventArgs e)
         {
-            if ((Settings.Get<bool>("UiHiddenPageSetup") || Settings.Get<bool>("UiHiddenSetupLaunch")) && !PageSetupUI.HiddenForceShow)
-            {
-                ModMain.Hint("启动设置已被禁用！", ModMain.HintType.Red);
-            }
-            else
-            {
-                ModMain.FrmMain.PageChange((FormMain.PageStackData)FormMain.PageType.Setup, FormMain.PageSubType.SetupLaunch);
-            } // 切换到皮肤设置页面
+            ModMain.FrmMain.PageChange((FormMain.PageStackData)FormMain.PageType.Setup, FormMain.PageSubType.SetupLaunch); // 切换到皮肤设置页面
         }
 
     }

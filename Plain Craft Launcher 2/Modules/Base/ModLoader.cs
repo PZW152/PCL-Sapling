@@ -129,8 +129,6 @@ namespace PCL
                     if (_State == value)
                         return;
                     var OldState = _State;
-                    if (value == ModBase.LoadState.Finished && Settings.Get<bool>("SystemDebugDelay"))
-                        Thread.Sleep(ModBase.RandomInteger(100, 2000));
                     _State = value;
                     // 通知等待者：进入加载时换一个新的信号，离开加载时完成它
                     lock (ExitSignalLock)

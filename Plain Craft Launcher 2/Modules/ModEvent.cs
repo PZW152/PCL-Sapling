@@ -378,7 +378,7 @@ namespace PCL
                     case EventType.写入设置:
                         {
                             if (Args.Length == 1)
-                                throw new Exception($"EventType {Type} 需要至少 2 个以 | 分割的参数，例如 UiLauncherTransparent|400");
+                                throw new Exception($"EventType {Type} 需要至少 2 个以 | 分割的参数，例如 ToolDownloadThread|63");
                             Settings.SetSafe(Arg0, Args[1], Instance: ModMinecraft.McInstanceSelected);
                             if (Args.Length == 2)
                                 ModMain.Hint($"已写入设置：{Arg0} → {Args[1]}", ModMain.HintType.Green);

@@ -127,15 +127,8 @@ namespace PCL
                     }
                     catch (Exception ex)
                     {
-                        if (PathUtils.IsSame(ModBase.PathTemp, Path.GetTempPath() + @"PCL\"))
-                        {
-                            ModMain.MyMsgBox("PCL 无法访问缓存文件夹，可能导致程序出错或无法正常使用！" + ModBase.CrLf + ModBase.CrLf + "错误原因：" + ex.GetDisplay(true), "缓存文件夹不可用");
-                            break;
-                        }
-                        // 手动设置的缓存文件夹不可用：改用默认文件夹后重试
-                        ModMain.MyMsgBox("手动设置的缓存文件夹不可用，PCL 将使用默认缓存文件夹。" + ModBase.CrLf + ModBase.CrLf + "错误原因：" + ex.GetDisplay(true), "缓存文件夹不可用");
-                        Settings.Set("SystemSystemCache", "");
-                        ModBase.PathTemp = Path.GetTempPath() + @"PCL\";
+                        ModMain.MyMsgBox("PCL 无法访问缓存文件夹，可能导致程序出错或无法正常使用！" + ModBase.CrLf + ModBase.CrLf + "错误原因：" + ex.GetDisplay(true), "缓存文件夹不可用");
+                        break;
                     }
                 }
                 DirectoryUtils.Create(ModBase.PathTemp + @"Cache\");
@@ -155,11 +148,8 @@ namespace PCL
                 // 界面语言（必须在任何窗口显示之前决定）
                 ModLanguage.Initialize();
                 // 设置初始窗口
-                if (Settings.Get<bool>("UiLauncherLogo"))
-                {
-                    ModMain.FrmStart = new SplashScreen(@"Images\icon.ico");
-                    ModMain.FrmStart.Show(false, true);
-                }
+                ModMain.FrmStart = new SplashScreen(@"Images\icon.ico");
+                ModMain.FrmStart.Show(false, true);
                 // 基础信息
                 Logger.Info($"程序版本：{ModBase.VersionDisplay} ({ModBase.VersionCode}{(string.IsNullOrEmpty(ModBase.CommitHash) ? "" : $"，#{ModBase.CommitHash}")})");
                 Logger.Info($"识别码：{ModBase.Identify}");

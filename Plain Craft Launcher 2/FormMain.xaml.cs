@@ -409,7 +409,7 @@ namespace PCL
             }
             // 刷新主题
             ModSecret.ThemeRefresh(Settings.Get<int>("UiLauncherTheme"));
-            ModNet.ShouldValidateSslCertificateOnLogin(Settings.Get<bool>("ToolDownloadCert")); // 原先只在切换选项时生效，重启后失效
+            ModNet.ShouldValidateSslCertificateOnLogin(false);
             // 注册拖拽事件（不能直接加 Handles，否则没用；#6340）
             this.AddHandler(DragDrop.DragEnterEvent, new DragEventHandler(HandleDrag), handledEventsToo: true);
             this.AddHandler(DragDrop.DragOverEvent, new DragEventHandler(HandleDrag), handledEventsToo: true);
@@ -460,8 +460,6 @@ namespace PCL
         {
             ModBase.ApplicationStartTick = ModBase.GetTimeMs();
             ModBase.Handle = new WindowInteropHelper(this).Handle;
-            // 读取设置
-            PageSetupUI.HiddenRefresh();
             // 扩展按钮
             this.BtnExtraDownload.ShowCheck = this.BtnExtraDownload_ShowCheck;
             this.BtnExtraBack.ShowCheck = this.BtnExtraBack_ShowCheck;
@@ -508,7 +506,7 @@ namespace PCL
             HwndSource.AddHook(new HwndSourceHook(WndProc));
             ModAnimation.AniStart(new[] {
             ModAnimation.AaCode(() => ModAnimation.AniControlEnabled -= 1, 50),
-            ModAnimation.AaOpacity(this, Settings.Get<int>("UiLauncherTransparent") / 1000d + 0.4d, 250, 100),
+            ModAnimation.AaOpacity(this, 1d, 250, 100),
             ModAnimation.AaDouble(i => this.TransformPos.Y = this.TransformPos.Y + Coerce.ToDouble(i), -this.TransformPos.Y, 600, 100, new ModAnimation.AniEaseOutBack(ModAnimation.AniEasePower.Weak)),
             ModAnimation.AaDouble(i => this.TransformRotate.Angle = this.TransformRotate.Angle + Coerce.ToDouble(i), -this.TransformRotate.Angle, 500, 100, new ModAnimation.AniEaseOutBack(ModAnimation.AniEasePower.Weak)),
                         ModAnimation.AaCode(() =>
@@ -624,12 +622,6 @@ namespace PCL
                 Settings.Set("CacheMsV2Uuid", Settings.Get<string>("CacheMsUuid"));
                 Settings.Set("CacheMsV2Name", Settings.Get<string>("CacheMsName"));
                 Logger.Info("已从老版本迁移微软登录结果");
-            }
-            // Mod 命名设置迁移
-            if (Settings.HasSaved("ToolDownloadTranslate") && !Settings.HasSaved("ToolDownloadTranslateV2"))
-            {
-                Settings.Set("ToolDownloadTranslateV2", Settings.Get<int>("ToolDownloadTranslate") + 1);
-                Logger.Info("已从老版本迁移 Mod 命名设置");
             }
             // 重置 JVM 参数设置
             if (LastVersionCode <= 381 && Settings.HasSaved("LaunchAdvanceJvm") && (Settings.Get<string>("LaunchAdvanceJvm").ToString().Replace("-XX:+UseG1GC ", "").Replace("-XX:-UseAdaptiveSizePolicy ", "").Trim() ?? "") == (Settings.GetDefault("LaunchAdvanceJvm") ?? ""))
@@ -865,21 +857,6 @@ namespace PCL
             {
                 ModMain.FrmSelectRight.ShowHidden = !ModMain.FrmSelectRight.ShowHidden;
                 ModLoader.LoaderFolderRun(ModMinecraft.McInstanceListLoader, ModMinecraft.McFolderSelected, ModLoader.LoaderFolderRunType.ForceRun, MaxDepth: 1, ExtraPath: @"versions\");
-                return;
-            }
-            // 更改功能隐藏可见性
-            if (e.Key == Key.F12)
-            {
-                PageSetupUI.HiddenForceShow = !PageSetupUI.HiddenForceShow;
-                if (PageSetupUI.HiddenForceShow)
-                {
-                    ModMain.Hint("功能隐藏设置已暂时关闭！", ModMain.HintType.Green);
-                }
-                else
-                {
-                    ModMain.Hint("功能隐藏设置已重新开启！", ModMain.HintType.Green);
-                }
-                PageSetupUI.HiddenRefresh();
                 return;
             }
             // 按 F5 刷新页面

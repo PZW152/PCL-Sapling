@@ -38,7 +38,6 @@ namespace PCL
 
         private void PageInstanceLeft_Loaded(object sender, RoutedEventArgs e)
         {
-            PageSetupUI.HiddenRefresh();
         }
 
         public void RefreshModDisabled()

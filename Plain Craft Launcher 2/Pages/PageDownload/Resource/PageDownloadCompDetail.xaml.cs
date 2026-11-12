@@ -690,35 +690,7 @@ namespace PCL
                 else
                 {
                     string ChineseName = Project.TranslatedName.BeforeFirst(" (").BeforeFirst(" - ").Replace(@"\", "＼").Replace("/", "／").Replace("|", "｜").Replace(":", "：").Replace("<", "＜").Replace(">", "＞").Replace("*", "＊").Replace("?", "？").Replace("\"", "").Replace("： ", "：");
-                    switch (Settings.Get<int>("ToolDownloadTranslateV2"))
-                    {
-                        case 0:
-                            {
-                                FileName = $"【{ChineseName}】{File.FileName}";
-                                break;
-                            }
-                        case 1:
-                            {
-                                FileName = $"[{ChineseName}] {File.FileName}";
-                                break;
-                            }
-                        case 2:
-                            {
-                                FileName = $"{ChineseName}-{File.FileName}";
-                                break;
-                            }
-                        case 3:
-                            {
-                                FileName = $"{File.FileName}-{ChineseName}";
-                                break;
-                            }
-
-                        default:
-                            {
-                                FileName = File.FileName;
-                                break;
-                            }
-                    }
+                    FileName = $"[{ChineseName}] {File.FileName}";
                 }
                 if (File.ResourceType == ResourceTypes.Mod)
                     FileName = FileName.Replace("~", "-"); // ~ 会导致 Mixin 加载失败

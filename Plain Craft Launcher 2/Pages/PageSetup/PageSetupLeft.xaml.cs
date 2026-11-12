@@ -21,41 +21,12 @@ namespace PCL
         private bool IsPageSwitched = false; // 如果在 Loaded 前切换到其他页面，会导致触发 Loaded 时再次切换一次
         private void PageSetupLeft_Loaded(object sender, RoutedEventArgs e)
         {
-            // 是否处于隐藏的子页面
-            bool IsHiddenPage = false;
-            if (this.ItemLaunch.Checked && Settings.Get<bool>("UiHiddenSetupLaunch"))
-                IsHiddenPage = true;
-            if (this.ItemUI.Checked && Settings.Get<bool>("UiHiddenSetupUi"))
-                IsHiddenPage = true;
-            if (this.ItemSystem.Checked && Settings.Get<bool>("UiHiddenSetupSystem"))
-                IsHiddenPage = true;
-            if (PageSetupUI.HiddenForceShow)
-                IsHiddenPage = false;
-            // 若页面错误，或尚未加载，则继续
-            if (IsLoad && !IsHiddenPage)
+            if (IsLoad)
                 return;
             IsLoad = true;
-            // 刷新子页面隐藏情况
-            PageSetupUI.HiddenRefresh();
-            // 选择第一个未被禁用的子页面
             if (IsPageSwitched)
                 return;
-            if (!Settings.Get<bool>("UiHiddenSetupLaunch"))
-            {
-                this.ItemLaunch.SetChecked(true, false, false);
-            }
-            else if (!Settings.Get<bool>("UiHiddenSetupUi"))
-            {
-                this.ItemUI.SetChecked(true, false, false);
-            }
-            else if (!Settings.Get<bool>("UiHiddenSetupSystem"))
-            {
-                this.ItemSystem.SetChecked(true, false, false);
-            }
-            else
-            {
-                this.ItemLaunch.SetChecked(true, false, false);
-            }
+            this.ItemLaunch.SetChecked(true, false, false);
         }
         private void PageOtherLeft_Unloaded(object sender, RoutedEventArgs e)
         {
@@ -71,23 +42,7 @@ namespace PCL
         public PageSetupLeft()
         {
             this.InitializeComponent();
-            // 选择第一个未被禁用的子页面
-            if (!Settings.Get<bool>("UiHiddenSetupLaunch"))
-            {
-                PageID = FormMain.PageSubType.SetupLaunch;
-            }
-            else if (!Settings.Get<bool>("UiHiddenSetupUi"))
-            {
-                PageID = FormMain.PageSubType.SetupUI;
-            }
-            else if (!Settings.Get<bool>("UiHiddenSetupSystem"))
-            {
-                PageID = FormMain.PageSubType.SetupSystem;
-            }
-            else
-            {
-                PageID = FormMain.PageSubType.SetupLaunch;
-            }
+            PageID = FormMain.PageSubType.SetupLaunch;
 
             this.Loaded += PageSetupLeft_Loaded;
             this.Unloaded += PageOtherLeft_Unloaded;

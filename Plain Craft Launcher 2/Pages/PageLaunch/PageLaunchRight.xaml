@@ -1,12 +1,37 @@
 <local:MyPageRight x:Class="PCL.PageLaunchRight"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:behaviors="clr-namespace:PCL.Controls.Behaviors"
     xmlns:local="clr-namespace:PCL" PanScroll="PanBack">
     <local:MyScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" x:Name="PanBack">
         <StackPanel Name="PanMain" Margin="25,25,25,10" Grid.IsSharedSizeScope="True">
+            <!-- 主角卡（取自 Sapling）：当前实例的名字、大号版本号、标签和“继续玩” -->
+            <Grid x:Name="PanHero" Margin="0,0,0,15" MinHeight="320">
+                <local:MyDropShadow ShadowRadius="6" Opacity="0.18" Color="{DynamicResource ColorObject2}" CornerRadius="8" Margin="-6,-4,-6,-8" IsHitTestVisible="False" />
+                <Border CornerRadius="8" Background="{DynamicResource ColorBrushHero}" ClipToBounds="True">
+                    <Grid Margin="28,24,28,26">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" MinHeight="24" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Name="LabHeroName" Grid.Row="0" FontSize="20" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis" Text="欢迎使用 PCL 树苗修改版" />
+                        <Viewbox x:Name="BoxHeroVersion" Grid.Row="1" HorizontalAlignment="Left" StretchDirection="DownOnly" Stretch="Uniform" Margin="-3,2,0,0">
+                            <TextBlock x:Name="LabHeroVersion" FontSize="76" FontFamily="Segoe UI" FontWeight="Black" Foreground="White" Text="1.21.1" />
+                        </Viewbox>
+                        <TextBlock x:Name="LabHeroWelcome" Grid.Row="1" FontSize="15" Foreground="#E6FFFFFF" TextWrapping="Wrap" LineHeight="24" Margin="0,10,0,0" Visibility="Collapsed"
+                                   Text="两步就能开始玩：先在左边选好登录方式，再点「开始玩」，启动器会下载最新正式版并直接进入游戏。" />
+                        <WrapPanel x:Name="PanHeroTags" Grid.Row="2" Margin="0,8,0,0" />
+                        <TextBlock x:Name="LabHeroContinue" Grid.Row="4" FontSize="14" Foreground="#E6FFFFFF" Margin="2,0,0,10" Text="继续玩" />
+                        <UniformGrid x:Name="PanHeroTiles" Grid.Row="5" Rows="1" Columns="3" Margin="-5,0,-5,0" />
+                    </Grid>
+                </Border>
+            </Grid>
             <local:MyCard Margin="0,0,0,15" Title="启动日志" x:Name="PanLog">
                 <local:MyTextBox x:Name="LabLog" Margin="15,34,15,13" Padding="0,4" IsReadOnly="True" IsUndoEnabled="False"
                          AcceptsReturn="True" TextWrapping="Wrap" BorderThickness="0" HasBackground="False"

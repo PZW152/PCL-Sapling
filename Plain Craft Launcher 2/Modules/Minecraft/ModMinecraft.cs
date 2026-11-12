@@ -187,8 +187,6 @@ namespace PCL
 
                 foreach (McFolder Folder in CacheMcFolderList)
                     McFolderLauncherProfilesJsonCreate(Folder.Location);
-                if (Settings.Get<bool>("SystemDebugDelay"))
-                    Thread.Sleep(ModBase.RandomInteger(200, 2000));
 
                 // 回设
                 McFolderList = CacheMcFolderList;
@@ -1384,8 +1382,6 @@ namespace PCL
                     McInstanceSelected = null;
                     Logger.Info("未找到可用 Minecraft 版本");
                 }
-                if (Settings.Get<bool>("SystemDebugDelay"))
-                    Thread.Sleep(ModBase.RandomInteger(200, 3000));
             }
             catch (Exception ex)
             {

@@ -94,8 +94,6 @@ namespace PCL
                 ModMinecraft.McFolderListLoader.WaitForExit(IsForceRestart: true);
                 ModMinecraft.McFolderSelected = ModMinecraft.McFolderList.First().Location;
             }
-            if (Settings.Get<bool>("SystemDebugDelay"))
-                Thread.Sleep(ModBase.RandomInteger(500, 3000));
             // 自动整合包安装
             if (PackInstallPath is not null)
             {
@@ -748,14 +746,7 @@ namespace PCL
             }
             else if (ModMinecraft.McInstanceSelected is null)
             {
-                if (Settings.Get<bool>("UiHiddenPageDownload") && !PageSetupUI.HiddenForceShow)
-                {
-                    CurrentState = 1;
-                }
-                else
-                {
-                    CurrentState = 2;
-                }
+                CurrentState = 2;
             }
             else
             {
@@ -766,6 +757,7 @@ namespace PCL
             {
                 BtnLaunchInstance = ModMinecraft.McInstanceSelected;
                 BtnLaunchState = CurrentState;
+                ModMain.FrmLaunchRight?.RefreshHero(); // 首页主角卡跟着当前实例变化
                 switch (CurrentState)
                 {
                     case 0:
@@ -775,16 +767,6 @@ namespace PCL
                             ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = false;
                             ModMain.FrmLaunchLeft.LabVersion.Text = "正在加载中，请稍候";
                             ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = false;
-                            ModMain.FrmLaunchLeft.BtnMore.Visibility = Visibility.Collapsed;
-                            break;
-                        }
-                    case 1:
-                        {
-                            Logger.Info("启动按钮：无 Minecraft 版本，下载已禁用");
-                            ModMain.FrmLaunchLeft.BtnLaunch.Text = "启动游戏";
-                            ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = false;
-                            ModMain.FrmLaunchLeft.LabVersion.Text = "未找到可用的游戏版本";
-                            ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = true;
                             ModMain.FrmLaunchLeft.BtnMore.Visibility = Visibility.Collapsed;
                             break;
                         }
@@ -815,16 +797,11 @@ namespace PCL
                             }
                             break;
                         }
-                        // FrmLaunchLeft.BtnMore.Visibility = Visibility.Visible '由功能隐藏设置修改
                 }
             }
 
-            // 功能隐藏
-            ModMain.FrmLaunchLeft.BtnVersion.Visibility = !PageSetupUI.HiddenForceShow && Settings.Get<bool>("UiHiddenFunctionSelect") ? Visibility.Collapsed : Visibility.Visible;
             if (CurrentState == 3)
-            {
-                ModMain.FrmLaunchLeft.BtnMore.Visibility = ModMain.FrmLaunchLeft.BtnVersion.Visibility;
-            }
+                ModMain.FrmLaunchLeft.BtnMore.Visibility = Visibility.Visible;
         }
         // 取消按钮
         public void BtnCancel_Click()

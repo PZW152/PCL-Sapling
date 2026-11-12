@@ -69,8 +69,6 @@ namespace PCL
         private void SliderLoad()
         {
             this.SliderDownloadThread.GetHintText = new Func<object, object>(v => Coerce.ToInt(v) + 1);
-            this.SliderDownloadSpeed.GetHintText = new Func<object, object>(v => { switch (v) { case var @case when Coerce.LessEqual(@case, 14): { return Coerce.Concat((Coerce.ToInt(v) + 1) * 0.1d, " M/s"); } case var case1 when Coerce.LessEqual(case1, 31): { return Coerce.Concat((Coerce.ToInt(v) - 11) * 0.5d, " M/s"); } case var case2 when Coerce.LessEqual(case2, 41): { return Coerce.Concat(Coerce.ToInt(v) - 21, " M/s"); } default: { return "无限制"; } } });
-            this.SliderDebugAnim.GetHintText = new Func<object, object>(v => Coerce.Greater(v, 29) ? "关闭" : Coerce.Concat(Coerce.ToInt(v) / 10d + 0.1d, "x"));
         }
         private void SliderDownloadThread_PreviewChange(object sender, ModBase.RouteEventArgs e)
         {

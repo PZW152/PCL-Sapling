@@ -26,7 +26,7 @@ namespace PCL
             // 对父级设置透明度
             if (Parent is ContextMenu)
             {
-                ((ContextMenu)Parent).Opacity = Settings.Get<int>("UiLauncherTransparent") / 1000d + 0.4d;
+                ((ContextMenu)Parent).Opacity = 1d;
             }
         }
 

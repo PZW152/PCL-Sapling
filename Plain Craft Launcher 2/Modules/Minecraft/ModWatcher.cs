@@ -467,6 +467,7 @@ namespace PCL
                     ModBase.WriteIni(IniPath, "PlayTimeSeconds", PlayTime.AddSession(Total, DateTime.Now - StartedAt).ToString());
                     ModBase.WriteIni(IniPath, "LastPlayed", DateTime.Now.Ticks.ToString());
                     ModMinecraft.McInstanceListForceRefresh = true; // 版本列表按最近游玩排序，需要重新排列
+                    ModBase.RunInUi(() => ModMain.FrmLaunchRight?.RefreshHero()); // 更新首页的游玩时间与“继续玩”
                 }
                 catch (Exception ex)
                 {

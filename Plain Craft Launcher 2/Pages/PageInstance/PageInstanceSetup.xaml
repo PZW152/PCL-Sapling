@@ -35,9 +35,9 @@
                                                   ToolTip="与其余关闭隔离的版本共享存档、Mod 等文件。&#xa;若存在多个安装了 Mod 的版本，可能会由于 Mod 冲突而导致崩溃。"/>
                         </local:MyComboBox>
                         <TextBlock Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Left" Text="游戏窗口标题" Margin="0,0,25,0" />
-                        <local:MyTextBox x:Name="TextArgumentTitle" Grid.Row="2" Grid.ColumnSpan="2" local:SettingService.Key="VersionArgumentTitle" Grid.Column="1" ToolTip="自定义游戏窗口的标题，若留空则跟随全局设置的值。&#xa;你可以用替换标记来动态改变其内容。" HintText="跟随全局设置" MaxLength="100" />
+                        <local:MyTextBox x:Name="TextArgumentTitle" Grid.Row="2" Grid.ColumnSpan="2" local:SettingService.Key="VersionArgumentTitle" Grid.Column="1" ToolTip="自定义游戏窗口的标题，若留空则使用游戏默认的标题。&#xa;你可以用替换标记来动态改变其内容。" HintText="默认" MaxLength="100" />
                         <TextBlock Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Left" Text="自定义信息" Margin="0,0,25,0" />
-                        <local:MyTextBox x:Name="TextArgumentInfo" Grid.Row="4" Grid.ColumnSpan="2" local:SettingService.Key="VersionArgumentInfo" Grid.Column="1" HintText="跟随全局设置" ToolTip="注意：Mojang 于 Minecraft 26.1 移除了该设置，因此该设置在新版本中无效。&#xa;&#xa;该信息会显示在游戏主界面的左下角，与 F3 调试页面的左上角。&#xa;若留空，则跟随全局设置的值。&#xa;&#xa;你可以用替换标记来动态改变其内容。">
+                        <local:MyTextBox x:Name="TextArgumentInfo" Grid.Row="4" Grid.ColumnSpan="2" local:SettingService.Key="VersionArgumentInfo" Grid.Column="1" HintText="PCL" ToolTip="注意：Mojang 于 Minecraft 26.1 移除了该设置，因此该设置在新版本中无效。&#xa;&#xa;该信息会显示在游戏主界面的左下角，与 F3 调试页面的左上角。&#xa;若留空，则显示 PCL。&#xa;&#xa;你可以用替换标记来动态改变其内容。">
                             <local:MyTextBox.ValidateRules>
                                 <pclcs:ValidateExcept>
                                     <pclcs:ValidateExcept.Excepts>

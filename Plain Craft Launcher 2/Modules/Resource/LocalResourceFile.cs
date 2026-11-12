@@ -230,7 +230,7 @@ namespace PCL
         {
             get
             {
-                return !Settings.Get<bool>("UiHiddenFunctionModUpdate") && !Settings.Get<bool>("VersionAdvanceDisableModUpdate", Instance: PageInstanceLeft.Instance) && UpdateFile is not null;
+                return !Settings.Get<bool>("VersionAdvanceDisableModUpdate", Instance: PageInstanceLeft.Instance) && UpdateFile is not null;
             }
         }
 

@@ -450,26 +450,7 @@ namespace PCL
         {
             get
             {
-                if (_NetTaskSpeedLimitHigh is null)
-                {
-                    int Setting = Settings.Get<int>("ToolDownloadSpeed");
-                    if (Setting <= 14)
-                    {
-                        _NetTaskSpeedLimitHigh = (long?)Math.Round((Setting + 1) * 0.1d * 1024d * 1024d);
-                    }
-                    else if (Setting <= 31)
-                    {
-                        _NetTaskSpeedLimitHigh = (long?)Math.Round((Setting - 11) * 0.5d * 1024d * 1024d);
-                    }
-                    else if (Setting <= 41)
-                    {
-                        _NetTaskSpeedLimitHigh = (Setting - 21) * 1024 * 1024L;
-                    }
-                    else
-                    {
-                        _NetTaskSpeedLimitHigh = (long?)-1;
-                    }
-                }
+                _NetTaskSpeedLimitHigh ??= -1; // 不限速（限速设置已移除）
                 return _NetTaskSpeedLimitHigh.Value;
             }
         }
@@ -1285,8 +1266,6 @@ namespace PCL
                         CancelToken.Dispose();
                         CancelToken = new CancellationTokenSource(); // 重置超时，不再让 CancellationToken 在固定时间后触发（#8488）
                         ResponseStream = Response.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
-                        if (Settings.Get<bool>("SystemDebugDelay"))
-                            System.Threading.Thread.Sleep(ModBase.RandomInteger(50, 3000));
                         byte[] ResponseBytes = new byte[16385];
                         HttpDataCount = ResponseStream.ReadAsync(ResponseBytes, 0, 16384, CancelToken.Token).GetResultWithTimeout(CancelToken, Timeout);
                         while ((IsUnknownSize || Th.DownloadUndone > 0L) && HttpDataCount > 0 && !ModBase.IsProgramEnding && State < NetState.Merging && (!Th.Source.IsFailed || Th.Source.SingleThread == Th)) // 判断是否下载完成
@@ -1890,9 +1869,6 @@ namespace PCL
                 // 目标文件已存在
                 if (File.Check.Check(File.LocalPath) is null)
                     return File.LocalPath;
-                // 在设置中禁用了复制
-                if (Settings.Get<bool>("SystemDebugSkipCopy"))
-                    return null;
                 // 没有可用的检查规则，只能开始下载
                 if (File.Check.Hash is null && File.Check.ActualSize < 0L)
                     return null;

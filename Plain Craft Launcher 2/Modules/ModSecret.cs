@@ -133,6 +133,12 @@ namespace PCL
                 System.Windows.Application.Current.Resources["ColorObject8"] = (Color)Color8;
                 System.Windows.Application.Current.Resources["ColorObjectBg0"] = (Color)ColorBg0;
                 System.Windows.Application.Current.Resources["ColorObjectBg1"] = (Color)ColorBg1;
+                // 主角卡背景（取自 Sapling 的深色主角区块，这里用主题蓝）：左上亮、右下深的斜向渐变
+                var Hero = new LinearGradientBrush() { StartPoint = new Point(0d, 0d), EndPoint = new Point(1d, 1d) };
+                Hero.GradientStops.Add(new GradientStop() { Offset = 0d, Color = new ModBase.MyColor().FromHSL2(ColorHue - 6, ColorSat, 52 + ColorLightAdjust) });
+                Hero.GradientStops.Add(new GradientStop() { Offset = 1d, Color = new ModBase.MyColor().FromHSL2(ColorHue + 8, ColorSat, 40 + ColorLightAdjust) });
+                Hero.Freeze();
+                System.Windows.Application.Current.Resources["ColorBrushHero"] = Hero;
                 ThemeRefreshMain();
             }
             catch (Exception ex)

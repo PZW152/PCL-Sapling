@@ -21,12 +21,6 @@
                             <RowDefinition Height="28" />
                             <RowDefinition Height="9" />
                             <RowDefinition Height="28" />
-                            <RowDefinition Height="9" />
-                            <RowDefinition Height="28" />
-                            <RowDefinition Height="9" />
-                            <RowDefinition Height="28" />
-                            <RowDefinition Height="9" />
-                            <RowDefinition Height="28" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="默认版本隔离" Margin="0,0,25,0" />
                         <local:MyComboBox local:SettingService.Key="LaunchArgumentIndieV2" x:Name="ComboArgumentIndieV2" SelectionChanged="ComboArgumentIndie_SelectionChanged"
@@ -43,39 +37,17 @@
                             <local:MyComboBoxItem Content="隔离所有版本" 
                                                   ToolTip="不同版本之间的存档、Mod、资源包等均不互通。&#xa;这会导致不同原版版本间的存档不能共用，所以一般不推荐。" />
                         </local:MyComboBox>
-                        <TextBlock Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Left" Text="游戏窗口标题" Margin="0,0,25,0" />
-                        <local:MyTextBox local:SettingService.Key="LaunchArgumentTitle" 
-                                         Grid.Row="2" Grid.ColumnSpan="2" Grid.Column="1" ToolTip="自定义游戏窗口的标题，若留空则不进行更改。&#xa;你可以用替换标记来动态改变其内容。" HintText="默认" MaxLength="100" />
-                        <TextBlock Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Left" Text="自定义信息" Margin="0,0,25,0" />
-                        <local:MyTextBox local:SettingService.Key="LaunchArgumentInfo" 
-                                         Grid.Row="4" Grid.ColumnSpan="2" Text="PCL" Grid.Column="1" ToolTip="注意：Mojang 于 Minecraft 26.1 移除了该设置，因此该设置在新版本中无效。&#xa;&#xa;该信息会显示在游戏主界面的左下角，与 F3 调试页面的左上角。&#xa;你可以用替换标记来动态改变其内容。">
-                            <local:MyTextBox.ValidateRules>
-                                <pclcs:ValidateExcept>
-                                    <pclcs:ValidateExcept.Excepts>
-                                        <System:String>"</System:String>
-                                        <System:String>“</System:String>
-                                        <System:String>”</System:String>
-                                    </pclcs:ValidateExcept.Excepts>
-                                </pclcs:ValidateExcept>
-                            </local:MyTextBox.ValidateRules>
-                        </local:MyTextBox>
-                        <TextBlock VerticalAlignment="Center" Grid.Row="6" HorizontalAlignment="Left" Text="启动器可见性" Margin="0,0,25,0" />
+                        <TextBlock VerticalAlignment="Center" Grid.Row="2" HorizontalAlignment="Left" Text="启动器可见性" Margin="0,0,25,0" />
                         <local:MyComboBox local:SettingService.Key="LaunchArgumentVisible" 
-                                          x:Name="ComboArgumentVisibie" SelectionChanged="ComboArgumentVisibie_SizeChanged" Grid.Row="6" Grid.ColumnSpan="2" Grid.Column="1">
+                                          x:Name="ComboArgumentVisibie" SelectionChanged="ComboArgumentVisibie_SizeChanged" Grid.Row="2" Grid.ColumnSpan="2" Grid.Column="1">
                             <local:MyComboBoxItem Content="游戏启动后立即关闭" />
                             <local:MyComboBoxItem Content="游戏启动后隐藏，游戏退出后自动关闭" local:SettingService.Value="2" />
                             <local:MyComboBoxItem Content="游戏启动后隐藏，游戏退出后重新打开" local:SettingService.Value="3" />
                             <local:MyComboBoxItem Content="游戏启动后最小化" local:SettingService.Value="4" />
                             <local:MyComboBoxItem Content="游戏启动后仍保持不变" local:SettingService.Value="5" />
                         </local:MyComboBox>
-                        <TextBlock VerticalAlignment="Center" Grid.Row="8" HorizontalAlignment="Left" Text="进程优先级" Margin="0,0,25,0" />
-                        <local:MyComboBox local:SettingService.Key="LaunchArgumentPriority" Grid.Row="8" Grid.ColumnSpan="2" Grid.Column="1">
-                            <local:MyComboBoxItem Content="高（优先保证游戏运行，游戏性能更佳，但可能造成其他程序卡顿）" />
-                            <local:MyComboBoxItem Content="中（平衡）" />
-                            <local:MyComboBoxItem Content="低（优先保证其他程序运行，但可能让游戏卡顿，适合挂机时使用）" />
-                        </local:MyComboBox>
-                        <TextBlock VerticalAlignment="Center" Grid.Row="10" HorizontalAlignment="Left" Text="窗口大小" Margin="0,0,25,0" />
-                        <Grid x:Name="PanArgumentWindow" Grid.Row="10" Grid.ColumnSpan="2" Grid.Column="1">
+                        <TextBlock VerticalAlignment="Center" Grid.Row="4" HorizontalAlignment="Left" Text="窗口大小" Margin="0,0,25,0" />
+                        <Grid x:Name="PanArgumentWindow" Grid.Row="4" Grid.ColumnSpan="2" Grid.Column="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition />
                                 <ColumnDefinition Width="Auto" />
@@ -326,7 +298,6 @@
                         <local:MyCheckBox Height="28" Text="禁用 Java Launch Wrapper" local:SettingService.Key="LaunchAdvanceDisableJLW" ToolTip="是否使用 Java Launch Wrapper 修复 Java 18- 在中文路径下可能无法正常启动的问题。&#xa;详见：https://github.com/00ll00/java_launch_wrapper" />
                         <local:MyCheckBox Height="28" Text="禁用 LWJGL Unsafe Agent" local:SettingService.Key="LaunchAdvanceDisableLUA" ToolTip="是否使用 LWJGL Unsafe Agent 修复 LWJGL 3.4.1 的一个性能问题。&#xa;详见：https://github.com/HMCL-dev/lwjgl-unsafe-agent" />
                         <local:MyCheckBox Height="28" Text="使用高性能显卡" local:SettingService.Key="LaunchAdvanceGraphicCard" ToolTip="自动在 Windows 设置 → 系统 → 屏幕 → 显示卡 中将 PCL 和 Java 改为使用高性能显卡。&#xa;如果同时有集成显卡和独立显卡，这能确保 MC 使用独立显卡进行渲染，以大幅提高帧率。" />
-                        <local:MyCheckBox Height="28" Text="在正版登录时验证 SSL 证书" local:SettingService.Key="ToolDownloadCert" ToolTip="开启验证可以提高安全性，但可能会导致正版登录失败（见 #3018）。&#xa;若登录因为 “未能为 SSL/TLS 安全通道建立信任关系” 失败，请考虑关闭此选项。" />
                     </StackPanel>
                     <local:MyHint Text="版本独立设置中还有更多高级选项可供调整。" Margin="0,5,0,10" Theme="Blue" Grid.Row="11" Grid.ColumnSpan="2"
                                   CanClose="True" RelativeSetup="HintMoreAdvancedSetup" />
