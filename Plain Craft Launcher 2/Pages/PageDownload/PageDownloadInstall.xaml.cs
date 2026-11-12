@@ -23,6 +23,7 @@ namespace PCL
         private void CardForge_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
         private void CardNeoForge_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
         private void CardFabric_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
+        private void CardQuilt_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
         private void CardFabricApi_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
         private void CardOptiFabric_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
         private void CardLiteLoader_Swap(object sender, ModBase.RouteEventArgs e) => ReloadSelected();
@@ -46,6 +47,11 @@ namespace PCL
         {
             ReloadSelected();
             Fabric_Loaded();
+        }
+        private void LoadQuilt_StateChanged(object sender, MyLoading.MyLoadingState e, MyLoading.MyLoadingState e2)
+        {
+            ReloadSelected();
+            Quilt_Loaded();
         }
         private void LoadFabricApi_StateChanged(object sender, MyLoading.MyLoadingState e, MyLoading.MyLoadingState e2)
         {
@@ -79,6 +85,7 @@ namespace PCL
             this.LoadOptiFine.State = ModDownload.DlOptiFineListLoader;
             this.LoadLiteLoader.State = ModDownload.DlLiteLoaderListLoader;
             this.LoadFabric.State = ModDownload.DlFabricListLoader;
+            this.LoadQuilt.State = ModDownload.DlQuiltListLoader;
             this.LoadFabricApi.State = ModDownload.DlFabricApiLoader;
             this.LoadNeoForge.State = ModDownload.DlNeoForgeListLoader;
             this.LoadOptiFabric.State = ModDownload.DlOptiFabricLoader;
@@ -107,6 +114,7 @@ namespace PCL
             ModDownload.DlOptiFineListLoader.Start();
             ModDownload.DlLiteLoaderListLoader.Start();
             ModDownload.DlFabricListLoader.Start();
+            ModDownload.DlQuiltListLoader.Start();
             ModDownload.DlNeoForgeListLoader.Start();
 
             // 重载预览
@@ -135,7 +143,7 @@ namespace PCL
 
             this.DisabledPageAnimControls.Remove(this.BtnStart);
             this.BtnStart.Show = true;
-            foreach (var Card in new[] { this.CardOptiFine, this.CardLiteLoader, this.CardForge, this.CardNeoForge, this.CardFabric, this.CardFabricApi, this.CardOptiFabric })
+            foreach (var Card in new[] { this.CardOptiFine, this.CardLiteLoader, this.CardForge, this.CardNeoForge, this.CardFabric, this.CardQuilt, this.CardFabricApi, this.CardOptiFabric })
                 Card.IsSwapped = true;
 
             // 如果在选择页面按了刷新键，选择页的东西可能会由于动画被隐藏，但不会由于加载结束而再次显示，因此这里需要手动恢复
@@ -192,6 +200,7 @@ namespace PCL
             Forge_Loaded();
             NeoForge_Loaded();
             Fabric_Loaded();
+            Quilt_Loaded();
             FabricApi_Loaded();
             OptiFabric_Loaded();
             ReloadSelected();
@@ -258,6 +267,10 @@ namespace PCL
         public ModDownload.DlForgeVersionEntry SelectedForge = null;
         public ModDownload.DlNeoForgeListEntry SelectedNeoForge = null;
         public string SelectedFabric = null;
+        /// <summary>选择的 Quilt 版本。与 Fabric 互斥；Fabric API 也可以和它一起安装。</summary>
+        public string SelectedQuilt = null;
+        /// <summary>选择了 Fabric 或 Quilt：都可以使用 Fabric API 与 Fabric Mod。</summary>
+        public bool SelectedFabricLike => SelectedFabric is not null || SelectedQuilt is not null;
         public ResourceVersion SelectedFabricApi = null;
         public ResourceVersion SelectedOptiFabric = null;
         private bool _ReloadSelected_Ongoing = false; // #3742 中，LoadOptiFineGetError 会初始化 LoadOptiFine，触发事件 LoadOptiFine.StateChanged，导致再次调用 SelectReload
@@ -406,8 +419,36 @@ namespace PCL
                     this.LabFabric.Foreground = ModSecret.ColorGray1;
                 }
             }
+            // Quilt
+            if (VanillaDrop <= 130)
+            {
+                this.CardQuilt.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                this.CardQuilt.Visibility = Visibility.Visible;
+                string QuiltError = LoadQuiltGetError();
+                this.CardQuilt.MainSwap.Visibility = QuiltError is null ? Visibility.Visible : Visibility.Collapsed;
+                if (QuiltError is not null)
+                    this.CardQuilt.IsSwapped = true;
+                this.SetPanelVisibility(this.PanQuiltInfo, this.CardQuilt.IsSwapped);
+                if (SelectedQuilt is null)
+                {
+                    this.BtnQuiltClear.Visibility = Visibility.Collapsed;
+                    this.ImgQuilt.Visibility = Visibility.Collapsed;
+                    this.LabQuilt.Text = QuiltError ?? "可以添加";
+                    this.LabQuilt.Foreground = ModSecret.ColorGray4;
+                }
+                else
+                {
+                    this.BtnQuiltClear.Visibility = Visibility.Visible;
+                    this.ImgQuilt.Visibility = Visibility.Visible;
+                    this.LabQuilt.Text = SelectedQuilt;
+                    this.LabQuilt.Foreground = ModSecret.ColorGray1;
+                }
+            }
             // FabricApi
-            if (SelectedFabric is null)
+            if (!SelectedFabricLike)
             {
                 this.CardFabricApi.Visibility = Visibility.Collapsed;
             }
@@ -416,7 +457,7 @@ namespace PCL
                 this.CardFabricApi.Visibility = Visibility.Visible;
                 string FabricApiError = LoadFabricApiGetError();
                 this.CardFabricApi.MainSwap.Visibility = FabricApiError is null ? Visibility.Visible : Visibility.Collapsed;
-                if (FabricApiError is not null || SelectedFabric is null)
+                if (FabricApiError is not null || !SelectedFabricLike)
                     this.CardFabricApi.IsSwapped = true;
                 this.SetPanelVisibility(this.PanFabricApiInfo, this.CardFabricApi.IsSwapped);
                 if (SelectedFabricApi is null)
@@ -463,7 +504,7 @@ namespace PCL
                 }
             }
             // 主警告
-            if (SelectedFabric is not null && SelectedFabricApi is null)
+            if (SelectedFabricLike && SelectedFabricApi is null)
             {
                 this.HintFabricAPI.Visibility = Visibility.Visible;
             }
@@ -489,7 +530,7 @@ namespace PCL
                 this.HintOptiFabric.Visibility = Visibility.Collapsed;
                 this.HintOptiFabricOld.Visibility = Visibility.Collapsed;
             }
-            if (VanillaDrop >= 160 && SelectedOptiFine is not null && (SelectedForge is not null || SelectedFabric is not null))
+            if (VanillaDrop >= 160 && SelectedOptiFine is not null && (SelectedForge is not null || SelectedFabricLike))
             {
                 this.HintModOptiFine.Visibility = Visibility.Visible;
             }
@@ -513,9 +554,10 @@ namespace PCL
             SelectedForge = null;
             SelectedNeoForge = null;
             SelectedFabric = null;
+            SelectedQuilt = null;
             SelectedFabricApi = null;
             SelectedOptiFabric = null;
-            foreach (var ClearButton in new[] { this.BtnOptiFineClear, this.BtnLiteLoaderClear, this.BtnForgeClear, this.BtnNeoForgeClear, this.BtnFabricClear, this.BtnFabricApiClear, this.BtnOptiFabricClear })
+            foreach (var ClearButton in new[] { this.BtnOptiFineClear, this.BtnLiteLoaderClear, this.BtnForgeClear, this.BtnNeoForgeClear, this.BtnFabricClear, this.BtnQuiltClear, this.BtnFabricApiClear, this.BtnOptiFabricClear })
                 ClearButton.Visibility = Visibility.Collapsed;
         }
         // 信息栏动画
@@ -542,6 +584,10 @@ namespace PCL
             if (SelectedFabric is not null)
             {
                 return "pack://application:,,,/images/Blocks/Fabric.png";
+            }
+            else if (SelectedQuilt is not null)
+            {
+                return "pack://application:,,,/images/Blocks/Quilt.png";
             }
             else if (SelectedForge is not null)
             {
@@ -574,6 +620,8 @@ namespace PCL
             string Name = VanillaName;
             if (SelectedFabric is not null)
                 Name += "-Fabric " + SelectedFabric.BeforeFirst("+");
+            if (SelectedQuilt is not null)
+                Name += "-Quilt " + SelectedQuilt;
             if (SelectedForge is not null)
                 Name += "-Forge_" + SelectedForge.VersionName;
             if (SelectedNeoForge is not null)
@@ -784,6 +832,9 @@ namespace PCL
             {
                 return "与 Fabric 不兼容";
             }
+            // Quilt 没有 OptiFabric：全部不兼容
+            if (SelectedQuilt is not null)
+                return "与 Quilt 不兼容";
             // 检查 Loader
             if (this.GetLoaderError(this.LoadOptiFine) is not null)
                 return this.GetLoaderError(this.LoadOptiFine);
@@ -999,6 +1050,8 @@ namespace PCL
                     return "与 NeoForge 不兼容";
                 if (SelectedFabric is not null)
                     return "与 Fabric 不兼容";
+                if (SelectedQuilt is not null)
+                    return "与 Quilt 不兼容";
                 if (SelectedOptiFine is not null && McUtils.CompareVersionGE(VanillaName, "1.13") && McUtils.CompareVersionGE("1.14.3", VanillaName))
                 {
                     return "与 OptiFine 不兼容"; // 1.13 ~ 1.14.3 OptiFine 检查
@@ -1087,6 +1140,8 @@ namespace PCL
                 return "与 Forge 不兼容";
             if (SelectedFabric is not null)
                 return "与 Fabric 不兼容";
+            if (SelectedQuilt is not null)
+                return "与 Quilt 不兼容";
             // 检查 Loader
             if (this.GetLoaderError(this.LoadNeoForge) is not null)
                 return this.GetLoaderError(this.LoadNeoForge);
@@ -1154,6 +1209,8 @@ namespace PCL
             // 检查 OptiFine 1.20.5+：没有 OptiFabric 故全部不兼容
             if (SelectedOptiFine is not null && McUtils.CompareVersionGE(VanillaName, "1.20.5"))
                 return "与 OptiFine 不兼容";
+            if (SelectedQuilt is not null)
+                return "与 Quilt 不兼容";
             // 检查 Loader
             if (this.GetLoaderError(this.LoadFabric) is not null)
                 return this.GetLoaderError(this.LoadFabric);
@@ -1203,6 +1260,78 @@ namespace PCL
             {
                 Logger.Error(ex, "可视化 Fabric 安装版本列表出错");
             }
+        }
+
+        /// <summary>
+        /// 获取 Quilt 的加载异常信息。若正常则返回 null。
+        /// </summary>
+        public string LoadQuiltGetError()
+        {
+            if (SelectedOptiFine is not null)
+                return "与 OptiFine 不兼容";
+            if (this.GetLoaderError(this.LoadQuilt) is not null)
+                return this.GetLoaderError(this.LoadQuilt);
+            string Target = VanillaName.Replace("∞", "infinite");
+            if (!ModDownload.DlQuiltListLoader.Output.Value["game"].OfType<JObject>().Any(v => v["version"].ToString() == Target))
+                return "无";
+            if (SelectedFabric is not null)
+                return "与 Fabric 不兼容";
+            if (SelectedForge is not null)
+                return "与 Forge 不兼容";
+            if (SelectedNeoForge is not null)
+                return "与 NeoForge 不兼容";
+            return null;
+        }
+        private void CardQuilt_PreviewSwap(object sender, ModBase.RouteEventArgs e)
+        {
+            if (LoadQuiltGetError() is not null)
+                e.Handled = true;
+        }
+        /// <summary>
+        /// 尝试重新可视化 Quilt 版本列表。
+        /// </summary>
+        private void Quilt_Loaded()
+        {
+            try
+            {
+                if (ModDownload.DlQuiltListLoader.State != ModBase.LoadState.Finished)
+                    return;
+                JArray Versions = (JArray)ModDownload.DlQuiltListLoader.Output.Value["loader"];
+                if (!Versions.Any())
+                    return;
+                // 稳定版在前，同类按版本号从新到旧
+                var Sorted = Versions.OfType<JObject>()
+                    .OrderBy(v => v["version"].ToString().Contains("-"))
+                    .ThenByDescending(v => v["version"].ToString(), Comparer<string>.Create((a, b) => McUtils.CompareVersion(a, b)))
+                    .ToList();
+                this.PanQuilt.Children.Clear();
+                this.CardQuilt.SwapControl = this.PanQuilt;
+                this.CardQuilt.SetContentBuilder(Sorted, Version => ModDownloadLib.QuiltDownloadListItem(Version, (_, __) => this.Quilt_Selected((MyListItem)(object)_, (EventArgs)(object)__)));
+                if (!this.CardQuilt.IsSwapped)
+                    this.CardQuilt.BuildContent();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "可视化 Quilt 安装版本列表出错");
+            }
+        }
+        public void Quilt_Selected(MyListItem sender, EventArgs e)
+        {
+            SelectedQuilt = ((JToken)sender.Tag)["version"].ToString();
+            SelectedFabric = null;
+            SelectedOptiFabric = null;
+            FabricApi_Loaded();
+            this.CardQuilt.IsSwapped = true;
+            ReloadSelected();
+        }
+        private void Quilt_Clear(object sender, EventArgs e)
+        {
+            SelectedQuilt = null;
+            SelectedFabricApi = null;
+            this.BtnFabricApiClear.Visibility = Visibility.Collapsed;
+            AutoSelectedFabricApi = false;
+            this.CardQuilt.IsSwapped = true;
+            ReloadSelected();
         }
 
         // 选择与清除
@@ -1294,11 +1423,11 @@ namespace PCL
             if (this.GetLoaderError(this.LoadFabricApi) is not null)
                 return this.GetLoaderError(this.LoadFabricApi);
             if (ModDownload.DlFabricApiLoader.Output is null)
-                return SelectedFabric is null ? "需要安装 Fabric" : "获取中……";
+                return !SelectedFabricLike ? "需要安装 Fabric 或 Quilt" : "获取中……";
             // 检查版本
             if (ModDownload.DlFabricApiLoader.Output.Any(f => IsFabricApiCompatible(f, VanillaName)))
             {
-                return SelectedFabric is null ? "需要安装 Fabric" : null;
+                return !SelectedFabricLike ? "需要安装 Fabric 或 Quilt" : null;
             }
             else
             {
@@ -1504,7 +1633,7 @@ namespace PCL
     /// </summary>
         public McComponents GetSelectedComponents()
         {
-            return new McComponents(minecraftVersion: VanillaName, optiFineEntry: SelectedOptiFine is null ? null : JObject.FromObject(SelectedOptiFine), forgeVersion: SelectedForge?.VersionName, neoForgeVersion: SelectedNeoForge?.VersionName, fabricVersion: SelectedFabric, fabricApiVersion: (SelectedFabricApi?.Version) ?? (SelectedFabricApi?.Id) ?? (SelectedFabricApi?.Display), optiFabricVersion: (SelectedOptiFabric?.Version) ?? (SelectedOptiFabric?.Id) ?? (SelectedOptiFabric?.Display), liteLoaderVersion: SelectedLiteLoader?.JsonToken?["version"].ToString());
+            return new McComponents(minecraftVersion: VanillaName, optiFineEntry: SelectedOptiFine is null ? null : JObject.FromObject(SelectedOptiFine), forgeVersion: SelectedForge?.VersionName, neoForgeVersion: SelectedNeoForge?.VersionName, fabricVersion: SelectedFabric, quiltVersion: SelectedQuilt, fabricApiVersion: (SelectedFabricApi?.Version) ?? (SelectedFabricApi?.Id) ?? (SelectedFabricApi?.Display), optiFabricVersion: (SelectedOptiFabric?.Version) ?? (SelectedOptiFabric?.Id) ?? (SelectedOptiFabric?.Display), liteLoaderVersion: SelectedLiteLoader?.JsonToken?["version"].ToString());
         }
 
         private void TextSelectName_KeyDown(object sender, KeyEventArgs e)
@@ -1534,7 +1663,7 @@ namespace PCL
         public virtual void StartInstall(ModDownloadLib.McInstallRequest Request)
         {
             // 确认版本隔离
-            if ((SelectedForge is not null || SelectedNeoForge is not null || SelectedFabric is not null) && (Settings.Get<int>("LaunchArgumentIndieV2") == 0 || Settings.Get<int>("LaunchArgumentIndieV2") == 2))
+            if ((SelectedForge is not null || SelectedNeoForge is not null || SelectedFabricLike) && (Settings.Get<int>("LaunchArgumentIndieV2") == 0 || Settings.Get<int>("LaunchArgumentIndieV2") == 2))
             {
                 if (ModMain.MyMsgBox("你尚未开启版本隔离，多个 MC 版本会共用同一个 Mod 文件夹。" + ModBase.CrLf + "因此，游戏可能会因为读取到与当前版本不符的 Mod 而崩溃。" + ModBase.CrLf + "推荐先在 设置 → 启动选项 → 默认版本隔离 中开启版本隔离！", "版本隔离提示", "取消下载", "继续") == 1)
                 {
@@ -1573,7 +1702,8 @@ namespace PCL
 
                 default:
                     {
-                        return null;
+                        // 尚未开始的加载器（Waiting）也会显示为 Stop，此时还没有输出
+                        return ((ModLoader.LoaderBase)Loader.State).State == ModBase.LoadState.Finished ? null : "获取中……";
                     }
             }
         }

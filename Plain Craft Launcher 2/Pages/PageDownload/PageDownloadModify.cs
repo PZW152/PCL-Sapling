@@ -58,6 +58,7 @@ namespace PCL
             BtnForgeRestore.Click += RestoreComponent;
             BtnNeoForgeRestore.Click += RestoreComponent;
             BtnFabricRestore.Click += RestoreComponent;
+            BtnQuiltRestore.Click += RestoreComponent;
             BtnFabricApiRestore.Click += RestoreComponent;
             BtnOptiFabricRestore.Click += RestoreComponent;
             BtnLiteLoaderRestore.Click += RestoreComponent;
@@ -144,7 +145,14 @@ namespace PCL
                 var UnknownLoaders = VersionInfo.ModLoaderVersions.Where(Loader => string.IsNullOrWhiteSpace(Loader.Value) || Loader.Value == "未知版本").Select(Loader => Loader.Key.ToString()).ToList();
                 if (UnknownLoaders.Any())
                     throw new Exception($"无法确定 {UnknownLoaders.Join("、")} 的版本，无法修改");
-                Components = new McComponents(VersionInfo.VanillaName, VersionInfo.ModLoaderVersions);
+                var LoaderVersions = new Dictionary<ModLoaders, string>(VersionInfo.ModLoaderVersions);
+                if (VersionInfo.IsQuilt && LoaderVersions.TryGetValue(ModLoaders.Fabric, out string QuiltVersion))
+                {
+                    // Quilt 在版本信息中按 Fabric 记录，修改时要按 Quilt 还原，否则会被改装成 Fabric
+                    LoaderVersions.Remove(ModLoaders.Fabric);
+                    LoaderVersions[ModLoaders.Quilt] = QuiltVersion;
+                }
+                Components = new McComponents(VersionInfo.VanillaName, LoaderVersions);
                 OptiFineVersion = VersionInfo.OptiFine;
                 IsVanillaVersionReliable = VersionInfo.Reliable;
             }
@@ -152,7 +160,7 @@ namespace PCL
             if (string.IsNullOrWhiteSpace(MinecraftVersion))
                 throw new Exception("无法确定当前 Minecraft 版本，请检查版本文件");
             // 等待子列表加载器完成获取
-            var LoaderList = new Dictionary<string, ModLoader.LoaderBase>() { { "Minecraft", ModDownload.DlClientListLoader }, { "OptiFine", ModDownload.DlOptiFineListLoader }, { "LiteLoader", ModDownload.DlLiteLoaderListLoader }, { "NeoForge", ModDownload.DlNeoForgeListLoader }, { "Fabric", ModDownload.DlFabricListLoader }, { "Fabric API", ModDownload.DlFabricApiLoader }, { "OptiFabric", ModDownload.DlOptiFabricLoader } };
+            var LoaderList = new Dictionary<string, ModLoader.LoaderBase>() { { "Minecraft", ModDownload.DlClientListLoader }, { "OptiFine", ModDownload.DlOptiFineListLoader }, { "LiteLoader", ModDownload.DlLiteLoaderListLoader }, { "NeoForge", ModDownload.DlNeoForgeListLoader }, { "Fabric", ModDownload.DlFabricListLoader }, { "Quilt", ModDownload.DlQuiltListLoader }, { "Fabric API", ModDownload.DlFabricApiLoader }, { "OptiFabric", ModDownload.DlOptiFabricLoader } };
             ModLoader.LoaderTask<string, List<ModDownload.DlForgeVersionEntry>> ForgeLoader = null;
             if (McVersion.IsStandardFormat(MinecraftVersion))
             {
@@ -229,6 +237,15 @@ namespace PCL
                     throw new Exception($"Fabric 列表中没有已安装的 {Components.ModLoaderVersions[ModLoaders.Fabric]}");
                 }
                 SelectedFabric = FabricEntry["version"].ToString();
+            }
+            // Quilt
+            if (Components.ModLoaderVersions.ContainsKey(ModLoaders.Quilt))
+            {
+                string Installed = Components.ModLoaderVersions[ModLoaders.Quilt];
+                var QuiltEntry = ModDownload.DlQuiltListLoader.Output.Value["loader"].OfType<JObject>().FirstOrDefault(v => v["version"].ToString() == Installed);
+                if (QuiltEntry is null || !ModDownload.DlQuiltListLoader.Output.Value["game"].OfType<JObject>().Any(v => v["version"].ToString() == MinecraftVersion.Replace("∞", "infinite")))
+                    throw new Exception($"Quilt 列表中没有已安装的 {Installed}");
+                SelectedQuilt = QuiltEntry["version"].ToString();
             }
             // LiteLoader
             if (Components.ModLoaderVersions.ContainsKey(ModLoaders.LiteLoader))
@@ -433,6 +450,7 @@ namespace PCL
             BtnForgeRestore.Tag = SelectedForge;
             BtnNeoForgeRestore.Tag = SelectedNeoForge;
             BtnFabricRestore.Tag = SelectedFabric;
+            BtnQuiltRestore.Tag = SelectedQuilt;
             BtnFabricApiRestore.Tag = SelectedFabricApi;
             BtnOptiFabricRestore.Tag = SelectedOptiFabric;
             BtnLiteLoaderRestore.Tag = SelectedLiteLoader;
@@ -442,6 +460,7 @@ namespace PCL
             this.LabForgeOld.Text = SelectedForge is null ? "无" : this.LabForge.Text;
             this.LabNeoForgeOld.Text = SelectedNeoForge is null ? "无" : this.LabNeoForge.Text;
             this.LabFabricOld.Text = SelectedFabric is null ? "无" : this.LabFabric.Text;
+            this.LabQuiltOld.Text = SelectedQuilt is null ? "无" : this.LabQuilt.Text;
             this.LabLiteLoaderOld.Text = SelectedLiteLoader is null ? "无" : this.LabLiteLoader.Text;
             this.LabFabricApiOld.Text = SelectedFabricApi is null ? "无" : this.LabFabricApi.Text;
             this.LabOptiFabricOld.Text = SelectedOptiFabric is null ? "无" : this.LabOptiFabric.Text;
@@ -459,7 +478,7 @@ namespace PCL
             {
                 // 把当前已选择的组件记录到 PendingComponents
                 var Components = GetSelectedComponents();
-                foreach ((MyLoading Loader, string Version) Component in new[] { (this.LoadOptiFine, Components.OptiFineVersion), (this.LoadFabricApi, Components.FabricApiVersion), (this.LoadOptiFabric, Components.OptiFabricVersion), (this.LoadForge, SelectedForge?.VersionName), (this.LoadNeoForge, SelectedNeoForge?.VersionName), (this.LoadFabric, SelectedFabric), (this.LoadLiteLoader, SelectedLiteLoader?.JsonToken?["version"].ToString()) })
+                foreach ((MyLoading Loader, string Version) Component in new[] { (this.LoadOptiFine, Components.OptiFineVersion), (this.LoadFabricApi, Components.FabricApiVersion), (this.LoadOptiFabric, Components.OptiFabricVersion), (this.LoadForge, SelectedForge?.VersionName), (this.LoadNeoForge, SelectedNeoForge?.VersionName), (this.LoadFabric, SelectedFabric), (this.LoadQuilt, SelectedQuilt), (this.LoadLiteLoader, SelectedLiteLoader?.JsonToken?["version"].ToString()) })
                 {
                     // 保留尚未加载完成的组件选择
                     if (Component.Version is not null)
@@ -480,7 +499,7 @@ namespace PCL
                 {
                     bool HasProcessed = false;
                     // 优先恢复 Mod 加载器，再匹配兼容的附加组件
-                    foreach (var LoadingComponent in new[] { this.LoadFabric, this.LoadForge, this.LoadNeoForge, this.LoadLiteLoader, this.LoadOptiFine, this.LoadFabricApi, this.LoadOptiFabric })
+                    foreach (var LoadingComponent in new[] { this.LoadFabric, this.LoadQuilt, this.LoadForge, this.LoadNeoForge, this.LoadLiteLoader, this.LoadOptiFine, this.LoadFabricApi, this.LoadOptiFabric })
                     {
                         string Version = null;
                         if (!PendingComponents.TryGetValue(LoadingComponent, out Version))
@@ -491,12 +510,12 @@ namespace PCL
                         // 检查前置组件
                         if (object.ReferenceEquals(LoadingComponent, this.LoadOptiFine))
                         {
-                            if (new[] { LoadFabric, LoadForge, LoadNeoForge, LoadLiteLoader }.Any(Component => PendingComponents.ContainsKey(Component)))
+                            if (new[] { LoadFabric, LoadQuilt, LoadForge, LoadNeoForge, LoadLiteLoader }.Any(Component => PendingComponents.ContainsKey(Component)))
                                 continue;
                         }
                         else if (object.ReferenceEquals(LoadingComponent, this.LoadFabricApi))
                         {
-                            if (PendingComponents.ContainsKey(this.LoadFabric))
+                            if (PendingComponents.ContainsKey(this.LoadFabric) || PendingComponents.ContainsKey(this.LoadQuilt))
                                 continue;
                         }
                         else if (object.ReferenceEquals(LoadingComponent, this.LoadForge))
@@ -525,7 +544,15 @@ namespace PCL
                         PendingComponents.Remove(LoadingComponent);
                         HasProcessed = true;
                         // 匹配目标 MC 版本下兼容的组件
-                        if (object.ReferenceEquals(LoadingComponent, this.LoadFabric))
+                        if (object.ReferenceEquals(LoadingComponent, this.LoadQuilt))
+                        {
+                            if (SelectedQuilt is null && LoadQuiltGetError() is null)
+                            {
+                                var Versions = ModDownload.DlQuiltListLoader.Output.Value["loader"].OfType<JObject>();
+                                SelectedQuilt = (Versions.FirstOrDefault(v => v["version"].ToString() == (Version ?? "")) ?? Versions.FirstOrDefault(v => !v["version"].ToString().Contains("-")))?["version"].ToString();
+                            }
+                        }
+                        else if (object.ReferenceEquals(LoadingComponent, this.LoadFabric))
                         {
                             if (SelectedFabric is null && LoadFabricGetError() is null)
                             {
@@ -612,11 +639,11 @@ namespace PCL
             ModDownload.DlOptiFineListEntry OriginalOptiFine = BtnOptiFineRestore.Tag as ModDownload.DlOptiFineListEntry;
             this.ShowComparison(this.PanOptiFineCompare, this.PanOptiFineInfo, InitialTarget.OptiFineVersion, Current.OptiFineVersion, this.LabOptiFine.Text, BtnOptiFineRestore, InitialTarget.OptiFineEntry is null || IsMinecraftUnchanged && this.CardOptiFine.MainSwap.Visibility == Visibility.Visible && OriginalOptiFine is not null && (SelectedForge is null || IsOptiFineSuitForForge(OriginalOptiFine, SelectedForge)), this.BtnOptiFineClear);
             // Fabric API
-            this.ShowComparison(this.PanFabricApiCompare, this.PanFabricApiInfo, InitialTarget.FabricApiVersion, Current.FabricApiVersion, this.LabFabricApi.Text, BtnFabricApiRestore, InitialTarget.FabricApiVersion is null || IsMinecraftUnchanged && SelectedFabric is not null && this.CardFabricApi.MainSwap.Visibility == Visibility.Visible, this.BtnFabricApiClear);
+            this.ShowComparison(this.PanFabricApiCompare, this.PanFabricApiInfo, InitialTarget.FabricApiVersion, Current.FabricApiVersion, this.LabFabricApi.Text, BtnFabricApiRestore, InitialTarget.FabricApiVersion is null || IsMinecraftUnchanged && SelectedFabricLike && this.CardFabricApi.MainSwap.Visibility == Visibility.Visible, this.BtnFabricApiClear);
             // OptiFabric
             this.ShowComparison(this.PanOptiFabricCompare, this.PanOptiFabricInfo, InitialTarget.OptiFabricVersion, Current.OptiFabricVersion, this.LabOptiFabric.Text, BtnOptiFabricRestore, InitialTarget.OptiFabricVersion is null || IsMinecraftUnchanged && SelectedFabric is not null && SelectedOptiFine is not null && this.CardOptiFabric.MainSwap.Visibility == Visibility.Visible, this.BtnOptiFabricClear);
             // Mod Loader
-            foreach ((ModLoaders Kind, MyCard Card, Grid ComparePanel, Grid CurrentPanel, TextBlock Label, MyIconButton RestoreButton, MyIconButton ClearButton) Loader in new[] { (ModLoaders.Forge, this.CardForge, this.PanForgeCompare, this.PanForgeInfo, this.LabForge, BtnForgeRestore, this.BtnForgeClear), (ModLoaders.NeoForge, this.CardNeoForge, this.PanNeoForgeCompare, this.PanNeoForgeInfo, this.LabNeoForge, BtnNeoForgeRestore, this.BtnNeoForgeClear), (ModLoaders.Fabric, this.CardFabric, this.PanFabricCompare, this.PanFabricInfo, this.LabFabric, BtnFabricRestore, this.BtnFabricClear), (ModLoaders.LiteLoader, this.CardLiteLoader, this.PanLiteLoaderCompare, this.PanLiteLoaderInfo, this.LabLiteLoader, BtnLiteLoaderRestore, this.BtnLiteLoaderClear) })
+            foreach ((ModLoaders Kind, MyCard Card, Grid ComparePanel, Grid CurrentPanel, TextBlock Label, MyIconButton RestoreButton, MyIconButton ClearButton) Loader in new[] { (ModLoaders.Forge, this.CardForge, this.PanForgeCompare, this.PanForgeInfo, this.LabForge, BtnForgeRestore, this.BtnForgeClear), (ModLoaders.NeoForge, this.CardNeoForge, this.PanNeoForgeCompare, this.PanNeoForgeInfo, this.LabNeoForge, BtnNeoForgeRestore, this.BtnNeoForgeClear), (ModLoaders.Fabric, this.CardFabric, this.PanFabricCompare, this.PanFabricInfo, this.LabFabric, BtnFabricRestore, this.BtnFabricClear), (ModLoaders.Quilt, this.CardQuilt, this.PanQuiltCompare, this.PanQuiltInfo, this.LabQuilt, BtnQuiltRestore, this.BtnQuiltClear), (ModLoaders.LiteLoader, this.CardLiteLoader, this.PanLiteLoaderCompare, this.PanLiteLoaderInfo, this.LabLiteLoader, BtnLiteLoaderRestore, this.BtnLiteLoaderClear) })
             {
                 string OldVersion = null;
                 string NewVersion = null;
@@ -626,6 +653,11 @@ namespace PCL
                 if (Loader.Kind == ModLoaders.Forge && OldVersion is not null && CanRestore)
                 {
                     CanRestore = SelectedOptiFine is null || IsOptiFineSuitForForge(SelectedOptiFine, (ModDownload.DlForgeVersionEntry)Loader.RestoreButton.Tag);
+                }
+                if (Loader.Kind == ModLoaders.Quilt && OldVersion is not null)
+                {
+                    string TargetVersion = VanillaName.Replace("∞", "infinite");
+                    CanRestore = this.CardQuilt.Visibility == Visibility.Visible && this.CardQuilt.MainSwap.Visibility == Visibility.Visible && ModDownload.DlQuiltListLoader.Output.Value["loader"].OfType<JObject>().Any(v => v["version"].ToString() == OldVersion) && ModDownload.DlQuiltListLoader.Output.Value["game"].OfType<JObject>().Any(v => v["version"].ToString() == TargetVersion);
                 }
                 if (Loader.Kind == ModLoaders.Fabric && OldVersion is not null)
                 {
@@ -654,6 +686,10 @@ namespace PCL
                 else if (ReferenceEquals(RestoreButton, BtnNeoForgeRestore))
                 {
                     UnavailableReason = this.CardNeoForge.Visibility == Visibility.Collapsed ? "无" : LoadNeoForgeGetError();
+                }
+                else if (ReferenceEquals(RestoreButton, BtnQuiltRestore))
+                {
+                    UnavailableReason = this.CardQuilt.Visibility == Visibility.Collapsed ? "无" : LoadQuiltGetError();
                 }
                 else if (ReferenceEquals(RestoreButton, BtnFabricRestore))
                 {
@@ -732,10 +768,11 @@ namespace PCL
                     SelectedForge = BtnForgeRestore.Tag as ModDownload.DlForgeVersionEntry;
                     SelectedNeoForge = BtnNeoForgeRestore.Tag as ModDownload.DlNeoForgeListEntry;
                     SelectedFabric = BtnFabricRestore.Tag as string;
+                    SelectedQuilt = BtnQuiltRestore.Tag as string;
                     SelectedLiteLoader = BtnLiteLoaderRestore.Tag as ModDownload.DlLiteLoaderListEntry;
                     SelectedFabricApi = BtnFabricApiRestore.Tag as ResourceVersion;
                     SelectedOptiFabric = BtnOptiFabricRestore.Tag as ResourceVersion;
-                    AutoSelectedFabricApi = SelectedFabric is not null;
+                    AutoSelectedFabricApi = SelectedFabricLike;
                     AutoSelectedOptiFabric = SelectedFabric is not null && SelectedOptiFine is not null;
                 }
                 finally
@@ -770,6 +807,15 @@ namespace PCL
                     SelectedFabricApi = null;
                     SelectedOptiFabric = null;
                 }
+            }
+            else if (ReferenceEquals(Button, BtnQuiltRestore))
+            {
+                SelectedQuilt = Button.Tag as string;
+                if (SelectedQuilt is not null)
+                    SelectedFabric = null;
+                AutoSelectedFabricApi = SelectedFabricLike;
+                if (!SelectedFabricLike)
+                    SelectedFabricApi = null;
             }
             else if (ReferenceEquals(Button, BtnFabricApiRestore))
             {
@@ -839,7 +885,7 @@ namespace PCL
             Request.InstanceFolder = TargetInstance.PathVersion;
             // 警告
             var Warnings = new List<string>();
-            if ((SelectedForge is not null || SelectedNeoForge is not null || SelectedFabric is not null) && !PathUtils.IsSame(TargetInstance.PathIndie, TargetInstance.PathVersion))
+            if ((SelectedForge is not null || SelectedNeoForge is not null || SelectedFabricLike) && !PathUtils.IsSame(TargetInstance.PathIndie, TargetInstance.PathVersion))
             {
                 Warnings.Add("该版本尚未开启版本隔离，可能与别的 MC 版本共用同一个 Mod 和存档文件夹。" + ModBase.CrLf + "修改版本后，已有的 Mod、存档等需要手动迁移到新的游戏目录。");
             }

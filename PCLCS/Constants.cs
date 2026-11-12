@@ -45,6 +45,10 @@ public enum ModLoaders {
     LiteLoader = 2,
     Fabric = 4,
     NeoForge = 16,
+    /// <summary>
+    /// Quilt。只用于安装请求（McComponents）；已安装的 Quilt 版本按 Fabric 兼容处理（可以使用 Fabric Mod），并以 McVersion.IsQuilt 区分显示。
+    /// </summary>
+    Quilt = 32,
     All = Forge | LiteLoader | Fabric | NeoForge,
 }
 

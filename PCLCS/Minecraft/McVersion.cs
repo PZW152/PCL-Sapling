@@ -32,6 +32,14 @@ public sealed class McVersion {
     public ModLoaders ModLoaders => ModLoaderVersions.Keys.Aggregate(ModLoaders.None, (result, loader) => result | loader);
     /// <summary> 已安装的各个 Mod Loader 及其版本；无法确定精确版本时为“未知版本”。</summary>
     public Dictionary<ModLoaders, string> ModLoaderVersions { get; } = [];
+    /// <summary>
+    /// 是否为 Quilt。Quilt 版本的 ModLoaders 中仍是 Fabric（Fabric Mod 可以直接使用），版本号记在 Fabric 下。
+    /// </summary>
+    public bool IsQuilt { get; private set; }
+    /// <summary>
+    /// Fabric 系加载器的显示名称：Quilt 或 Fabric。
+    /// </summary>
+    public string FabricLikeName => IsQuilt ? "Quilt" : "Fabric";
     /// <summary> OptiFine 版本名，如 C8、C9_pre10；未识别到时为 null。</summary>
     public string? OptiFine;
     /// <summary> OptiFine 是否以 Mod 形式安装。</summary>
@@ -136,8 +144,9 @@ public sealed class McVersion {
         if (jsonText.ContainsIgnoreCase("liteloader")) {
             ModLoaderVersions[ModLoaders.LiteLoader] = jsonText.RegexSeek(@"(?<=com\.mumfrey:liteloader:)[^\"":/]+") ?? "未知版本";
         }
-        // Fabric、Forge、NeoForge
-        if (jsonText.ContainsIgnoreCase("net.fabricmc:fabric-loader") || jsonText.ContainsIgnoreCase("org.quiltmc:quilt-loader")) {
+        // Fabric、Quilt、Forge、NeoForge（Quilt 可以使用 Fabric Mod，按 Fabric 兼容处理，另外记下它是 Quilt）
+        IsQuilt = jsonText.ContainsIgnoreCase("org.quiltmc:quilt-loader");
+        if (jsonText.ContainsIgnoreCase("net.fabricmc:fabric-loader") || IsQuilt) {
             ModLoaderVersions[ModLoaders.Fabric] = jsonText.RegexSeek(@"(?<=(net\.fabricmc:fabric-loader:|org\.quiltmc:quilt-loader:))[0-9\.]+(\+build.[0-9]+)?")?
                                                         .Replace("+build", "") ?? "未知版本";
         } else if (jsonText.ContainsIgnoreCase("net.neoforge")) {

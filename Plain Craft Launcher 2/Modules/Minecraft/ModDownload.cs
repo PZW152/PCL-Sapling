@@ -979,6 +979,17 @@ namespace PCL
         }
 
         /// <summary>
+        /// Quilt 列表，官方源（meta.quiltmc.org），结构与 Fabric 的相同：game（含 stable）与 loader。
+        /// </summary>
+        public static ModLoader.LoaderTask<int, DlFabricListResult> DlQuiltListLoader = new ModLoader.LoaderTask<int, DlFabricListResult>("DlQuiltList Official", Loader =>
+        {
+            JObject Result = (JObject)ModNet.NetRequestByClientRetry("https://meta.quiltmc.org/v3/versions", RequireJson: true).DeserializeJson();
+            if (Result["game"] is null || Result["loader"] is null)
+                throw new Exception("获取到的 Quilt 列表缺乏必要项");
+            Loader.Output = new DlFabricListResult() { IsOfficial = true, SourceName = "Quilt 官方源", Value = Result };
+        });
+
+        /// <summary>
     /// Fabric 列表，主加载器。
     /// </summary>
         public static ModLoader.LoaderTask<int, DlFabricListResult> DlFabricListLoader = new ModLoader.LoaderTask<int, DlFabricListResult>("DlFabricList Main", DlFabricListMain);

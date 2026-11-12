@@ -829,7 +829,7 @@ namespace PCL
             if (TargetInstance.Version.ModLoaders.HasFlagF(ModLoaders.Forge))
                 Dependencies.Add("forge", TargetInstance.Version.ModLoaderVersions[ModLoaders.Forge]);
             if (TargetInstance.Version.ModLoaders.HasFlagF(ModLoaders.Fabric))
-                Dependencies.Add("fabric-loader", TargetInstance.Version.ModLoaderVersions[ModLoaders.Fabric]);
+                Dependencies.Add(TargetInstance.Version.IsQuilt ? "quilt-loader" : "fabric-loader", TargetInstance.Version.ModLoaderVersions[ModLoaders.Fabric]);
             if (TargetInstance.Version.ModLoaders.HasFlagF(ModLoaders.NeoForge))
                 Dependencies.Add("neoforge", TargetInstance.Version.ModLoaderVersions[ModLoaders.NeoForge]);
             var ResultJson = new JObject() { { "game", "minecraft" }, { "formatVersion", 1 }, { "versionId", PackVersion }, { "name", PackName }, { "summary", TargetInstance.Info }, { "files", Files }, { "dependencies", Dependencies } };

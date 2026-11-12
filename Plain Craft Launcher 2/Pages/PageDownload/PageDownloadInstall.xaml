@@ -70,7 +70,7 @@
                                                 Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
                         </local:MyCard>
                         <local:MyHint x:Name="HintSelectName" Theme="Red" Visibility="Collapsed" />
-                        <local:MyHint Text="如果不安装 Fabric API，大多数 Mod 都会无法使用！" Margin="0,10,0,0" x:Name="HintFabricAPI" Theme="Red" />
+                        <local:MyHint Text="如果不安装 Fabric API，大多数 Mod 都会无法使用！（Quilt 也可以使用 Fabric API）" Margin="0,10,0,0" x:Name="HintFabricAPI" Theme="Red" />
                         <local:MyHint Text="必须安装 OptiFabric 才能正常使用 OptiFine！" Margin="0,10,0,0" x:Name="HintOptiFabric" Theme="Red" />
                         <local:MyHint Text="安装结束后，请在 Mod 下载中搜索 OptiFabric Origins 并下载，否则 OptiFine 会无法使用！" Margin="0,10,0,0" x:Name="HintOptiFabricOld" Theme="Yellow" />
                         <local:MyHint Text="OptiFine 与一部分 Mod 的兼容性不佳，请谨慎安装。" Margin="0,10,0,0" x:Name="HintModOptiFine" Theme="Yellow" />
@@ -193,6 +193,36 @@
                         </Grid>
                         <local:MyIconButton x:Name="BtnFabricClear" Click="Fabric_Clear" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
                         <local:MyIconButton x:Name="BtnFabricRestore" Style="{StaticResource ModifyRestoreButton}" Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
+                    </local:MyCard>
+                        <local:MyCard Title="Quilt" Height="40" Margin="0,12,0,0" x:Name="CardQuilt" PreviewSwap="CardQuilt_PreviewSwap" Swap="CardQuilt_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
+                        <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanQuilt" />
+                        <Grid x:Name="PanQuiltInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top" Tag="True">
+                            <Grid.RenderTransform>
+                                <TranslateTransform />
+                            </Grid.RenderTransform>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+                            <local:MyImage x:Name="ImgQuilt" Margin="0,0,7,0" SnapsToDevicePixels="True" Height="18" RenderOptions.BitmapScalingMode="Linear" Source="pack://application:,,,/images/Blocks/Quilt.png" />
+                            <TextBlock x:Name="LabQuilt" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Grid.Column="1" />
+                        </Grid>
+                        <Grid x:Name="PanQuiltCompare" Height="18" Margin="132,11,80,0" VerticalAlignment="Top" Visibility="Collapsed" IsHitTestVisible="False">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+                            <DockPanel>
+                                <local:MyImage Style="{StaticResource ModifyCompareIcon}" Source="pack://application:,,,/images/Blocks/Quilt.png" DockPanel.Dock="Left" />
+                                <TextBlock x:Name="LabQuiltOld" Style="{StaticResource ModifyCompareText}" />
+                            </DockPanel>
+                            <Path Grid.Column="1" Style="{StaticResource ModifyCompareArrow}" />
+                            <DockPanel Grid.Column="2">
+                                <local:MyImage Style="{StaticResource ModifyCompareIcon}" Source="pack://application:,,,/images/Blocks/Quilt.png" DockPanel.Dock="Left" />
+                                <TextBlock Style="{StaticResource ModifyCompareText}" />
+                            </DockPanel>
+                        </Grid>
+                        <local:MyIconButton x:Name="BtnQuiltClear" Click="Quilt_Clear" Style="{StaticResource ModifyClearButton}" Theme="Black" LogoScale="0.5" Logo="{StaticResource ModifyClearLogo}" />
+                        <local:MyIconButton x:Name="BtnQuiltRestore" Style="{StaticResource ModifyRestoreButton}" Theme="Black" LogoScale="0.55" Logo="{StaticResource ModifyRestoreLogo}" />
                     </local:MyCard>
                         <local:MyCard Title="Fabric API" Height="40" Margin="0,12,0,0" x:Name="CardFabricApi" PreviewSwap="CardFabricApi_PreviewSwap" Swap="CardFabricApi_Swap" IsSwapped="True" CanSwap="True" SwapLogoRight="True">
                         <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanFabricApi" />
@@ -330,6 +360,7 @@
             <local:MyLoading Visibility="Collapsed" x:Name="LoadNeoForge" StateChanged="LoadNeoForge_StateChanged" HasAnimation="False" />
             <local:MyLoading Visibility="Collapsed" x:Name="LoadLiteLoader" StateChanged="LoadLiteLoader_StateChanged" HasAnimation="False" />
             <local:MyLoading Visibility="Collapsed" x:Name="LoadFabric" StateChanged="LoadFabric_StateChanged" HasAnimation="False" />
+            <local:MyLoading Visibility="Collapsed" x:Name="LoadQuilt" StateChanged="LoadQuilt_StateChanged" HasAnimation="False" />
             <local:MyLoading Visibility="Collapsed" x:Name="LoadFabricApi" StateChanged="LoadFabricApi_StateChanged" HasAnimation="False" />
             <local:MyLoading Visibility="Collapsed" x:Name="LoadOptiFabric" StateChanged="LoadOptiFabric_StateChanged" HasAnimation="False" />
         </local:MyCard>

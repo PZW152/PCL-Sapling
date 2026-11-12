@@ -54,11 +54,12 @@ public record McComponents(string MinecraftVersion, Dictionary<ModLoaders, strin
     [JsonIgnore]
     public string? OptiFineVersion => OptiFineEntry?["InstanceName"]?.Value<string>()?.AfterLast("-OptiFine_");
     public McComponents(string minecraftVersion, JObject? optiFineEntry, string? forgeVersion,
-        string? neoForgeVersion, string? fabricVersion, string? fabricApiVersion, string? optiFabricVersion, string? liteLoaderVersion)
+        string? neoForgeVersion, string? fabricVersion, string? fabricApiVersion, string? optiFabricVersion, string? liteLoaderVersion, string? quiltVersion = null)
         : this(minecraftVersion, [], optiFineEntry, fabricApiVersion, optiFabricVersion) {
         if (forgeVersion is not null) ModLoaderVersions[ModLoaders.Forge] = forgeVersion;
         if (neoForgeVersion is not null) ModLoaderVersions[ModLoaders.NeoForge] = neoForgeVersion;
         if (fabricVersion is not null) ModLoaderVersions[ModLoaders.Fabric] = fabricVersion;
+        if (quiltVersion is not null) ModLoaderVersions[ModLoaders.Quilt] = quiltVersion;
         if (liteLoaderVersion is not null) ModLoaderVersions[ModLoaders.LiteLoader] = liteLoaderVersion;
     }
     public bool IsEquivalentTo(McComponents other) =>

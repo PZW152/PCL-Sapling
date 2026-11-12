@@ -889,7 +889,7 @@ namespace PCL
                                 }
                             case McInstanceState.Fabric:
                                 {
-                                    Logo = ModBase.PathImage + "Blocks/Fabric.png";
+                                    Logo = ModBase.PathImage + (Version.IsQuilt ? "Blocks/Quilt.png" : "Blocks/Fabric.png");
                                     break;
                                 }
                             case McInstanceState.OptiFine:
@@ -989,7 +989,7 @@ namespace PCL
                 if (Version.ModLoaders.HasFlagF(ModLoaders.NeoForge))
                     ModLoaderInfo += ", NeoForge" + (Version.ModLoaderVersions[ModLoaders.NeoForge] == "未知版本" ? "" : " " + Version.ModLoaderVersions[ModLoaders.NeoForge]);
                 if (Version.ModLoaders.HasFlagF(ModLoaders.Fabric))
-                    ModLoaderInfo += ", Fabric" + (Version.ModLoaderVersions[ModLoaders.Fabric] == "未知版本" ? "" : " " + Version.ModLoaderVersions[ModLoaders.Fabric]);
+                    ModLoaderInfo += ", " + Version.FabricLikeName + (Version.ModLoaderVersions[ModLoaders.Fabric] == "未知版本" ? "" : " " + Version.ModLoaderVersions[ModLoaders.Fabric]);
                 if (Version.HasOptiFine)
                     ModLoaderInfo += ", OptiFine" + (Version.OptiFine == "未知版本" ? "" : " " + Version.OptiFine.Replace("-", " ").Replace("_", " "));
                 if (Version.ModLoaders.HasFlagF(ModLoaders.LiteLoader))

@@ -71,6 +71,7 @@
     <Resource Include="Images\Blocks\RedstoneLampOff.png" />
     <Resource Include="Images\Blocks\RedstoneLampOn.png" />
     <Resource Include="Images\Blocks\Fabric.png" />
+    <Resource Include="Images\Blocks\Quilt.png" />
     <Resource Include="Images\Heads\Logo.png" />
     <Resource Include="Images\ReleaseTypes\Alpha.png" />
     <Resource Include="Images\ReleaseTypes\Beta.png" />

@@ -2089,18 +2089,22 @@ pause";
     /// 获取下载某个 Fabric 版本的加载器列表。
     /// 这不会补全所需的支持库文件，需要后续手动补全支持库。
     /// </summary>
-        private static List<ModLoader.LoaderBase> McDownloadFabricLoader(string FabricVersion, string MinecraftName, string McFolder)
+        private static List<ModLoader.LoaderBase> McDownloadFabricLoader(string FabricVersion, string MinecraftName, string McFolder, bool IsQuilt = false)
         {
 
-            // 参数初始化
-            string Id = "fabric-loader-" + FabricVersion + "-" + MinecraftName;
+            // 参数初始化：Quilt 的版本 JSON 与 Fabric 结构相同，只是地址和名称不同
+            string Name = IsQuilt ? "Quilt" : "Fabric";
+            string Id = (IsQuilt ? "quilt-loader-" : "fabric-loader-") + FabricVersion + "-" + MinecraftName;
             string VersionFolder = McFolder + @"versions\" + Id + @"\";
             var Loaders = new List<ModLoader.LoaderBase>();
 
             // 下载 Json
             MinecraftName = MinecraftName.Replace("∞", "infinite"); // 放在 ID 后面避免影响版本文件夹名称
-            Loaders.Add(new ModLoader.LoaderTask<string, List<ModNet.NetFile>>("获取 Fabric 主文件下载地址", (Task) => Task.Output = new List<ModNet.NetFile>() { new ModNet.NetFile(new[] { "https://meta.fabricmc.net/v2/versions/loader/" + MinecraftName + "/" + FabricVersion + "/profile/json" }, VersionFolder + Id + ".json", new FileChecker() { IsJson = true }) }) { ProgressWeight = 0.5d }); // 构造文件请求
-            Loaders.Add(new ModNet.LoaderDownload("下载 Fabric 主文件", new List<ModNet.NetFile>()) { ProgressWeight = 2.5d });
+            string ProfileUrl = IsQuilt
+                ? "https://meta.quiltmc.org/v3/versions/loader/" + MinecraftName + "/" + FabricVersion + "/profile/json"
+                : "https://meta.fabricmc.net/v2/versions/loader/" + MinecraftName + "/" + FabricVersion + "/profile/json";
+            Loaders.Add(new ModLoader.LoaderTask<string, List<ModNet.NetFile>>($"获取 {Name} 主文件下载地址", (Task) => Task.Output = new List<ModNet.NetFile>() { new ModNet.NetFile(new[] { ProfileUrl }, VersionFolder + Id + ".json", new FileChecker() { IsJson = true }) }) { ProgressWeight = 0.5d }); // 构造文件请求
+            Loaders.Add(new ModNet.LoaderDownload($"下载 {Name} 主文件", new List<ModNet.NetFile>()) { ProgressWeight = 2.5d });
 
             return Loaders;
         }
@@ -2126,6 +2130,29 @@ pause";
             NewItem.Click += OnClick;
             return NewItem;
         })
+            {
+                Height = 42d
+            };
+        }
+        public static MyVirtualizingElement<MyListItem> QuiltDownloadListItem(JObject Entry, MyListItem.ClickEventHandler OnClick)
+        {
+            string Version = Entry["version"].ToString();
+            bool Stable = !Version.Contains("-");
+            return new MyVirtualizingElement<MyListItem>(() =>
+            {
+                var NewItem = new MyListItem()
+                {
+                    Title = Version,
+                    SnapsToDevicePixels = true,
+                    Height = 42d,
+                    Type = MyListItem.CheckType.Clickable,
+                    Tag = Entry,
+                    Info = Stable ? "稳定版" : "测试版",
+                    Logo = ModBase.PathImage + "Blocks/Quilt.png"
+                };
+                NewItem.Click += OnClick;
+                return NewItem;
+            })
             {
                 Height = 42d
             };
@@ -2241,8 +2268,10 @@ pause";
             string NeoForgeFolder = NeoForgeVersion is null ? null : $@"{TempMcFolder}versions\neoforge-{NeoForgeVersion}";
             string LiteLoaderVersion = Request.Components.ModLoaderVersions.ContainsKey(ModLoaders.LiteLoader) ? Request.Components.ModLoaderVersions[ModLoaders.LiteLoader] : null;
             string LiteLoaderFolder = LiteLoaderVersion is null ? null : $@"{TempMcFolder}versions\{Request.Components.MinecraftVersion}-LiteLoader";
-            string FabricVersion = Request.Components.ModLoaderVersions.ContainsKey(ModLoaders.Fabric) ? Request.Components.ModLoaderVersions[ModLoaders.Fabric] : null;
-            string FabricFolder = FabricVersion is null ? null : $@"{TempMcFolder}versions\fabric-loader-{FabricVersion}-{Request.Components.MinecraftVersion}";
+            // Quilt 与 Fabric 只会有一个；Quilt 按 Fabric 的流程安装，只是版本 JSON 来自 Quilt
+            bool IsQuilt = Request.Components.ModLoaderVersions.ContainsKey(ModLoaders.Quilt);
+            string FabricVersion = IsQuilt ? Request.Components.ModLoaderVersions[ModLoaders.Quilt] : Request.Components.ModLoaderVersions.ContainsKey(ModLoaders.Fabric) ? Request.Components.ModLoaderVersions[ModLoaders.Fabric] : null;
+            string FabricFolder = FabricVersion is null ? null : $@"{TempMcFolder}versions\{(IsQuilt ? "quilt-loader" : "fabric-loader")}-{FabricVersion}-{Request.Components.MinecraftVersion}";
 
             // 判断 OptiFine 是否作为 Mod 进行下载
             bool Modable = Request.Components.ModLoaderVersions.Any();
@@ -2269,7 +2298,7 @@ pause";
             if (NeoForgeFolder is not null)
                 Logger.Info($"NeoForge 缓存：{NeoForgeFolder}");
             if (FabricFolder is not null)
-                Logger.Info($"Fabric 缓存：{FabricFolder}");
+                Logger.Info($"{(IsQuilt ? "Quilt" : "Fabric")} 缓存：{FabricFolder}");
             if (LiteLoaderFolder is not null)
                 Logger.Info($"LiteLoader 缓存：{LiteLoaderFolder}");
             Logger.Info($"对应的原版版本：{Request.Components.MinecraftVersion}");
@@ -2328,7 +2357,7 @@ pause";
             // Fabric
             if (FabricVersion is not null)
             {
-                LoaderList.Add(new ModLoader.LoaderCombo<string>("下载 Fabric " + FabricVersion, McDownloadFabricLoader(FabricVersion, Request.Components.MinecraftVersion, TempMcFolder)) { ProgressWeight = 2d, Show = false, Block = true });
+                LoaderList.Add(new ModLoader.LoaderCombo<string>($"下载 {(IsQuilt ? "Quilt" : "Fabric")} " + FabricVersion, McDownloadFabricLoader(FabricVersion, Request.Components.MinecraftVersion, TempMcFolder, IsQuilt)) { ProgressWeight = 2d, Show = false, Block = true });
             }
             // 合并安装
             string MinecraftFolder = ModMinecraft.McFolderSelected;

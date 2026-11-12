@@ -382,6 +382,12 @@ namespace PCL
                     Logger.Info($"整合包 Fabric 版本：{Id}");
                     TargetVersion.ModLoaderVersions[ModLoaders.Fabric] = Id.Replace("fabric-", "");
                 }
+                else if (Id.StartsWithF("quilt-"))
+                {
+                    // Quilt 指定
+                    Logger.Info($"整合包 Quilt 版本：{Id}");
+                    TargetVersion.ModLoaderVersions[ModLoaders.Quilt] = Id.Replace("quilt-", "");
+                }
                 else
                 {
                     NotifyIncompatibleLoader(Id);
@@ -669,6 +675,12 @@ namespace PCL
                         {
                             TargetVersion.ModLoaderVersions[ModLoaders.Fabric] = Entry.Value.ToString();
                             Logger.Info($"整合包 Fabric 版本：{TargetVersion.ModLoaderVersions[ModLoaders.Fabric]}");
+                            break;
+                        }
+                    case "quilt-loader": // eg. 0.29.2
+                        {
+                            TargetVersion.ModLoaderVersions[ModLoaders.Quilt] = Entry.Value.ToString();
+                            Logger.Info($"整合包 Quilt 版本：{TargetVersion.ModLoaderVersions[ModLoaders.Quilt]}");
                             break;
                         }
 
@@ -1008,6 +1020,11 @@ namespace PCL
                             ModLoaderVersions[ModLoaders.Fabric] = (string)Component["version"];
                             break;
                         }
+                    case "org.quiltmc.quilt-loader":
+                        {
+                            ModLoaderVersions[ModLoaders.Quilt] = (string)Component["version"];
+                            break;
+                        }
 
                     default:
                         {
@@ -1110,12 +1127,9 @@ namespace PCL
                 Addons.Add((string)Entry["id"], (string)Entry["version"]);
             if (!Addons.ContainsKey("game"))
                 throw new Exception("该 MCBBS 整合包未提供游戏版本信息，无法安装！");
-            if (Addons.ContainsKey("quilt"))
-            {
-                ModMain.Hint("PCL 不支持安装 Quilt 整合包！", ModMain.HintType.Red);
-                throw new OperationCanceledException();
-            }
             var ModLoaderVersions = new Dictionary<ModLoaders, string>();
+            if (Addons.ContainsKey("quilt"))
+                ModLoaderVersions[ModLoaders.Quilt] = Addons["quilt"];
             if (Addons.ContainsKey("forge"))
                 ModLoaderVersions[ModLoaders.Forge] = Addons["forge"];
             if (Addons.ContainsKey("neoforge"))
