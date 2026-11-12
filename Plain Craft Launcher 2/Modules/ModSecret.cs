@@ -94,10 +94,13 @@ namespace PCL
         {
             try
             {
-                if (ThemeNow == NewTheme && NewTheme >= 0)
-                    return;
-                if (NewTheme >= 0)
-                    ThemeNow = NewTheme;
+                // 读取当前主题的配色参数（原开源版在这里是空的：色相固定为蓝色，切换主题与自定义滑块都不会生效）
+                ThemeNow = NewTheme >= 0 ? NewTheme : Settings.Get<int>("UiLauncherTheme");
+                var Args = ThemePalette.Resolve(ThemeNow, Settings.Get<int>("UiLauncherHue"), Settings.Get<int>("UiLauncherSat"), Settings.Get<int>("UiLauncherDelta"), Settings.Get<int>("UiLauncherLight"));
+                ColorHue = Args.Hue;
+                ColorSat = Args.Saturation;
+                ColorLightAdjust = Args.LightAdjust;
+                ColorHueTopbarDelta = Args.TopbarHueDelta;
 
                 Color1 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.2d, 25d + ColorLightAdjust * 0.3d);
                 Color2 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 45 + ColorLightAdjust);
