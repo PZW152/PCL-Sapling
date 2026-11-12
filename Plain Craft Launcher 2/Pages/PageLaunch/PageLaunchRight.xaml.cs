@@ -27,8 +27,21 @@ namespace PCL
         public PageLaunchRight()
         {
             this.Loaded += (_, __) => Init();
+            this.Unloaded += (_, __) => LogTimer.Stop();
             this.InitializeComponent();
             this.PanBack.SizeChanged += (_, __) => FitHero();
+            LogTimer.Tick += (_, __) => RefreshGameLog();
+            this.BtnGameLogFolder.Click += (_, __) =>
+            {
+                var Instance = LogWatcher?.Instance ?? ModMinecraft.McInstanceSelected;
+                if (Instance is not null)
+                    ModBase.OpenExplorer(Instance.PathIndie + @"logs\");
+            };
+            this.BtnGameLogCopy.Click += (_, __) =>
+            {
+                ModBase.ClipboardSet(this.TextGameLog.Text, false);
+                ModMain.Hint("已复制游戏日志", ModMain.HintType.Green);
+            };
         }
 
         private void Init()
@@ -36,7 +49,50 @@ namespace PCL
             this.PanBack.ScrollToHome();
             this.PanLog.Visibility = ModBase.ModeDebug.ToVisibility();
             RefreshHero();
+            RefreshGameLog();
+            LogTimer.Start();
         }
+
+        #region 游戏日志
+
+        private readonly System.Windows.Threading.DispatcherTimer LogTimer = new() { Interval = TimeSpan.FromMilliseconds(700) };
+        private ModWatcher.Watcher LogWatcher = null;
+        private string LogLastLine = null;
+        private int LogLastCount = -1;
+
+        /// <summary>
+        /// 显示当前实例最近一次运行的输出（最多 500 行），游戏运行中在主角卡右上角标出。
+        /// </summary>
+        private void RefreshGameLog()
+        {
+            var Instance = ModMinecraft.McInstanceSelected;
+            var Watcher = ModWatcher.McWatcherList.LastOrDefault(w => Instance is not null && w.Instance?.PathVersion == Instance.PathVersion);
+            bool Running = Watcher is not null && (Watcher.State == ModWatcher.Watcher.MinecraftState.Loading || Watcher.State == ModWatcher.Watcher.MinecraftState.Running);
+            this.PanHeroRunning.Visibility = Running ? Visibility.Visible : Visibility.Collapsed;
+            if (Running)
+                this.LabHeroRunning.Text = Watcher.State == ModWatcher.Watcher.MinecraftState.Loading ? "游戏加载中" : "游戏运行中";
+            if (Watcher is null)
+            {
+                this.CardGameLog.Visibility = Visibility.Collapsed;
+                LogWatcher = null;
+                return;
+            }
+            this.CardGameLog.Visibility = Visibility.Visible;
+            this.CardGameLog.Title = Running ? "游戏日志" : Watcher.State == ModWatcher.Watcher.MinecraftState.Crashed ? "游戏日志（游戏崩溃了）" : "游戏日志（游戏已退出）";
+            string[] Lines = Watcher.LatestLog.ToArray();
+            string Last = Lines.LastOrDefault();
+            if (ReferenceEquals(Watcher, LogWatcher) && Lines.Length == LogLastCount && Last == LogLastLine)
+                return;
+            LogWatcher = Watcher;
+            LogLastCount = Lines.Length;
+            LogLastLine = Last;
+            bool AtEnd = this.TextGameLog.VerticalOffset + this.TextGameLog.ViewportHeight >= this.TextGameLog.ExtentHeight - 4;
+            this.TextGameLog.Text = Lines.Length == 0 ? "还没有输出……" : string.Join(ModBase.CrLf, Lines);
+            if (AtEnd)
+                this.TextGameLog.ScrollToEnd(); // 用户往上翻时不打扰
+        }
+
+        #endregion
 
         /// <summary>
         /// 主角卡至少占满一屏，内容少时“继续玩”贴在底部。

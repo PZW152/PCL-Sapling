@@ -20,7 +20,13 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock x:Name="LabHeroName" Grid.Row="0" FontSize="20" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis" Text="欢迎使用 PCL 树苗修改版" />
+                        <TextBlock x:Name="LabHeroName" Grid.Row="0" FontSize="20" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis" Text="欢迎使用 PCL 树苗修改版" Margin="0,0,110,0" />
+                        <Border x:Name="PanHeroRunning" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" CornerRadius="13" Padding="10,4,12,5" Background="#33FFFFFF" Visibility="Collapsed">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse x:Name="ShapeHeroRunning" Width="8" Height="8" Fill="#7CF29A" VerticalAlignment="Center" Margin="0,1,7,0" />
+                                <TextBlock x:Name="LabHeroRunning" FontSize="13.5" Foreground="White" Text="游戏运行中" />
+                            </StackPanel>
+                        </Border>
                         <Viewbox x:Name="BoxHeroVersion" Grid.Row="1" HorizontalAlignment="Left" StretchDirection="DownOnly" Stretch="Uniform" Margin="-3,2,0,0">
                             <TextBlock x:Name="LabHeroVersion" FontSize="76" FontFamily="Segoe UI" FontWeight="Black" Foreground="White" Text="1.21.1" />
                         </Viewbox>
@@ -32,6 +38,22 @@
                     </Grid>
                 </Border>
             </Grid>
+            <!-- 游戏日志（取自 Sapling 与 PCL CE）：游戏运行时显示最近的输出 -->
+            <local:MyCard Margin="0,0,0,15" Title="游戏日志" x:Name="CardGameLog" Visibility="Collapsed">
+                <Grid Margin="15,36,15,12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBox x:Name="TextGameLog" Height="240" IsReadOnly="True" IsUndoEnabled="False" TextWrapping="NoWrap" BorderThickness="0"
+                             Background="#0A000000" Padding="8,6" FontFamily="Consolas, Microsoft YaHei UI" FontSize="12" Foreground="{DynamicResource ColorBrush1}"
+                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
+                        <local:MyButton x:Name="BtnGameLogFolder" Text="打开日志文件夹" MinWidth="130" Height="32" Padding="13,0" Margin="0,0,12,0" />
+                        <local:MyButton x:Name="BtnGameLogCopy" Text="复制日志" MinWidth="110" Height="32" Padding="13,0" />
+                    </StackPanel>
+                </Grid>
+            </local:MyCard>
             <local:MyCard Margin="0,0,0,15" Title="启动日志" x:Name="PanLog">
                 <local:MyTextBox x:Name="LabLog" Margin="15,34,15,13" Padding="0,4" IsReadOnly="True" IsUndoEnabled="False"
                          AcceptsReturn="True" TextWrapping="Wrap" BorderThickness="0" HasBackground="False"
