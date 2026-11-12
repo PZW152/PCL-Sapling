@@ -90,6 +90,7 @@
                         <RowDefinition Height="28" />
                         <RowDefinition Height="5" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="缓存文件夹" Margin="0,0,25,0" />
                     <local:MyTextBox x:Name="TextSystemCache" Grid.Row="0" Grid.ColumnSpan="2" local:SettingService.Key="SystemSystemCache" Grid.Column="1" ToolTip="PCL 的下载、皮肤等缓存文件的存储位置。&#xa;不推荐路径中带有空格。&#xa;留空即为默认值，重启 PCL 后生效。" HintText="默认">
@@ -102,10 +103,13 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Button" />
                         </Grid.ColumnDefinitions>
                         <local:MyButton Grid.Column="0" x:Name="BtnSystemSettingExp" Click="BtnSystemSettingExp_Click" MinWidth="140" Text="导出设置" Padding="13,0" Margin="0,0,20,0" />
                         <local:MyButton Grid.Column="1" x:Name="BtnSystemSettingImp" Click="BtnSystemSettingImp_Click" MinWidth="140" Text="导入设置" Padding="13,0" Margin="0,0,20,0" />
+                        <local:MyButton Grid.Column="2" x:Name="BtnSystemUpdate" Click="BtnSystemUpdate_Click" MinWidth="140" Text="检查更新" Padding="13,0" Margin="0,0,20,0" />
                     </Grid>
+                    <local:MyCheckBox Grid.Row="3" Grid.ColumnSpan="2" Margin="-1,12,0,0" Height="22" local:SettingService.Key="SystemAutoUpdate" Text="自动检查更新（有新版本时询问是否更新）" />
                 </Grid>
             </local:MyCard>
 

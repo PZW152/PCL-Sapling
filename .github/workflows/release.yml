@@ -1,0 +1,53 @@
+name: Release
+# 推送 v1.2.3 形式的標籤時，建置正式版並發佈到 GitHub Releases。
+# 啟動器的自動更新只接受名為 PCL-Sapling-版本號.exe、帶有 SHA-256 摘要（GitHub 自動計算）的檔案。
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 1
+        submodules: true
+
+    - name: Check version
+      shell: bash
+      run: |
+        tag="${GITHUB_REF_NAME#v}"
+        code=$(grep -oP 'VersionBaseName = "\K[0-9.]+' "Plain Craft Launcher 2/Modules/Base/ModBase.cs")
+        if [ "$tag" != "$code" ]; then
+          echo "標籤 $GITHUB_REF_NAME 與 ModBase.VersionBaseName ($code) 不一致，否則啟動器會一直提示更新"
+          exit 1
+        fi
+        echo "version=$tag" >> $GITHUB_ENV
+
+    - name: Test
+      run: dotnet run --project "PCL.Tests\PCL.Tests.csproj" -c Debug
+
+    - name: Build
+      env:
+        PCL_MS_CLIENT_ID: ${{ secrets.CLIENT_ID }}
+        PCL_CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+        PCL_COMMIT_HASH: ${{ github.sha }}
+      run: dotnet build "Plain Craft Launcher 2\Plain Craft Launcher 2.csproj" -c Release
+
+    - name: Publish
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        file="PCL-Sapling-${version}.exe"
+        cp "Plain Craft Launcher 2/bin/Plain Craft Launcher 2.exe" "$file"
+        sha=$(sha256sum "$file" | cut -d' ' -f1)
+        notes=$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")
+        printf '%s\n\nSHA256：`%s`\n\n本軟體是第三方基於 PCL 獨立進行二次創作的修改版，並非 PCL 官方版本。\n' "$notes" "$sha" > notes.md
+        gh release create "$GITHUB_REF_NAME" "$file" --title "PCL 樹苗修改版 ${version}" --notes-file notes.md

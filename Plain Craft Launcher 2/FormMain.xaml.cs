@@ -523,6 +523,7 @@ namespace PCL
             // Timer 启动
             ModAnimation.AniStart();
             ModMain.TimerMainStart();
+            ModUpdate.OnStartup();
             // 加载池
             ModBase.RunInDedicatedThread(() =>
         {
