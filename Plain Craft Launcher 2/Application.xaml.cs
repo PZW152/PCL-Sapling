@@ -35,6 +35,7 @@ namespace PCL
                 MeloongCore.Wpf.Main.Init();
                 if (!(e.Args.Contains("--update") || e.Args.Contains("--gpu") || e.Args.Contains("--memory"))) // 若是通过命令行调用，则不检查单例、不轮换日志（#9137）
                 {
+                    ModShortcut.AcceptCommandLine(e.Args); // 快捷方式的启动请求：若启动器已打开，由已打开的启动器处理
                     WaitingMutex(e);
                     Logger.Instance = new PclLogger() { logFolder = Paths.BaseThenName, MinLevel = ModBase.ModeDebug ? LogLevel.Trace : LogLevel.Info };
                 }
@@ -191,7 +192,7 @@ namespace PCL
             try
             {
                 bool MutexCreatedNew;
-                PclMutex = new Mutex(true, "PCL_SingletonMutex", out MutexCreatedNew);
+                PclMutex = new Mutex(true, "PCL_Sapling_SingletonMutex", out MutexCreatedNew); // 与原版 PCL 分开，两者可以同时打开
                 if (MutexCreatedNew)
                     return;
                 Logger.Warn("已有一个 PCL 实例正在运行");

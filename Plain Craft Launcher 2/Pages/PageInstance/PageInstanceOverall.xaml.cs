@@ -14,6 +14,8 @@ namespace PCL
 {
     public partial class PageInstanceOverall
     {
+        private void BtnManageShortcut_Click(object sender, MouseButtonEventArgs e) => ModShortcut.CreateDesktopShortcut(PageInstanceLeft.Instance);
+
         #region 事件
 
         private void OnBtnDisplayDesc_Click(object sender, MouseButtonEventArgs e) => BtnDisplayDesc_Click(sender, e);

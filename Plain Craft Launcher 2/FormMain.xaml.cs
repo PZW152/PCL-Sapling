@@ -524,6 +524,7 @@ namespace PCL
             ModAnimation.AniStart();
             ModMain.TimerMainStart();
             ModUpdate.OnStartup();
+            ModShortcut.StartWatching();
             // 加载池
             ModBase.RunInDedicatedThread(() =>
         {
