@@ -5,10 +5,10 @@ public class ChineseConverterTests
     private static string T(string Text) => ChineseConverter.ToTraditional(Text);
 
     [Test]
-    public async Task 换成港澳台都看得懂的用词()
+    public async Task 换成与Sapling一致的港澳台通用用词()
     {
         await Assert.That(T("默认文件夹")).IsEqualTo("預設資料夾");
-        await Assert.That(T("网络服务器内存不足")).IsEqualTo("網路伺服器記憶體不足");
+        await Assert.That(T("网络服务器内存不足")).IsEqualTo("網絡伺服器記憶體不足");
         await Assert.That(T("启动设置")).IsEqualTo("啟動設定");
         await Assert.That(T("正在下载 Minecraft")).IsEqualTo("正在下載 Minecraft");
         await Assert.That(T("登录微软账号")).IsEqualTo("登入微軟帳號");
@@ -28,7 +28,7 @@ public class ChineseConverterTests
     public async Task 路径与网址保持原样()
     {
         await Assert.That(T(@"游戏文件夹：C:\游戏\我的世界\.minecraft，已复制")).IsEqualTo(@"遊戲資料夾：C:\游戏\我的世界\.minecraft，已複製");
-        await Assert.That(T("打开 https://example.com/下载 查看")).IsEqualTo("開啟 https://example.com/下载 檢視");
+        await Assert.That(T("打开 https://example.com/下载 查看")).IsEqualTo("打開 https://example.com/下载 查看");
         await Assert.That(T(@"共享文件夹 \\Mac\Home\游戏 不可用")).IsEqualTo(@"共享資料夾 \\Mac\Home\游戏 不可用");
     }
 
