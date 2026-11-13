@@ -1,5 +1,6 @@
 #nullable disable
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 
 namespace PCLCS
@@ -20,6 +21,9 @@ namespace PCLCS
             public string LastModified;
             /// <summary>缓存保持新鲜直到此时间（UTC Ticks）；0 表示每次都需要向服务器确认。</summary>
             public long FreshUntilUtc;
+            /// <summary>正文长度与 SHA1：与正文文件对不上时（例如写入时断电）视为没有缓存（#6）。</summary>
+            public long Length = -1;
+            public string Sha1;
         }
 
         private static readonly object Lock = new object();
@@ -34,7 +38,48 @@ namespace PCLCS
         }
 
         public static bool IsCacheable(HttpRequestMessage Request) =>
-            Request.Method == HttpMethod.Get && Request.Headers.Authorization is null && !Request.Headers.Contains("Authorization");
+            Request.Method == HttpMethod.Get && Request.Headers.Authorization is null && !Request.Headers.Contains("Authorization") &&
+            !Request.Headers.Contains("Cookie") && !LooksLikeCredentialUrl(Request.RequestUri);
+
+        private static readonly Regex CredentialQuery = new Regex(@"(^|[?&])(access_token|token|key|api_key|apikey|sig|signature|code|password|session)=", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        /// <summary>
+        /// 网址里带用户信息（user:pass@）或常见的凭据参数时，不写入磁盘（#6）。
+        /// </summary>
+        public static bool LooksLikeCredentialUrl(Uri Url) =>
+            Url is not null && Url.IsAbsoluteUri && (!string.IsNullOrEmpty(Url.UserInfo) || CredentialQuery.IsMatch(Url.Query));
+
+        private static string Sha1Of(byte[] Data)
+        {
+            using (var Sha = SHA1.Create())
+                return string.Concat(Sha.ComputeHash(Data).Select(b => b.ToString("x2")));
+        }
+
+        /// <summary>
+        /// 读取正文并与元数据核对；对不上时返回 null。旧版本写入的缓存没有长度信息，照常使用。
+        /// </summary>
+        private static byte[] ReadBody(Meta Info, string BodyPath)
+        {
+            byte[] Body = File.ReadAllBytes(BodyPath);
+            if (Info.Length >= 0 && (Body.Length != Info.Length || !string.Equals(Sha1Of(Body), Info.Sha1, StringComparison.OrdinalIgnoreCase)))
+            {
+                Logger.Warn($"HTTP 缓存内容与记录不一致，已忽略：{Info.Url}");
+                return null;
+            }
+            return Body;
+        }
+
+        /// <summary>
+        /// 先写临时文件，再以系统的替换操作换上，避免其他线程或断电时读到写了一半的内容。
+        /// </summary>
+        private static void WriteAtomic(string Target, byte[] Data)
+        {
+            string Temp = Target + "." + Guid.NewGuid().ToString("N").Substring(0, 8) + ".tmp";
+            File.WriteAllBytes(Temp, Data);
+            if (File.Exists(Target))
+                File.Replace(Temp, Target, null, true);
+            else
+                File.Move(Temp, Target);
+        }
 
         private static Meta ReadMeta(string Url, out string BodyPath)
         {
@@ -66,8 +111,8 @@ namespace PCLCS
                 if (Info is null) return null;
                 try
                 {
-                    if (Info.FreshUntilUtc > DateTime.UtcNow.Ticks)
-                        return File.ReadAllBytes(BodyPath);
+                    if (Info.FreshUntilUtc > DateTime.UtcNow.Ticks && ReadBody(Info, BodyPath) is byte[] Fresh)
+                        return Fresh;
                     if (!string.IsNullOrEmpty(Info.ETag))
                         Request.Headers.TryAddWithoutValidation("If-None-Match", Info.ETag);
                     if (!string.IsNullOrEmpty(Info.LastModified))
@@ -93,9 +138,10 @@ namespace PCLCS
                 if (Info is null) return null;
                 try
                 {
-                    byte[] Body = File.ReadAllBytes(BodyPath);
+                    byte[] Body = ReadBody(Info, BodyPath);
+                    if (Body is null) return null;
                     Info.FreshUntilUtc = GetFreshUntil(Response);
-                    File.WriteAllText(Folder + KeyOf(Url) + ".json", JsonConvert.SerializeObject(Info), Encoding.UTF8);
+                    WriteAtomic(Folder + KeyOf(Url) + ".json", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(Info)));
                     return Body;
                 }
                 catch (Exception ex)
@@ -124,13 +170,9 @@ namespace PCLCS
                 {
                     Directory.CreateDirectory(Folder);
                     string Key = KeyOf(Url);
-                    // 先写临时文件再替换，避免其他线程读到写了一半的内容
-                    string Temp = Folder + Key + "." + Guid.NewGuid().ToString("N") + ".tmp";
-                    File.WriteAllBytes(Temp, Body);
-                    string BodyPath = Folder + Key + ".bin";
-                    if (File.Exists(BodyPath)) File.Delete(BodyPath);
-                    File.Move(Temp, BodyPath);
-                    File.WriteAllText(Folder + Key + ".json", JsonConvert.SerializeObject(new Meta { Url = Url, ETag = ETag, LastModified = LastModified, FreshUntilUtc = FreshUntil }), Encoding.UTF8);
+                    // 正文与元数据各自原子替换；元数据记录正文的长度与哈希，两者不一致时读取会忽略这条缓存
+                    WriteAtomic(Folder + Key + ".bin", Body);
+                    WriteAtomic(Folder + Key + ".json", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new Meta { Url = Url, ETag = ETag, LastModified = LastModified, FreshUntilUtc = FreshUntil, Length = Body.Length, Sha1 = Sha1Of(Body) })));
                 }
                 catch (Exception ex)
                 {
@@ -147,16 +189,55 @@ namespace PCLCS
             if (!Enabled) return null;
             lock (Lock)
             {
-                if (ReadMeta(Url, out string BodyPath) is null) return null;
+                var Info = ReadMeta(Url, out string BodyPath);
+                if (Info is null) return null;
                 try
                 {
-                    return File.ReadAllBytes(BodyPath);
+                    return ReadBody(Info, BodyPath);
                 }
                 catch (Exception ex)
                 {
                     Logger.Warn(ex, "读取 HTTP 缓存失败");
                     return null;
                 }
+            }
+        }
+
+        /// <summary>
+        /// 温和地清理缓存（#6）：删除很久没有用到的条目，总大小超出上限时从最久没用的开始删，并删除残留的临时文件。
+        /// 离线时需要的版本列表等会经常被刷新，不会因此被删掉。返回删除的条目数。
+        /// </summary>
+        public static int Prune(long MaxBytes = 256L * 1024 * 1024, int MaxAgeDays = 90)
+        {
+            if (!Enabled || !Directory.Exists(Folder)) return 0;
+            lock (Lock)
+            {
+                int Removed = 0;
+                void Delete(string Path)
+                {
+                    try { if (File.Exists(Path)) File.Delete(Path); } catch (Exception) { }
+                }
+                foreach (string Temp in Directory.GetFiles(Folder, "*.tmp"))
+                    if (File.GetLastWriteTimeUtc(Temp) < DateTime.UtcNow.AddHours(-1)) Delete(Temp);
+                // 以元数据的修改时间作为“最近用到”：保存与 304 刷新都会更新它
+                var Entries = Directory.GetFiles(Folder, "*.bin").Select(Bin =>
+                {
+                    string Json = System.IO.Path.ChangeExtension(Bin, ".json");
+                    var Used = File.Exists(Json) ? File.GetLastWriteTimeUtc(Json) : File.GetLastWriteTimeUtc(Bin);
+                    return (Bin, Json, Used, Size: new FileInfo(Bin).Length);
+                }).OrderBy(e => e.Used).ToList();
+                long Total = Entries.Sum(e => e.Size);
+                var Oldest = DateTime.UtcNow.AddDays(-MaxAgeDays);
+                foreach (var Entry in Entries)
+                {
+                    if (Entry.Used >= Oldest && Total <= MaxBytes) break;
+                    Delete(Entry.Bin);
+                    Delete(Entry.Json);
+                    Total -= Entry.Size;
+                    Removed++;
+                }
+                if (Removed > 0) Logger.Info($"已清理 {Removed} 条 HTTP 缓存");
+                return Removed;
             }
         }
 

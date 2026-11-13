@@ -142,4 +142,60 @@ public class HttpDiskCacheTests
         await Assert.That(HttpDiskCache.TryUseOrPrepare(Get(Url), Url)).IsNull();
         await Assert.That(HttpDiskCache.TryReadStale(Url)).IsNull();
     }
+
+    [Test]
+    public async Task 带Cookie或网址里带凭据时不缓存()
+    {
+        var WithCookie = Get("https://example.com/a");
+        WithCookie.Headers.Add("Cookie", "session=abc");
+        await Assert.That(HttpDiskCache.IsCacheable(WithCookie)).IsFalse();
+        await Assert.That(HttpDiskCache.IsCacheable(Get("https://example.com/a?access_token=abc"))).IsFalse();
+        await Assert.That(HttpDiskCache.IsCacheable(Get("https://example.com/a?page=2&key=abc"))).IsFalse();
+        await Assert.That(HttpDiskCache.IsCacheable(Get("https://user:pass@example.com/a"))).IsFalse();
+        // 普通参数照常缓存
+        await Assert.That(HttpDiskCache.IsCacheable(Get("https://api.modrinth.com/v2/search?query=sodium&index=relevance"))).IsTrue();
+    }
+
+    [Test]
+    public async Task 正文与记录不一致时忽略缓存()
+    {
+        string Folder = NewFolder();
+        try
+        {
+            const string Url = "https://example.com/list";
+            HttpDiskCache.Store(Response(HttpStatusCode.OK, ETag: "\"1\"", MaxAgeSeconds: 600), Url, Bytes("complete-content"));
+            await Assert.That(Text(HttpDiskCache.TryReadStale(Url))).IsEqualTo("complete-content");
+            // 模拟写到一半断电：正文被截断，元数据还是旧的
+            string Body = Directory.GetFiles(Folder, "*.bin").Single();
+            File.WriteAllText(Body, "compl");
+            await Assert.That(HttpDiskCache.TryReadStale(Url)).IsNull();
+            await Assert.That(HttpDiskCache.TryUseOrPrepare(Get(Url), Url)).IsNull();
+        }
+        finally { Directory.Delete(Folder, true); }
+    }
+
+    [Test]
+    public async Task 清理很久没用与超出上限的条目()
+    {
+        string Folder = NewFolder();
+        try
+        {
+            HttpDiskCache.Store(Response(HttpStatusCode.OK, ETag: "\"a\""), "https://example.com/old", Bytes("old-old-old"));
+            HttpDiskCache.Store(Response(HttpStatusCode.OK, ETag: "\"b\""), "https://example.com/new", Bytes("new"));
+            // 让第一条看起来 100 天没用过
+            foreach (var Json in Directory.GetFiles(Folder, "*.json"))
+                if (File.ReadAllText(Json).Contains("/old"))
+                    File.SetLastWriteTimeUtc(Json, DateTime.UtcNow.AddDays(-100));
+            File.WriteAllText(Path.Combine(Folder, "stale.tmp"), "x");
+            File.SetLastWriteTimeUtc(Path.Combine(Folder, "stale.tmp"), DateTime.UtcNow.AddDays(-1));
+            await Assert.That(HttpDiskCache.Prune()).IsEqualTo(1);
+            await Assert.That(HttpDiskCache.TryReadStale("https://example.com/old")).IsNull();
+            await Assert.That(Text(HttpDiskCache.TryReadStale("https://example.com/new"))).IsEqualTo("new");
+            await Assert.That(File.Exists(Path.Combine(Folder, "stale.tmp"))).IsFalse();
+            // 超出总大小上限时也会删除
+            await Assert.That(HttpDiskCache.Prune(MaxBytes: 0)).IsEqualTo(1);
+            await Assert.That(HttpDiskCache.TryReadStale("https://example.com/new")).IsNull();
+        }
+        finally { Directory.Delete(Folder, true); }
+    }
 }

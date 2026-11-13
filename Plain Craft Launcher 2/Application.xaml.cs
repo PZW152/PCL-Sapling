@@ -132,6 +132,9 @@ namespace PCL
                     }
                 }
                 DirectoryUtils.Create(ModBase.PathTemp + @"Cache\");
+                // HTTP 缓存：启动时在后台清理很久没用的条目（#6）
+                HttpDiskCache.Folder ??= ModBase.PathTemp + @"Cache\HttpV2\";
+                ModBase.RunInThread(() => HttpDiskCache.Prune());
                 DirectoryUtils.Create(Paths.AppDataThenName);
                 // 设置 ToolTipService 默认值
                 ToolTipService.InitialShowDelayProperty.OverrideMetadata(typeof(DependencyObject), new FrameworkPropertyMetadata(100));
