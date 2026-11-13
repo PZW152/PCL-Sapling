@@ -43,7 +43,8 @@ namespace PCL
                     string Size = StringUtils.FormatByteSize(Plan.Bytes);
                     if (ModMain.MyMsgBox($"有 {Plan.Files.Count} 个文件没有任何版本在用，共 {Size}。" + ModBase.CrLf +
                                          "这些是共用的资源和支持库，不包括存档、Mod 和版本本身；以后需要时会重新下载。" +
-                                         (LibrariesSkipped ? ModBase.CrLf + ModBase.CrLf + "因为有 Forge 或 NeoForge 版本，支持库不会被清理（它们在安装时会生成额外的文件）。" : ""),
+                                         (LibrariesSkipped ? ModBase.CrLf + ModBase.CrLf + "因为有 Forge 或 NeoForge 版本，支持库不会被清理（它们在安装时会生成额外的文件）。" : "") +
+                                         (Keep.AssetsUnknown ? ModBase.CrLf + ModBase.CrLf + "有版本的资源索引缺失或无法读取，为了避免误删，资源文件不会被清理。" : ""),
                                          "清理游戏文件", "清理", "取消") != 1)
                         return;
                     long Freed = GameFileCleanup.Run(McFolder, Plan);
@@ -94,15 +95,36 @@ namespace PCL
                             Keep.AddLibrary(Library.LocalPath.Substring(LibrariesRoot.Length));
                     }
                 }
-                var Index = ModMinecraft.McAssetsGetIndex(Instance, ReturnLegacyOnError: true);
+                // 资源：不使用启动时的 legacy 退路，读不出真实的索引就不清理资源文件（#3）
+                JToken Index = null;
+                try
+                {
+                    Index = ModMinecraft.McAssetsGetIndex(Instance, ReturnLegacyOnError: false);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, $"无法确定版本 {Instance.Name} 的资源索引");
+                }
                 string Id = Index?["id"]?.ToString();
                 if (string.IsNullOrEmpty(Id))
+                {
+                    Keep.AssetsUnknown = true;
                     continue;
+                }
                 string IndexPath = McFolder + @"assets\indexes\" + Id + ".json";
-                if (File.Exists(IndexPath))
-                    Keep.AddAssetIndex(Id, (JObject)FileUtils.ReadAsString(IndexPath).DeserializeJson());
-                else
-                    Keep.AssetIndexes.Add(Id);
+                Keep.AssetIndexes.Add(Id);
+                try
+                {
+                    if (File.Exists(IndexPath) && FileUtils.ReadAsString(IndexPath).DeserializeJson() is JObject IndexJson)
+                        Keep.AddAssetIndex(Id, IndexJson);
+                    else
+                        Keep.AssetsUnknown = true;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, $"读取资源索引 {Id} 失败");
+                    Keep.AssetsUnknown = true;
+                }
             }
             return Keep;
         }

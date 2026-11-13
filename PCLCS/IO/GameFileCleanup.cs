@@ -23,6 +23,10 @@ public static class GameFileCleanup {
         public HashSet<string> AssetIndexes = new(StringComparer.OrdinalIgnoreCase);
         /// <summary>仍在使用的资源文件哈希。</summary>
         public HashSet<string> AssetHashes = new(StringComparer.OrdinalIgnoreCase);
+        /// <summary>
+        /// 有版本的资源依赖无法完整读出（索引缺失、格式异常、只能退回 legacy）。为 true 时不清理任何资源文件（#3）。
+        /// </summary>
+        public bool AssetsUnknown;
 
         public void AddLibrary(string RelativePath) => Libraries?.Add(NormalizeLibrary(RelativePath));
 
@@ -31,12 +35,14 @@ public static class GameFileCleanup {
         /// </summary>
         public void AddAssetIndex(string Id, JObject IndexJson) {
             AssetIndexes.Add(Id);
-            if (IndexJson["objects"] is JObject Objects) {
-                foreach (var Property in Objects.Properties()) {
-                    string? Hash = Property.Value["hash"]?.ToString();
-                    if (!string.IsNullOrEmpty(Hash))
-                        AssetHashes.Add(Hash!);
-                }
+            if (IndexJson["objects"] is not JObject Objects) {
+                AssetsUnknown = true; // 读得懂 JSON 但没有资源列表：分不清“本来为空”和“损坏”，按不确定处理
+                return;
+            }
+            foreach (var Property in Objects.Properties()) {
+                string? Hash = Property.Value["hash"]?.ToString();
+                if (!string.IsNullOrEmpty(Hash))
+                    AssetHashes.Add(Hash!);
             }
         }
     }
@@ -54,14 +60,14 @@ public static class GameFileCleanup {
         string Assets = Path.Combine(McFolder, "assets");
         // 资源索引
         string Indexes = Path.Combine(Assets, "indexes");
-        if (Directory.Exists(Indexes)) {
+        if (!Keep.AssetsUnknown && Directory.Exists(Indexes)) {
             foreach (var File in Directory.GetFiles(Indexes, "*.json"))
                 if (!Keep.AssetIndexes.Contains(Path.GetFileNameWithoutExtension(File)))
                     Files.Add(File);
         }
         // 资源文件：objects\前两位\哈希
         string Objects = Path.Combine(Assets, "objects");
-        if (Directory.Exists(Objects)) {
+        if (!Keep.AssetsUnknown && Directory.Exists(Objects)) {
             foreach (var Folder in Directory.GetDirectories(Objects))
                 foreach (var File in Directory.GetFiles(Folder))
                     if (!Keep.AssetHashes.Contains(Path.GetFileName(File)))

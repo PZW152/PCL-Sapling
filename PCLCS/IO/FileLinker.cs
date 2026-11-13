@@ -19,14 +19,32 @@ public static class FileLinker {
         string source = Path.GetFullPath(sourcePath);
         string target = Path.GetFullPath(targetPath);
         if (string.Equals(source, target, StringComparison.OrdinalIgnoreCase)) return false;
+        if (!File.Exists(source)) throw new FileNotFoundException("要共用的文件不存在", source);
         Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-        if (File.Exists(target)) {
-            File.SetAttributes(target, FileAttributes.Normal);
-            File.Delete(target);
+        // 先在目标旁边做好临时文件，成功后再换上去：中途失败时原来的目标保持不变（#2）
+        string temp = target + ".pcl-" + Guid.NewGuid().ToString("N").Substring(0, 8) + ".tmp";
+        bool linked;
+        try {
+            linked = SameVolume(source, target) && CreateHardLink(ToExtendedPath(temp), ToExtendedPath(source), IntPtr.Zero);
+            if (!linked) File.Copy(source, temp, overwrite: true);
+            if (File.Exists(target)) {
+                File.SetAttributes(target, FileAttributes.Normal);
+                File.Replace(temp, target, null, ignoreMetadataErrors: true); // 系统层面一次完成替换
+            } else {
+                File.Move(temp, target);
+            }
+        } catch {
+            try {
+                if (File.Exists(temp)) {
+                    File.SetAttributes(temp, FileAttributes.Normal);
+                    File.Delete(temp);
+                }
+            } catch {
+                // 清理临时文件失败不影响原来的错误
+            }
+            throw;
         }
-        if (SameVolume(source, target) && CreateHardLink(ToExtendedPath(target), ToExtendedPath(source), IntPtr.Zero)) return true;
-        File.Copy(source, target, overwrite: true);
-        return false;
+        return linked;
     }
 
     private static bool SameVolume(string a, string b) =>

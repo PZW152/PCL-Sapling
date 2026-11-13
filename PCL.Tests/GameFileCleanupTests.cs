@@ -87,4 +87,30 @@ public class GameFileCleanupTests
             Directory.Delete(Mc, true);
         }
     }
+
+    [Test]
+    public async Task 资源索引不完整时不清理资源文件()
+    {
+        string Mc = NewFolder();
+        try
+        {
+            Write(Mc, @"assets\indexes\17.json");
+            Write(Mc, @"assets\indexes\old.json");
+            Write(Mc, @"assets\objects\aa\aa11");
+            Write(Mc, @"libraries\com\old\old\1.0\old-1.0.jar");
+            // 合法 JSON 却没有 objects：分不清是空还是损坏
+            var Keep = new GameFileCleanup.Keep();
+            Keep.AddAssetIndex("17", JObject.Parse("""{"note":"broken"}"""));
+            await Assert.That(Keep.AssetsUnknown).IsTrue();
+            var Names = GameFileCleanup.Plan(Mc, Keep).Files.Select(f => f.Substring(Mc.Length + 1)).ToList();
+            await Assert.That(Names).IsEquivalentTo(new[] { @"libraries\com\old\old\1.0\old-1.0.jar" }); // 支持库照常清理
+            // 直接标记为不确定（例如索引文件缺失）
+            var Unknown = new GameFileCleanup.Keep { AssetsUnknown = true };
+            await Assert.That(GameFileCleanup.Plan(Mc, Unknown).Files.Any(f => f.Contains(@"\assets\"))).IsFalse();
+        }
+        finally
+        {
+            Directory.Delete(Mc, true);
+        }
+    }
 }

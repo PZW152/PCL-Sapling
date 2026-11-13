@@ -1678,11 +1678,12 @@ namespace PCL
             }
         }
         // 根据类别进行查找
-        private static ConcurrentDictionary<string, long> _CheckExistingFile_Sizes = new ConcurrentDictionary<string, long>();
+        // 每次都读取当前的大小：文件可能刚被下载或修改，进程级缓存会一直沿用过时的结果（#5）
         private static Func<string, FileChecker, bool> _CheckExistingFile_CheckCandidate = (Candidate, Checker) =>
     {
         // 快速进行大小校验
-        long Length = _CheckExistingFile_Sizes.GetOrAdd(Candidate, c => FileUtils.Exists(c) ? FileUtils.GetInfo(c).Length : -1);
+        var Info = new FileInfo(Candidate);
+        long Length = Info.Exists ? Info.Length : -1;
         if (Checker.ActualSize != Length)
             return false;
         // 进一步进行 Hash 校验
@@ -2212,30 +2213,19 @@ namespace PCL
         #endregion
 
         /// <summary>
-    /// 设置是否应当在正版登录时校验 SSL 证书。
-    /// </summary>
+        /// 设置是否兼容正版登录接口的证书链问题。规则在 PCLCS.TlsPolicy：只针对登录域名、只容忍证书链问题，其他一律严格验证（#1）。
+        /// </summary>
         public static void ShouldValidateSslCertificateOnLogin(bool Enabled)
         {
             ServicePointManager.ServerCertificateValidationCallback = new System.Net.Security.RemoteCertificateValidationCallback((Sender, Certificate, Chain, Failure) =>
-        {
-            HttpWebRequest Request = Sender as HttpWebRequest;
-            if (Failure == System.Net.Security.SslPolicyErrors.None)
-                return true; // 已通过验证
-            // 基于 #3018 和 #5879，只在访问正版登录 API 时跳过证书验证
-            Logger.Warn($"未通过 SSL 证书验证（{Failure}），提供的证书为 {Certificate?.Subject}，URL：{Request?.Address}");
-            if (Request is null)
             {
-                return !Enabled;
-            }
-            else if (Request.Address.Host.Contains("xboxlive") || Request.Address.Host.Contains("minecraftservices"))
-            {
-                return !Enabled; // 根据设置决定是否忽略错误
-            }
-            else
-            {
-                return false;
-            }
-        });
+                if (Failure == System.Net.Security.SslPolicyErrors.None)
+                    return true; // 已通过验证
+                string Host = (Sender as HttpWebRequest)?.Address?.Host;
+                bool Accepted = TlsPolicy.Accept(Host, Failure, allowLoginChainErrors: !Enabled);
+                Logger.Warn($"未通过 SSL 证书验证（{Failure}），主机：{Host ?? "未知"}，证书：{Certificate?.Subject}，{(Accepted ? "按登录接口的兼容规则继续" : "已拒绝连接")}");
+                return Accepted;
+            });
         }
 
     }
