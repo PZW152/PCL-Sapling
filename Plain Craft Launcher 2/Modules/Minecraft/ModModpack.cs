@@ -277,6 +277,19 @@ namespace PCL
         {
             DirectoryUtils.Delete(InstallTemp);
             c.ThrowIfCancellationRequested();
+            // 解压前按压缩包记录的大小检查条目数、总大小、压缩比与剩余空间（#8）
+            long Free = -1;
+            try
+            {
+                Free = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(InstallTemp))).AvailableFreeSpace;
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "读取磁盘剩余空间失败");
+            }
+            string Problem = ArchiveBudget.Check(FileAddress, Free);
+            if (Problem is not null)
+                throw new Exception(Problem);
             FileUtils.ExtractToDirectory(FileAddress, InstallTemp, c, p);
         }
         /// <summary>
