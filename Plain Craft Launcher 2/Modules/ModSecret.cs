@@ -133,18 +133,50 @@ namespace PCL
                 System.Windows.Application.Current.Resources["ColorObject8"] = (Color)Color8;
                 System.Windows.Application.Current.Resources["ColorObjectBg0"] = (Color)ColorBg0;
                 System.Windows.Application.Current.Resources["ColorObjectBg1"] = (Color)ColorBg1;
-                // 主角卡背景（取自 Sapling 的深色主角区块，这里用主题蓝）：左上亮、右下深的斜向渐变
-                var Hero = new LinearGradientBrush() { StartPoint = new Point(0d, 0d), EndPoint = new Point(1d, 1d) };
-                Hero.GradientStops.Add(new GradientStop() { Offset = 0d, Color = new ModBase.MyColor().FromHSL2(ColorHue - 6, ColorSat, 52 + ColorLightAdjust) });
-                Hero.GradientStops.Add(new GradientStop() { Offset = 1d, Color = new ModBase.MyColor().FromHSL2(ColorHue + 8, ColorSat, 40 + ColorLightAdjust) });
-                Hero.Freeze();
-                System.Windows.Application.Current.Resources["ColorBrushHero"] = Hero;
+                ApplySurfaceResources();
                 ThemeRefreshMain();
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, "刷新主题颜色失败", LogBehavior.Toast);
             }
+        }
+        /// <summary>
+        /// 首页等新界面使用的表面颜色（取自 Sapling 的层次：画布 → 卡片 → 凹陷）。都跟随主题色相。
+        /// </summary>
+        private static void ApplySurfaceResources()
+        {
+            var Res = System.Windows.Application.Current.Resources;
+            Color Hsl(double Hue, double Sat, double Light, byte Alpha = 255)
+            {
+                Color Result = new ModBase.MyColor().FromHSL2(Hue, Sat, Light);
+                Result.A = Alpha;
+                return Result;
+            }
+            SolidColorBrush Solid(Color Value)
+            {
+                var Brush = new SolidColorBrush(Value);
+                Brush.Freeze();
+                return Brush;
+            }
+            Res["ColorBrushSurface"] = Solid(Color.FromArgb(245, 255, 255, 255));
+            Res["ColorBrushText"] = Solid(Color1);
+            Res["ColorBrushTextMuted"] = Solid(Hsl(ColorHue, 10, 47));
+            Res["ColorBrushAccentText"] = Solid(Hsl(ColorHue, ColorSat, 41 + ColorLightAdjust * 0.5));
+            Res["ColorBrushChip"] = Solid(Hsl(ColorHue, ColorSat * 0.9, 93.5));
+            Res["ColorBrushChipText"] = Solid(Hsl(ColorHue, ColorSat, 37 + ColorLightAdjust * 0.5));
+            Res["ColorBrushTile"] = Solid(Hsl(ColorHue, ColorSat * 0.6, 97.5));
+            Res["ColorBrushTileBorder"] = Solid(Hsl(ColorHue, ColorSat * 0.4, 90));
+            Res["ColorObjectTile"] = Hsl(ColorHue, ColorSat * 0.6, 97.5);
+            Res["ColorObjectTileHover"] = Hsl(ColorHue, ColorSat * 0.9, 94.5);
+            Res["ColorObjectTileBorder"] = Hsl(ColorHue, ColorSat * 0.4, 90);
+            Res["ColorObjectTileHoverBorder"] = Hsl(ColorHue, ColorSat * 0.8, 78);
+            // 主角卡顶部很淡的一层主题色，往下渐隐成卡片底色
+            var Wash = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(0, 1) };
+            Wash.GradientStops.Add(new GradientStop(Hsl(ColorHue, ColorSat * 0.9, 95.5), 0));
+            Wash.GradientStops.Add(new GradientStop(Hsl(ColorHue, ColorSat * 0.9, 95.5, 0), 0.55));
+            Wash.Freeze();
+            Res["ColorBrushHeroWash"] = Wash;
         }
         public static void ThemeRefreshMain()
         {

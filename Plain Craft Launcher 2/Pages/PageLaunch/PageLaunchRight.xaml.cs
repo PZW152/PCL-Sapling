@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using MeloongCore;
 using MeloongCore.Extensions;
@@ -14,8 +15,8 @@ using PCLCS;
 namespace PCL
 {
     /// <summary>
-    /// 启动页的右侧：主角卡（取自 Sapling）。
-    /// 显示当前实例的名字、大号版本号、加载器与游玩时间标签，以及“继续玩”（最近的世界与服务器，点一下直接进入）。
+    /// 启动页的右侧（设计方向 B「轻主角」，取自 Sapling）：
+    /// 主角卡显示当前实例的名字、主题蓝的大号版本号、标签与“继续玩”，下方是最近截图、游戏日志。
     /// </summary>
     public partial class PageLaunchRight : IRefreshable
     {
@@ -23,14 +24,36 @@ namespace PCL
         /// “继续玩”最多放几张卡片。
         /// </summary>
         private const int TileLimit = 3;
+        /// <summary>
+        /// 最近截图最多放几张。
+        /// </summary>
+        private const int ShotLimit = 4;
+        /// <summary>
+        /// PCL 版本设置侧栏中“Mod 管理”的图标。
+        /// </summary>
+        private const string ModLogo = "M789.504 912.896h-195.072a35.328 35.328 0 0 1-34.816-35.328v-77.312a39.936 39.936 0 0 0-40.448-39.936H481.28a40.448 40.448 0 0 0-40.448 39.936v77.312a34.816 34.816 0 0 1-34.816 35.328H204.8a41.984 41.984 0 0 1-40.448-42.496v-200.192a35.328 35.328 0 0 1 35.328-35.328h72.704a39.936 39.936 0 0 0 39.936-39.936v-37.888a39.936 39.936 0 0 0-39.936-40.448H199.68a35.328 35.328 0 0 1-35.328-35.328V287.744A41.984 41.984 0 0 1 204.8 245.76h176.64v-32.768a102.4 102.4 0 0 1 102.4-102.4h33.792a102.4 102.4 0 0 1 102.4 102.4v32.768h170.496a41.984 41.984 0 0 1 41.984 41.984V460.8h28.672a102.4 102.4 0 0 1 102.4 102.4v33.792a102.4 102.4 0 0 1-102.4 102.4h-28.672V870.4a41.984 41.984 0 0 1-43.008 42.496z m-159.744-70.144h131.584V665.6a34.304 34.304 0 0 1 34.816-34.816h64a31.744 31.744 0 0 0 31.744-31.744V563.2a31.744 31.744 0 0 0-31.744-31.744h-64a34.816 34.816 0 0 1-34.816-35.328V316.416h-177.152a35.328 35.328 0 0 1-35.328-35.328V212.992a31.744 31.744 0 0 0-31.744-31.744h-33.792a31.744 31.744 0 0 0-31.744 31.744v68.096a35.328 35.328 0 0 1-34.816 35.328H234.496v130.048h37.888a110.592 110.592 0 0 1 110.08 110.592v37.888a110.592 110.592 0 0 1-110.08 110.592h-37.888v137.216h136.192v-42.496a110.592 110.592 0 0 1 110.592-110.08h37.888a110.592 110.592 0 0 1 110.592 110.08z";
+        /// <summary>
+        /// “继续玩”卡片中没有世界图标时，按顺序使用的底色（低饱和的草绿、陶土橙、天蓝）。
+        /// </summary>
+        private static readonly Color[] TileColors = { Color.FromRgb(0x5B, 0x9E, 0x4A), Color.FromRgb(0xC9, 0x87, 0x3C), Color.FromRgb(0x4C, 0x7F, 0xC9) };
 
         public PageLaunchRight()
         {
             this.Loaded += (_, __) => Init();
             this.Unloaded += (_, __) => LogTimer.Stop();
             this.InitializeComponent();
-            this.PanBack.SizeChanged += (_, __) => FitHero();
             LogTimer.Tick += (_, __) => RefreshGameLog();
+            this.BtnHeroFolder.Logo = ModBase.Logo.IconButtonOpen;
+            this.BtnHeroMods.Logo = ModLogo;
+            this.BtnHeroFolder.Click += (_, __) =>
+            {
+                var Instance = ModMinecraft.McInstanceSelected;
+                if (Instance is not null)
+                    ModBase.OpenExplorer(Instance.PathIndie);
+            };
+            this.BtnHeroMods.Click += (_, __) => OpenInstancePage(FormMain.PageSubType.InstanceMod);
+            this.BtnHeroAllSaves.Click += (_, __) => OpenInstancePage(FormMain.PageSubType.InstanceOverall);
+            this.BtnShotsAll.Click += (_, __) => OpenInstancePage(FormMain.PageSubType.InstanceScreenshot);
             this.BtnGameLogFolder.Click += (_, __) =>
             {
                 var Instance = LogWatcher?.Instance ?? ModMinecraft.McInstanceSelected;
@@ -51,6 +74,18 @@ namespace PCL
             RefreshHero();
             RefreshGameLog();
             LogTimer.Start();
+        }
+
+        /// <summary>
+        /// 打开当前实例的版本设置中的某个子页面。
+        /// </summary>
+        private static void OpenInstancePage(FormMain.PageSubType Sub)
+        {
+            var Instance = ModMinecraft.McInstanceSelected;
+            if (Instance is null)
+                return;
+            PageInstanceLeft.Instance = Instance;
+            ModMain.FrmMain.PageChange(FormMain.PageType.InstanceSetup, Sub);
         }
 
         #region 游戏日志
@@ -94,30 +129,19 @@ namespace PCL
 
         #endregion
 
-        /// <summary>
-        /// 主角卡至少占满一屏，内容少时“继续玩”贴在底部。
-        /// </summary>
-        private void FitHero()
-        {
-            double Height = this.PanBack.ActualHeight - this.PanMain.Margin.Top - this.PanMain.Margin.Bottom - 15;
-            this.PanHero.MinHeight = Math.Max(320, Height);
-        }
-
         #region 主角卡
 
-        private string HeroInstancePath = null;
-
         /// <summary>
-        /// 按当前选择的实例刷新主角卡。选择变化、回到启动页、游戏结束时调用。
+        /// 按当前选择的实例刷新主角卡与最近截图。选择变化、回到启动页、游戏结束时调用。
         /// </summary>
         public void RefreshHero()
         {
             if (!this.IsLoaded)
                 return;
             var Instance = ModMinecraft.McInstanceSelected;
-            HeroInstancePath = Instance?.PathVersion;
             this.PanHeroTags.Children.Clear();
             this.PanHeroTiles.Children.Clear();
+            this.PanShots.Children.Clear();
             if (Instance is not null && !Instance.IsLoaded)
             {
                 try
@@ -133,47 +157,44 @@ namespace PCL
             {
                 // 还没有任何版本：欢迎语
                 this.LabHeroName.Text = "欢迎使用 PCL 樹苗修改版";
-                this.LabHeroName.Visibility = Visibility.Visible;
+                this.LabHeroKind.Text = "";
                 this.BoxHeroVersion.Visibility = Visibility.Collapsed;
                 this.LabHeroWelcome.Visibility = Visibility.Visible;
-                this.LabHeroContinue.Visibility = Visibility.Collapsed;
+                this.PanHeroContinue.Visibility = Visibility.Collapsed;
+                this.PanHeroTiles.Visibility = Visibility.Collapsed;
+                this.BtnHeroFolder.Visibility = Visibility.Collapsed;
+                this.BtnHeroMods.Visibility = Visibility.Collapsed;
+                this.CardShots.Visibility = Visibility.Collapsed;
                 return;
             }
             this.LabHeroWelcome.Visibility = Visibility.Collapsed;
             this.BoxHeroVersion.Visibility = Visibility.Visible;
+            this.BtnHeroFolder.Visibility = Visibility.Visible;
+            this.BtnHeroMods.Visibility = Instance.Modable ? Visibility.Visible : Visibility.Collapsed;
             this.LabHeroName.Text = Instance.Name;
             this.LabHeroName.ToolTip = Instance.Name;
-            // 大号版本号：版本号太长时缩小字号
-            string Version = Instance.State == ModMinecraft.McInstance.McInstanceState.Error || string.IsNullOrEmpty(Instance.Version?.VanillaName) || Instance.Version.VanillaName == "Unknown" ? Instance.Name : Instance.Version.VanillaName;
+            bool Broken = Instance.State == ModMinecraft.McInstance.McInstanceState.Error || string.IsNullOrEmpty(Instance.Version?.VanillaName) || Instance.Version.VanillaName == "Unknown";
+            string Version = Broken ? "无法启动" : Instance.Version.VanillaName;
             this.LabHeroVersion.Text = Version;
-            this.LabHeroName.Visibility = Version == Instance.Name ? Visibility.Collapsed : Visibility.Visible; // 名字就是版本号时不重复显示
-            this.LabHeroVersion.FontSize = Version.Length <= 8 ? 76 : Version.Length <= 14 ? 56 : 40;
-            // 标签
-            foreach (string Tag in HeroTags(Instance))
+            if (Version == Instance.Name)
+                this.LabHeroName.Text = "Minecraft"; // 名字就是版本号时，不在上面再写一遍
+            this.LabHeroVersion.FontSize = Version.Length <= 10 ? 56 : Version.Length <= 18 ? 42 : 32;
+            // 名字旁边的灰字：版本类型
+            string[] Parts = Broken ? Array.Empty<string>() : Instance.VersionDisplayName().Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+            this.LabHeroKind.Text = Parts.Length > 0 ? Parts[0].Split(' ')[0] : "";
+            // 标签：加载器、游玩时间
+            foreach (string Tag in Broken ? new List<string> { Instance.Info } : HeroTags(Instance, Parts))
                 this.PanHeroTags.Children.Add(MakeTag(Tag));
-            // 继续玩
             RefreshTiles(Instance);
+            RefreshShots(Instance);
         }
 
         /// <summary>
-        /// 版本类型（正式版不显示）、加载器、游玩时间。
+        /// 加载器（每个一个标签）、累计游玩时间、上次游玩。
         /// </summary>
-        private static List<string> HeroTags(ModMinecraft.McInstance Instance)
+        private static List<string> HeroTags(ModMinecraft.McInstance Instance, string[] Parts)
         {
-            var Tags = new List<string>();
-            if (Instance.State == ModMinecraft.McInstance.McInstanceState.Error)
-            {
-                Tags.Add("无法启动：" + Instance.Info);
-                return Tags;
-            }
-            string[] Parts = Instance.VersionDisplayName().Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
-            if (Parts.Length > 0)
-            {
-                string Kind = Parts[0].Split(' ')[0];
-                if (Kind != "正式版")
-                    Tags.Add(Kind);
-                Tags.AddRange(Parts.Skip(1));
-            }
+            var Tags = Parts.Skip(1).ToList();
             try
             {
                 string IniPath = Instance.PathVersion + @"PCL\Setup.ini";
@@ -199,14 +220,14 @@ namespace PCL
             return Tags;
         }
 
-        private static Border MakeTag(string Text) => new Border
+        private static Border MakeTag(string Text)
         {
-            Background = new SolidColorBrush(Color.FromArgb(0x2E, 0xFF, 0xFF, 0xFF)),
-            CornerRadius = new CornerRadius(13),
-            Padding = new Thickness(12, 4, 12, 5),
-            Margin = new Thickness(0, 6, 8, 0),
-            Child = new TextBlock { Text = Text, FontSize = 13.5, Foreground = Brushes.White }
-        };
+            var Label = new TextBlock { Text = Text, FontSize = 12.5 };
+            Label.SetResourceReference(TextBlock.ForegroundProperty, "ColorBrushChipText");
+            var Tag = new Border { CornerRadius = new CornerRadius(12), Padding = new Thickness(11, 3, 11, 4), Margin = new Thickness(0, 6, 8, 0), Child = Label };
+            Tag.SetResourceReference(Border.BackgroundProperty, "ColorBrushChip");
+            return Tag;
+        }
 
         /// <summary>
         /// “继续玩”：最近的单人世界优先，空位放游戏里保存的服务器。
@@ -230,73 +251,88 @@ namespace PCL
             foreach (var World in Worlds)
             {
                 string Icon = Path.Combine(Instance.PathIndie, "saves", World.Folder, "icon.png");
-                this.PanHeroTiles.Children.Add(MakeTile(World.Folder, PlayTime.FormatLastPlayed(World.LastPlayed, DateTime.Now), File.Exists(Icon) ? Icon : null, Index++,
+                this.PanHeroTiles.Children.Add(MakeTile(World.Folder, PlayTime.FormatLastPlayed(World.LastPlayed, DateTime.Now), File.Exists(Icon) ? Icon : null, Index++, "进入世界 " + World.Folder,
                     () => ModLaunch.McLaunchStart(new ModLaunch.McLaunchOptions { Instance = Instance, WorldFolder = World.Folder })));
             }
             foreach (var Server in Servers)
             {
                 string Name = string.IsNullOrWhiteSpace(Server.Name) ? Server.Address : Server.Name;
-                this.PanHeroTiles.Children.Add(MakeTile(Name, "服务器", null, Index++,
+                this.PanHeroTiles.Children.Add(MakeTile(Name, "服务器", null, Index++, "进入服务器 " + Server.Address,
                     () => ModLaunch.McLaunchStart(new ModLaunch.McLaunchOptions { Instance = Instance, ServerIp = Server.Address })));
             }
-            this.LabHeroContinue.Visibility = Index > 0 ? Visibility.Visible : Visibility.Collapsed;
-            this.PanHeroTiles.Columns = TileLimit;
+            // 不足三张时用空位占住，卡片宽度保持一致
+            for (int i = Index; i < TileLimit; i++)
+                this.PanHeroTiles.Children.Add(new Border());
+            var Shown = Index > 0 ? Visibility.Visible : Visibility.Collapsed;
+            this.PanHeroContinue.Visibility = Shown;
+            this.PanHeroTiles.Visibility = Shown;
         }
 
         /// <summary>
-        /// 一张“继续玩”卡片：世界图标（没有时用名字的第一个字）、名字、说明。悬停变亮，按下缩一下。
+        /// 一张“继续玩”卡片：世界图标（没有时用名字的第一个字）、名字、说明。悬停变成浅主题色，按下缩一下。
         /// </summary>
-        private FrameworkElement MakeTile(string Title, string Info, string IconPath, int Index, Action OnClick)
+        private FrameworkElement MakeTile(string Title, string Info, string IconPath, int Index, string ToolTip, Action OnClick)
         {
             // 图标
-            FrameworkElement Icon;
-            var IconBox = new Border { Width = 40, Height = 40, CornerRadius = new CornerRadius(6), Background = new SolidColorBrush(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF)), ClipToBounds = true };
-            BitmapImage Image = IconPath is null ? null : LoadIcon(IconPath);
+            var IconBox = new Border { Width = 34, Height = 34, CornerRadius = new CornerRadius(5), ClipToBounds = true, Background = new SolidColorBrush(TileColors[Index % TileColors.Length]) };
+            BitmapImage Image = IconPath is null ? null : LoadImage(IconPath, 64);
             if (Image is not null)
             {
-                Icon = new Image { Source = Image, Stretch = Stretch.UniformToFill };
+                var Icon = new Image { Source = Image, Stretch = Stretch.UniformToFill };
                 RenderOptions.SetBitmapScalingMode(Icon, BitmapScalingMode.NearestNeighbor);
                 IconBox.Child = Icon;
             }
             else
             {
-                IconBox.Child = new TextBlock { Text = Title.Length > 0 ? char.IsSurrogate(Title[0]) ? Title.Substring(0, 2) : Title.Substring(0, 1) : "?", FontSize = 18, FontWeight = FontWeights.Bold, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+                IconBox.Child = new TextBlock { Text = Title.Length == 0 ? "?" : char.IsSurrogate(Title[0]) ? Title.Substring(0, 2) : Title.Substring(0, 1).ToUpperInvariant(), FontSize = 15, FontWeight = FontWeights.Bold, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
             }
             // 文字
-            var Texts = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0) };
-            Texts.Children.Add(new TextBlock { Text = Title, FontSize = 14.5, FontWeight = FontWeights.Bold, Foreground = Brushes.White, TextTrimming = TextTrimming.CharacterEllipsis });
-            Texts.Children.Add(new TextBlock { Text = Info, FontSize = 12.5, Foreground = new SolidColorBrush(Color.FromArgb(0xD9, 0xFF, 0xFF, 0xFF)), Margin = new Thickness(0, 2, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis });
+            var Name = new TextBlock { Text = Title, FontSize = 13.5, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis };
+            Name.SetResourceReference(TextBlock.ForegroundProperty, "ColorBrushText");
+            var Sub = new TextBlock { Text = Info, FontSize = 12, Margin = new Thickness(0, 1, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis };
+            Sub.SetResourceReference(TextBlock.ForegroundProperty, "ColorBrushTextMuted");
+            var Texts = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0) };
+            Texts.Children.Add(Name);
+            Texts.Children.Add(Sub);
             var Row = new DockPanel { LastChildFill = true };
             DockPanel.SetDock(IconBox, Dock.Left);
             Row.Children.Add(IconBox);
             Row.Children.Add(Texts);
-            // 卡片
-            var IdleBrush = Color.FromArgb(0x24, 0xFF, 0xFF, 0xFF);
-            var HoverBrush = Color.FromArgb(0x3D, 0xFF, 0xFF, 0xFF);
-            var Background = new SolidColorBrush(IdleBrush);
+            // 卡片：颜色从主题资源取，悬停时动画过渡
+            Color Idle = (Color)FindResource("ColorObjectTile"), Hover = (Color)FindResource("ColorObjectTileHover");
+            Color IdleBorder = (Color)FindResource("ColorObjectTileBorder"), HoverBorder = (Color)FindResource("ColorObjectTileHoverBorder");
+            var Fill = new SolidColorBrush(Idle);
+            var Stroke = new SolidColorBrush(IdleBorder);
             var Tile = new Border
             {
-                Background = Background,
-                CornerRadius = new CornerRadius(7),
-                Padding = new Thickness(10),
+                Background = Fill,
+                BorderBrush = Stroke,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(9, 8, 9, 8),
                 Margin = new Thickness(5, 0, 5, 0),
                 Cursor = Cursors.Hand,
                 Child = Row,
-                ToolTip = Info == "服务器" ? "进入服务器 " + Title : "进入世界 " + Title,
+                ToolTip = ToolTip,
                 RenderTransformOrigin = new Point(0.5, 0.5),
                 RenderTransform = new ScaleTransform(1, 1),
                 Opacity = 0
             };
-            Tile.MouseEnter += (_, __) => Background.BeginAnimation(SolidColorBrush.ColorProperty, new System.Windows.Media.Animation.ColorAnimation(HoverBrush, TimeSpan.FromMilliseconds(140)));
+            void Fade(Color To, Color ToBorder)
+            {
+                Fill.BeginAnimation(SolidColorBrush.ColorProperty, new ColorAnimation(To, TimeSpan.FromMilliseconds(140)));
+                Stroke.BeginAnimation(SolidColorBrush.ColorProperty, new ColorAnimation(ToBorder, TimeSpan.FromMilliseconds(140)));
+            }
+            Tile.MouseEnter += (_, __) => Fade(Hover, HoverBorder);
             Tile.MouseLeave += (_, __) =>
             {
-                Background.BeginAnimation(SolidColorBrush.ColorProperty, new System.Windows.Media.Animation.ColorAnimation(IdleBrush, TimeSpan.FromMilliseconds(140)));
+                Fade(Idle, IdleBorder);
                 ModAnimation.AniStart(ModAnimation.AaScaleTransform(Tile, 1d - ((ScaleTransform)Tile.RenderTransform).ScaleX, 300, Ease: new ModAnimation.AniEaseOutFluent()), "HeroTile Scale " + Index);
             };
             Tile.MouseLeftButtonDown += (_, e) =>
             {
                 e.Handled = true;
-                ModAnimation.AniStart(ModAnimation.AaScaleTransform(Tile, 0.96d - ((ScaleTransform)Tile.RenderTransform).ScaleX, 90, Ease: new ModAnimation.AniEaseOutFluent(ModAnimation.AniEasePower.Strong)), "HeroTile Scale " + Index);
+                ModAnimation.AniStart(ModAnimation.AaScaleTransform(Tile, 0.965d - ((ScaleTransform)Tile.RenderTransform).ScaleX, 90, Ease: new ModAnimation.AniEaseOutFluent(ModAnimation.AniEasePower.Strong)), "HeroTile Scale " + Index);
             };
             Tile.MouseLeftButtonUp += (_, e) =>
             {
@@ -307,26 +343,73 @@ namespace PCL
                     OnClick();
             };
             // 依次出现
-            ModAnimation.AniStart(ModAnimation.AaOpacity(Tile, 1, 260, 60 + Index * 50), "HeroTile Enter " + Index);
+            ModAnimation.AniStart(ModAnimation.AaOpacity(Tile, 1, 240, 40 + Index * 50), "HeroTile Enter " + Index);
             return Tile;
         }
 
-        private static BitmapImage LoadIcon(string FilePath)
+        #endregion
+
+        #region 最近截图
+
+        /// <summary>
+        /// 最近的几张截图，点一下打开截图页面。没有截图时整张卡片隐藏。
+        /// </summary>
+        private void RefreshShots(ModMinecraft.McInstance Instance)
+        {
+            List<string> Files;
+            try
+            {
+                string Folder = Instance.PathIndie + @"screenshots\";
+                Files = Directory.Exists(Folder)
+                    ? new DirectoryInfo(Folder).EnumerateFiles("*.png").OrderByDescending(f => f.LastWriteTime).Take(ShotLimit).Select(f => f.FullName).ToList()
+                    : new List<string>();
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "读取截图失败");
+                Files = new List<string>();
+            }
+            this.CardShots.Visibility = Files.Any() ? Visibility.Visible : Visibility.Collapsed;
+            int Index = 0;
+            foreach (string File in Files)
+            {
+                var Image = LoadImage(File, 320);
+                var Thumb = new Border
+                {
+                    Height = 68,
+                    CornerRadius = new CornerRadius(4),
+                    Margin = new Thickness(5, 0, 5, 0),
+                    Cursor = Cursors.Hand,
+                    ToolTip = Path.GetFileName(File),
+                    Background = Image is null ? (Brush)FindResource("ColorBrushTile") : new ImageBrush(Image) { Stretch = Stretch.UniformToFill },
+                    Opacity = 0
+                };
+                Thumb.MouseLeftButtonUp += (_, __) => OpenInstancePage(FormMain.PageSubType.InstanceScreenshot);
+                Thumb.MouseEnter += (_, __) => ModAnimation.AniStart(ModAnimation.AaOpacity(Thumb, 0.85 - Thumb.Opacity, 120), "HeroShot Hover " + File);
+                Thumb.MouseLeave += (_, __) => ModAnimation.AniStart(ModAnimation.AaOpacity(Thumb, 1 - Thumb.Opacity, 120), "HeroShot Hover " + File);
+                ModAnimation.AniStart(ModAnimation.AaOpacity(Thumb, 1, 240, 120 + Index++ * 50), "HeroShot Enter " + File);
+                this.PanShots.Children.Add(Thumb);
+            }
+            for (int i = Files.Count; i < ShotLimit; i++)
+                this.PanShots.Children.Add(new Border());
+        }
+
+        private static BitmapImage LoadImage(string FilePath, int DecodeWidth)
         {
             try
             {
                 var Image = new BitmapImage();
                 Image.BeginInit();
-                Image.CacheOption = BitmapCacheOption.OnLoad; // 不占用文件，游戏里还能改图标
+                Image.CacheOption = BitmapCacheOption.OnLoad; // 不占用文件，游戏里还能改写
                 Image.UriSource = new Uri(FilePath);
-                Image.DecodePixelWidth = 64;
+                Image.DecodePixelWidth = DecodeWidth;
                 Image.EndInit();
                 Image.Freeze();
                 return Image;
             }
             catch (Exception ex)
             {
-                Logger.Warn(ex, "读取世界图标失败：" + FilePath);
+                Logger.Warn(ex, "读取图片失败：" + FilePath);
                 return null;
             }
         }

@@ -7,37 +7,51 @@
     xmlns:local="clr-namespace:PCL" PanScroll="PanBack">
     <local:MyScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" x:Name="PanBack">
         <StackPanel Name="PanMain" Margin="25,25,25,10" Grid.IsSharedSizeScope="True">
-            <!-- 主角卡（取自 Sapling）：当前实例的名字、大号版本号、标签和“继续玩” -->
-            <Grid x:Name="PanHero" Margin="0,0,0,15" MinHeight="320">
-                <local:MyDropShadow ShadowRadius="6" Opacity="0.18" Color="{DynamicResource ColorObject2}" CornerRadius="8" Margin="-6,-4,-6,-8" IsHitTestVisible="False" />
-                <Border CornerRadius="8" Background="{DynamicResource ColorBrushHero}" ClipToBounds="True">
-                    <Grid Margin="28,24,28,26">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" MinHeight="24" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <TextBlock x:Name="LabHeroName" Grid.Row="0" FontSize="20" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis" Text="欢迎使用 PCL 樹苗修改版" Margin="0,0,110,0" />
-                        <Border x:Name="PanHeroRunning" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" CornerRadius="13" Padding="10,4,12,5" Background="#33FFFFFF" Visibility="Collapsed">
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse x:Name="ShapeHeroRunning" Width="8" Height="8" Fill="#7CF29A" VerticalAlignment="Center" Margin="0,1,7,0" />
-                                <TextBlock x:Name="LabHeroRunning" FontSize="13.5" Foreground="White" Text="游戏运行中" />
-                            </StackPanel>
-                        </Border>
-                        <Viewbox x:Name="BoxHeroVersion" Grid.Row="1" HorizontalAlignment="Left" StretchDirection="DownOnly" Stretch="Uniform" Margin="-3,2,0,0">
-                            <TextBlock x:Name="LabHeroVersion" FontSize="76" FontFamily="Segoe UI" FontWeight="Black" Foreground="White" Text="1.21.1" />
-                        </Viewbox>
-                        <TextBlock x:Name="LabHeroWelcome" Grid.Row="1" FontSize="15" Foreground="#E6FFFFFF" TextWrapping="Wrap" LineHeight="24" Margin="0,10,0,0" Visibility="Collapsed"
-                                   Text="两步就能开始玩：先在左边选好登录方式，再点「开始玩」，启动器会下载最新正式版并直接进入游戏。" />
-                        <WrapPanel x:Name="PanHeroTags" Grid.Row="2" Margin="0,8,0,0" />
-                        <TextBlock x:Name="LabHeroContinue" Grid.Row="4" FontSize="14" Foreground="#E6FFFFFF" Margin="2,0,0,10" Text="继续玩" />
-                        <UniformGrid x:Name="PanHeroTiles" Grid.Row="5" Rows="1" Columns="3" Margin="-5,0,-5,0" />
-                    </Grid>
+            <!-- 主角卡（设计方向 B「轻主角」，取自 Sapling）：白色卡片顶部一层很淡的主题色，主题蓝的大号版本号、标签和“继续玩” -->
+            <Grid x:Name="PanHero" Margin="0,0,0,15">
+                <local:MyDropShadow ShadowRadius="3" Opacity="0.09" Color="{DynamicResource ColorObject1}" CornerRadius="6" Margin="-3,-3,-3,-4" IsHitTestVisible="False" />
+                <local:MyDropShadow ShadowRadius="12" Opacity="0.07" Color="{DynamicResource ColorObject2}" CornerRadius="6" Margin="-12,-8,-12,-16" IsHitTestVisible="False" />
+                <Border CornerRadius="6" Background="{DynamicResource ColorBrushSurface}">
+                    <Border CornerRadius="6" Background="{DynamicResource ColorBrushHeroWash}">
+                        <StackPanel Margin="22,15,18,20">
+                            <DockPanel LastChildFill="True" Height="30">
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border x:Name="PanHeroRunning" CornerRadius="12" Padding="9,3,11,4" Margin="0,0,6,0" Background="{DynamicResource ColorBrushChip}" VerticalAlignment="Center" Visibility="Collapsed">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="7" Height="7" Fill="#3DAA5C" VerticalAlignment="Center" Margin="0,1,6,0" />
+                                            <TextBlock x:Name="LabHeroRunning" FontSize="12.5" Foreground="{DynamicResource ColorBrushChipText}" Text="游戏运行中" />
+                                        </StackPanel>
+                                    </Border>
+                                    <local:MyIconButton x:Name="BtnHeroFolder" Width="30" Height="30" LogoScale="0.85" Theme="Black" ToolTip="打开游戏文件夹" />
+                                    <local:MyIconButton x:Name="BtnHeroMods" Width="30" Height="30" LogoScale="0.85" Theme="Black" ToolTip="Mod 管理" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock x:Name="LabHeroName" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ColorBrushText}" TextTrimming="CharacterEllipsis" MaxWidth="330" Text="欢迎使用 PCL 樹苗修改版" />
+                                    <TextBlock x:Name="LabHeroKind" FontSize="12.5" Foreground="{DynamicResource ColorBrushTextMuted}" Margin="9,1,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DockPanel>
+                            <Viewbox x:Name="BoxHeroVersion" HorizontalAlignment="Left" StretchDirection="DownOnly" Stretch="Uniform" Margin="-2,0,0,0">
+                                <TextBlock x:Name="LabHeroVersion" FontSize="56" FontFamily="Segoe UI Semibold, Segoe UI" FontWeight="SemiBold" Foreground="{DynamicResource ColorBrushAccentText}" Text="1.21.1" />
+                            </Viewbox>
+                            <TextBlock x:Name="LabHeroWelcome" FontSize="14" Foreground="{DynamicResource ColorBrushText}" TextWrapping="Wrap" LineHeight="23" Margin="0,8,0,2" Visibility="Collapsed"
+                                       Text="两步就能开始玩：先在左边选好登录方式，再点「开始玩」，启动器会下载最新正式版并直接进入游戏。" />
+                            <WrapPanel x:Name="PanHeroTags" Margin="0,6,0,0" />
+                            <DockPanel x:Name="PanHeroContinue" Margin="0,20,0,10" LastChildFill="True">
+                                <local:MyTextButton x:Name="BtnHeroAllSaves" DockPanel.Dock="Right" Text="全部存档" FontSize="12.5" />
+                                <TextBlock FontSize="13" FontWeight="Bold" Foreground="{DynamicResource ColorBrushText}" Text="继续玩" />
+                            </DockPanel>
+                            <UniformGrid x:Name="PanHeroTiles" Rows="1" Columns="3" Margin="-5,0,-5,0" />
+                        </StackPanel>
+                    </Border>
                 </Border>
             </Grid>
+            <!-- 最近截图（设计方向 B） -->
+            <local:MyCard x:Name="CardShots" Margin="0,0,0,15" Title="最近截图" Visibility="Collapsed">
+                <Grid Margin="18,38,18,16">
+                    <local:MyTextButton x:Name="BtnShotsAll" Text="全部截图" FontSize="12.5" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-28,0,0" />
+                    <UniformGrid x:Name="PanShots" Rows="1" Columns="4" Margin="-5,0,-5,0" />
+                </Grid>
+            </local:MyCard>
             <!-- 游戏日志（取自 Sapling 与 PCL CE）：游戏运行时显示最近的输出 -->
             <local:MyCard Margin="0,0,0,15" Title="游戏日志" x:Name="CardGameLog" Visibility="Collapsed">
                 <Grid Margin="15,36,15,12">
@@ -46,7 +60,7 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <TextBox x:Name="TextGameLog" Height="240" IsReadOnly="True" IsUndoEnabled="False" TextWrapping="NoWrap" BorderThickness="0"
-                             Background="#0A000000" Padding="8,6" FontFamily="Consolas, Microsoft YaHei UI" FontSize="12" Foreground="{DynamicResource ColorBrush1}"
+                             Background="{DynamicResource ColorBrushTile}" Padding="8,6" FontFamily="Consolas, Microsoft YaHei UI" FontSize="12" Foreground="{DynamicResource ColorBrushText}"
                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
                         <local:MyButton x:Name="BtnGameLogFolder" Text="打开日志文件夹" MinWidth="130" Height="32" Padding="13,0" Margin="0,0,12,0" />
