@@ -290,7 +290,9 @@ namespace PCL
             string Problem = ArchiveBudget.Check(FileAddress, Free);
             if (Problem is not null)
                 throw new Exception(Problem);
-            FileUtils.ExtractToDirectory(FileAddress, InstallTemp, c, p);
+            // 解压时按实际写入量再检查一次：记录的大小可以造假（#8）
+            using (var Zip = FileUtils.OpenZip(FileAddress, c))
+                ArchiveBudget.Extract(Zip, InstallTemp, ArchiveBudget.BudgetFor(Free), c, Progress => p?.Set(Progress));
         }
         /// <summary>
     /// 从整合包的 override 目录复制文件，同时设置 PCL 的配置文件与版本隔离。
