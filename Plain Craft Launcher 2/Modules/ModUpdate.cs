@@ -21,7 +21,12 @@ namespace PCL
         /// </summary>
         public static void OnStartup()
         {
-            ModBase.RunInBackground(() => AppUpdate.RemoveOldVersion(ModBase.PathExe), "清理旧版本");
+            // 新版本正常运行一分钟后再删除旧版本：新版本刚启动就出错时，旧版本还在，可以把 .old 改回 .exe 恢复（#7）
+            ModBase.RunInBackground(() =>
+            {
+                Thread.Sleep(60000);
+                AppUpdate.RemoveOldVersion(ModBase.PathExe);
+            }, "清理旧版本");
             if (ModBase.BuildType != ModBase.BuildTypes.Release || !Settings.Get<bool>("SystemAutoUpdate"))
                 return;
             ModBase.RunInBackgroundAsync(async () =>
