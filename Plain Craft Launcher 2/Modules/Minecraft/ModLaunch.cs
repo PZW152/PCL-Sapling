@@ -1138,6 +1138,9 @@ namespace PCL
             McLaunchLog("当前剩余内存：" + MemoryPlanner.BytesToGb(SystemInfo.AvailablePhysicalMemory) + "G");
             int TargetRam = (int)Math.Round(Math.Floor(PageInstanceSetup.GetRam(ModMinecraft.McInstanceSelected) * 1024d));
             Args.Add("-Xmx" + TargetRam + "m");
+            // 固定内存大小（取自 PCL CE）：-Xms 与 -Xmx 相同；玩家自己写了 -Xms 时以玩家的为准
+            if (Settings.Get<bool>("LaunchRamLock") && !Args.Any(a => a.StartsWith("-Xms", StringComparison.OrdinalIgnoreCase)))
+                Args.Add("-Xms" + TargetRam + "m");
 
             // 获取设置的管理方式
             // 0：在 Java 21+ 使用分代 ZGC，20~15 使用非分代的 ZGC，14- 使用 G1GC

@@ -124,8 +124,27 @@ namespace PCL
 
         }
 
+        /// <summary>
+        /// 版本框的“全部”。这是可以输入的下拉框，文字不经过界面的繁体转换，所以在这里按当前语言显示。
+        /// </summary>
+        private const string AllVersionsSource = "全部 (也可自行输入)";
+        private static string AllVersionsText => UiLanguage.Display(AllVersionsSource);
+        private static bool IsAllVersions(string Text) => Text == AllVersionsSource || Text == AllVersionsText || Text == ChineseConverter.ToTraditional(AllVersionsSource);
+
+        /// <summary>
+        /// 让版本框的“全部”跟随当前界面语言（切换语言后回到这一页也会更新）。
+        /// </summary>
+        private void ApplyAllVersionsText()
+        {
+            if (this.TextSearchVersion.Items.Count > 0 && this.TextSearchVersion.Items[0] is MyComboBoxItem First && IsAllVersions(First.Content as string))
+                First.Content = AllVersionsText;
+            if (IsAllVersions(this.TextSearchVersion.Text))
+                this.TextSearchVersion.Text = AllVersionsText;
+        }
+
         private void PageResource_Loaded(object sender, EventArgs e)
         {
+            ApplyAllVersionsText();
             // 不知道从 Initialized 改成 Loaded 会不会有问题，但用 Initialized 会导致初始的筛选器修改被覆盖回默认值
             if (TargetInstance is not null)
             {
@@ -182,7 +201,7 @@ namespace PCL
         private ResourceSearcher.SearchRequest LoaderInput()
         {
             var Request = new ResourceSearcher.SearchRequest(PageType, Storage, (Page + 1) * PAGE_SIZE);
-            string GameVersion = this.TextSearchVersion.Text == "全部 (也可自行输入)" ? (string)null : this.TextSearchVersion.Text.Contains(".") || this.TextSearchVersion.Text.Contains("w") ? this.TextSearchVersion.Text : (string)null;
+            string GameVersion = IsAllVersions(this.TextSearchVersion.Text) ? (string)null : this.TextSearchVersion.Text.Contains(".") || this.TextSearchVersion.Text.Contains("w") ? this.TextSearchVersion.Text : (string)null;
             Request.SearchText = this.TextSearchName.Text;
             Request.GameVersion = GameVersion;
             Request.Tag = Coerce.ToStr(this.ComboSearchTag.SelectedItem.Fe().Tag);
@@ -309,7 +328,7 @@ namespace PCL
         private void ResetFilter()
         {
             this.TextSearchName.Text = "";
-            this.TextSearchVersion.Text = "全部 (也可自行输入)";
+            this.TextSearchVersion.Text = AllVersionsText;
             this.TextSearchVersion.SelectedIndex = 0;
             this.ComboSearchSource.SelectedIndex = 0;
             this.ComboSearchTag.SelectedIndex = 0;

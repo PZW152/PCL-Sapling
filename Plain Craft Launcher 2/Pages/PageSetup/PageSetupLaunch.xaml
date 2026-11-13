@@ -173,6 +173,8 @@
                         </StackPanel>
                         <TextBlock Grid.Row="2" x:Name="LabRamGame" SizeChanged="LabRamGame_SizeChanged" Text="2.5 GB" Grid.ColumnSpan="3" TextTrimming="None" Margin="2,3,0,0" FontSize="16" Foreground="{DynamicResource ColorBrush1}" HorizontalAlignment="Left" />
                     </Grid>
+                    <local:MyCheckBox Margin="-1,14,0,0" Height="22" local:SettingService.Key="LaunchRamLock" Text="固定内存大小"
+                                      ToolTip="游戏一开始就占用分配的全部内存（-Xms 与 -Xmx 相同），减少运行中因扩充内存造成的卡顿。&#xa;已在 Java 虚拟机参数中设置 -Xms 时不生效。（取自 PCL CE）" />
                 </StackPanel>
             </local:MyCard>
             <local:MyCard x:Name="CardSkin" Margin="0,0,0,15" Title="离线皮肤" CanSwap="True" IsSwapped="True">

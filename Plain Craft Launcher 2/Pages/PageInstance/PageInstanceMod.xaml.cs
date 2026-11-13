@@ -124,6 +124,43 @@ namespace PCL
         /// <summary>
     /// 将加载器结果的 Mod 列表加载为 UI。
     /// </summary>
+        private int DependencyCheckId = 0;
+        /// <summary>
+        /// 读取已启用 Mod 自己声明的前置，缺少时在列表上方提示（取自 PCL CE 的依赖查看）。在后台进行，不影响列表显示。
+        /// </summary>
+        private void CheckDependencies()
+        {
+            int CheckId = ++DependencyCheckId;
+            var Files = (LocalResourceLoaders.LocalResourceLoader.Output ?? new List<LocalResourceFile>()).Where(m => m.IsEnabled).Select(m => m.File.FullName).ToList();
+            this.HintMissingDeps.Visibility = Visibility.Collapsed;
+            ModBase.RunInThread(() =>
+            {
+                try
+                {
+                    var Missing = ModDependencies.FindMissing(Files.Select(ModDependencies.Read).Where(m => m is not null)!);
+                    string Text = null;
+                    if (Missing.Any())
+                    {
+                        var Lines = Missing.Take(4).Select(m => $"{m.ModName} 需要 {m.RequiredId}");
+                        Text = "有 Mod 缺少前置，游戏可能无法启动：" + ModBase.CrLf + string.Join(ModBase.CrLf, Lines) + (Missing.Count > 4 ? $"{ModBase.CrLf}……共 {Missing.Count} 项" : "") +
+                               ModBase.CrLf + "可以在「下载新 Mod」中搜索它们的名字安装。";
+                        Logger.Info("缺少前置：" + string.Join("，", Missing.Select(m => $"{m.FileName} → {m.RequiredId}")));
+                    }
+                    ModBase.RunInUi(() =>
+                    {
+                        if (CheckId != DependencyCheckId)
+                            return; // 列表已经刷新过了
+                        this.HintMissingDeps.Text = Text ?? "";
+                        this.HintMissingDeps.Visibility = Text is null ? Visibility.Collapsed : Visibility.Visible;
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, "检查 Mod 前置失败");
+                }
+            });
+        }
+
         private void LoadUIFromLoaderOutput()
         {
             try
@@ -148,6 +185,7 @@ namespace PCL
                 Filter = FilterType.All;
                 this.SearchBox.Text = ""; // 这会触发结果刷新，所以需要在 ModItems 更新之后，详见 #3124 的视频
                 RefreshUI();
+                CheckDependencies();
             }
             catch (Exception ex)
             {
