@@ -402,6 +402,7 @@ namespace PCL
                 if (_Type == value)
                     return;
                 _Type = value;
+                CoerceValue(FocusableProperty);
                 // 切换左栏大小
                 this.ColumnCheck.Width = new GridLength(_Type == CheckType.None || _Type == CheckType.Clickable ? this.Height < 40d ? 4 : 2 : 6);
                 // 切换竖条控件
@@ -438,6 +439,7 @@ namespace PCL
 
         public MyListItem()
         {
+            this.Loaded += (_, __) => CoerceValue(FocusableProperty); // 只是展示用的列表项不停在 Tab 上
             this.SizeChanged += (_, __) => OnSizeChanged();
             this.PreviewMouseLeftButtonUp += Button_MouseUp;
             this.PreviewMouseLeftButtonDown += Button_MouseDown;

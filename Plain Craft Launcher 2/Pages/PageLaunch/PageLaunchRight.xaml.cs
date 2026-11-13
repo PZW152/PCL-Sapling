@@ -342,6 +342,12 @@ namespace PCL
                 if (ModLaunch.McLaunchLoader.State != ModBase.LoadState.Loading)
                     OnClick();
             };
+            // 键盘：Tab 可以选中，Enter 或空格进入
+            ModKeyboard.MakePressable(Tile, () =>
+            {
+                if (ModLaunch.McLaunchLoader.State != ModBase.LoadState.Loading)
+                    OnClick();
+            });
             // 依次出现
             ModAnimation.AniStart(ModAnimation.AaOpacity(Tile, 1, 240, 40 + Index * 50), "HeroTile Enter " + Index);
             return Tile;
@@ -385,6 +391,7 @@ namespace PCL
                     Opacity = 0
                 };
                 Thumb.MouseLeftButtonUp += (_, __) => OpenInstancePage(FormMain.PageSubType.InstanceScreenshot);
+                ModKeyboard.MakePressable(Thumb, () => OpenInstancePage(FormMain.PageSubType.InstanceScreenshot));
                 Thumb.MouseEnter += (_, __) => ModAnimation.AniStart(ModAnimation.AaOpacity(Thumb, 0.85 - Thumb.Opacity, 120), "HeroShot Hover " + File);
                 Thumb.MouseLeave += (_, __) => ModAnimation.AniStart(ModAnimation.AaOpacity(Thumb, 1 - Thumb.Opacity, 120), "HeroShot Hover " + File);
                 ModAnimation.AniStart(ModAnimation.AaOpacity(Thumb, 1, 240, 120 + Index++ * 50), "HeroShot Enter " + File);

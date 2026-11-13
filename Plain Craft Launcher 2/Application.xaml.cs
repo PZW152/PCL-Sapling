@@ -149,6 +149,8 @@ namespace PCL
                 ModLanguage.Initialize();
                 // 深浅色（必须在任何窗口显示之前决定）
                 ModDarkMode.Initialize();
+                // 键盘操作：让自绘控件可以用 Tab 选中
+                ModKeyboard.Initialize();
                 // 设置初始窗口
                 ModMain.FrmStart = new SplashScreen(@"Images\icon.ico");
                 ModMain.FrmStart.Show(false, true);

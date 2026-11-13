@@ -71,7 +71,9 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type Window}">
-                            <ContentPresenter />
+                            <AdornerDecorator><!-- 键盘焦点框画在这一层 -->
+                                <ContentPresenter />
+                            </AdornerDecorator>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>

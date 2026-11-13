@@ -90,6 +90,20 @@
                             <local:MyRadioBox local:SettingService.Key="UiDarkMode" local:SettingService.Value="1" Grid.Column="2" Text="浅色" />
                             <local:MyRadioBox local:SettingService.Key="UiDarkMode" local:SettingService.Value="2" Grid.Column="3" Text="深色" />
                         </Grid>
+                        <Grid x:Name="PanScale" Height="30" Margin="0,0,0,7">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Name1" />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="界面大小" Margin="0,0,20,0" />
+                            <local:MyRadioBox local:SettingService.Key="UiScale" local:SettingService.Value="0" Grid.Column="1" Text="标准" />
+                            <local:MyRadioBox local:SettingService.Key="UiScale" local:SettingService.Value="1" Grid.Column="2" Text="较大" />
+                            <local:MyRadioBox local:SettingService.Key="UiScale" local:SettingService.Value="2" Grid.Column="3" Text="特大" />
+                        </Grid>
                     </StackPanel>
                 </Grid>
             </local:MyCard>

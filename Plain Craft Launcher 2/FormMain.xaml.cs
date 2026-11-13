@@ -181,8 +181,10 @@ namespace PCL
             ModSecret.ThemeRefreshMain();
             try
             {
-                this.Height = (double)Settings.Get<int>("WindowHeight");
-                this.Width = (double)Settings.Get<int>("WindowWidth");
+                ApplyScale(true);
+                this.Height = Settings.Get<int>("WindowHeight") * UiScale;
+                this.Width = Settings.Get<int>("WindowWidth") * UiScale;
+                FitInWorkArea();
             }
             catch (Exception ex) // 修复 #2019
             {
@@ -442,8 +444,8 @@ namespace PCL
         {
             if (IsSizeSaveable)
             {
-                Settings.Set("WindowHeight", this.Height);
-                Settings.Set("WindowWidth", this.Width);
+                Settings.Set("WindowHeight", this.Height / UiScale);
+                Settings.Set("WindowWidth", this.Width / UiScale);
             }
             this.RectForm.Rect = new Rect(0d, 0d, this.BorderForm.ActualWidth, this.BorderForm.ActualHeight);
             this.PanForm.Width = this.BorderForm.ActualWidth + 0.001d;
@@ -466,6 +468,51 @@ namespace PCL
         #region 窗体事件
 
         // 按键事件
+        #region 界面大小（取自 Sapling：放大后主要按钮都要看得到）
+
+        private const double BaseMinWidth = 810d, BaseMinHeight = 470d;
+        /// <summary>
+        /// 当前的界面缩放倍数：标准 1、较大 1.15、特大 1.3。
+        /// </summary>
+        public double UiScale { get; private set; } = 1d;
+
+        public static double ScaleOf(int Setting) => Setting switch { 1 => 1.15d, 2 => 1.3d, _ => 1d };
+
+        /// <summary>
+        /// 按设置缩放整个窗口的内容。启动时调用一次，之后设置改变时即时生效，窗口按比例变大或变小。
+        /// </summary>
+        public void ApplyScale(bool Initial)
+        {
+            double Old = UiScale;
+            UiScale = ScaleOf(Settings.Get<int>("UiScale"));
+            this.PanBack.LayoutTransform = UiScale == 1d ? Transform.Identity : new ScaleTransform(UiScale, UiScale);
+            this.MinWidth = BaseMinWidth * UiScale;
+            this.MinHeight = BaseMinHeight * UiScale;
+            if (Initial || Old == UiScale)
+                return;
+            this.Width = this.Width / Old * UiScale;
+            this.Height = this.Height / Old * UiScale;
+            FitInWorkArea();
+        }
+
+        /// <summary>
+        /// 窗口不能超出屏幕的工作区。
+        /// </summary>
+        private void FitInWorkArea()
+        {
+            var Area = SystemParameters.WorkArea;
+            if (this.Width > Area.Width)
+                this.Width = Math.Max(this.MinWidth, Area.Width);
+            if (this.Height > Area.Height)
+                this.Height = Math.Max(this.MinHeight, Area.Height);
+            if (!double.IsNaN(this.Left) && this.Left + this.Width > Area.Right)
+                this.Left = Math.Max(Area.Left, Area.Right - this.Width);
+            if (!double.IsNaN(this.Top) && this.Top + this.Height > Area.Bottom)
+                this.Top = Math.Max(Area.Top, Area.Bottom - this.Height);
+        }
+
+        #endregion
+
         private void FormMain_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.IsRepeat)
@@ -516,6 +563,9 @@ namespace PCL
             // 在没有弹窗时：继续检查……
             // ==========================
 
+            // 焦点在按钮、列表项等控件上时，Enter 与空格用来按下它（键盘操作）
+            if (ModKeyboard.TryPress(e))
+                return;
             // 按 ESC 取消启动，或返回上一级
             if (e.Key == Key.Escape)
             {
