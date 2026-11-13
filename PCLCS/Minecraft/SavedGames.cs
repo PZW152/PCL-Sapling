@@ -165,28 +165,71 @@ public static class SavedGames {
     /// </summary>
     public static string BackupWorld(string gameDirectory, string folder, DateTime now) {
         string saves = Path.Combine(gameDirectory, "saves");
-        string source = Path.Combine(saves, folder);
-        if (folder.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || folder is "." or ".." || !File.Exists(Path.Combine(source, "level.dat")))
+        if (string.IsNullOrWhiteSpace(folder) || folder.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || folder.Contains('\\') || folder is "." or "..")
             throw new DirectoryNotFoundException("找不到这个世界：" + folder);
-        string baseName = folder + " 备份 " + now.ToString("yyyy-MM-dd HH-mm", CultureInfo.InvariantCulture); // 固定用公历
-        string name = baseName;
-        for (int i = 2; Directory.Exists(Path.Combine(saves, name)); i++) name = $"{baseName} ({i})";
-        CopyDirectory(source, Path.Combine(saves, name));
-        return name;
+        string source = Path.Combine(saves, folder);
+        if (!File.Exists(PathUtils.ForApi(Path.Combine(source, "level.dat"))))
+            throw new DirectoryNotFoundException("找不到这个世界：" + folder);
+        if (IsReparsePoint(source))
+            throw new IOException("无法备份通过符号链接或目录联接指向其他位置的世界：" + folder);
+
+        // 暂存目录与 saves 位于同一个卷，未完成的世界也不会被游戏或启动器列出。
+        string stagingRoot = Path.Combine(saves, ".pcl-world-backups");
+        if (Directory.Exists(PathUtils.ForApi(stagingRoot))) {
+            bool isWorld = File.Exists(PathUtils.ForApi(Path.Combine(stagingRoot, "level.dat")))
+                || File.Exists(PathUtils.ForApi(Path.Combine(stagingRoot, "level.dat_old")));
+            if (isWorld || IsReparsePoint(stagingRoot))
+                throw new IOException("世界备份的暂存目录已被占用：" + stagingRoot);
+        }
+        string staging = Path.Combine(stagingRoot, Guid.NewGuid().ToString("N"));
+        string baseName = folder + " 备份 " + now.ToString("yyyy-MM-dd HH-mm", CultureInfo.InvariantCulture);
+        string sessionLock = PathUtils.ForApi(Path.Combine(source, "session.lock"));
+        using FileStream? worldLock = OpenWorldLock(sessionLock);
+        try {
+            CopyDirectory(source, staging);
+            for (int i = 1; ; i++) {
+                string name = i == 1 ? baseName : $"{baseName} ({i})";
+                string target = PathUtils.ForApi(Path.Combine(saves, name));
+                if (Directory.Exists(target) || File.Exists(target)) continue;
+                try {
+                    Directory.Move(PathUtils.ForApi(staging), target);
+                    return name;
+                } catch (IOException) when (Directory.Exists(target) || File.Exists(target)) {
+                    // 另一次备份先用了同一个名称，换一个名称再发布。
+                }
+            }
+        } finally {
+            // 清理这次任务自己的文件，保留原来的复制错误。
+            try {
+                if (Directory.Exists(PathUtils.ForApi(staging))) Directory.Delete(PathUtils.ForApi(staging), recursive: true);
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+    }
+
+    private static bool IsReparsePoint(string path) =>
+        (File.GetAttributes(PathUtils.ForApi(path)) & FileAttributes.ReparsePoint) != 0;
+
+    private static FileStream? OpenWorldLock(string path) {
+        // 多个备份可以同时读取会话锁。Minecraft 打开会话锁写入时，两者互斥。
+        try { return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read); }
+        catch (FileNotFoundException) { return null; } // 旧版本或尚未被游戏打开过的存档可能没有会话锁。
+        catch (IOException ex) { throw new IOException("无法取得世界的会话锁，请先关闭正在使用这个世界的 Minecraft。", ex); }
     }
 
     private static void CopyDirectory(string source, string target) {
-        Directory.CreateDirectory(target);
-        foreach (string file in Directory.EnumerateFiles(source)) {
+        Directory.CreateDirectory(PathUtils.ForApi(target));
+        foreach (string file in Directory.EnumerateFiles(PathUtils.ForApi(source))) {
             if (Path.GetFileName(file).Equals("session.lock", StringComparison.OrdinalIgnoreCase)) continue;
-            // 游戏正在运行时文件可能被占用，允许共享读取
+            if (IsReparsePoint(file)) throw new IOException("无法备份存档内的链接文件：" + file);
+            // 允许读取被其他程序以共享方式打开的文件。
             using FileStream input = new(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-            using FileStream output = new(Path.Combine(target, Path.GetFileName(file)), FileMode.CreateNew, FileAccess.Write);
+            using FileStream output = new(PathUtils.ForApi(Path.Combine(target, Path.GetFileName(file))), FileMode.CreateNew, FileAccess.Write);
             input.CopyTo(output);
         }
-        foreach (string directory in Directory.EnumerateDirectories(source)) {
-            // 不跟随符号链接，避免复制到世界以外的位置
-            if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0) continue;
+        foreach (string directory in Directory.EnumerateDirectories(PathUtils.ForApi(source))) {
+            if (IsReparsePoint(directory)) throw new IOException("无法备份存档内的链接目录：" + directory);
             CopyDirectory(directory, Path.Combine(target, Path.GetFileName(directory)));
         }
     }

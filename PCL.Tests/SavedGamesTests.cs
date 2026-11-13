@@ -116,6 +116,68 @@ public class SavedGamesTests
     }
 
     [Test]
+    public async Task 区块文件无法读取时不会发布只有元数据的世界()
+    {
+        string Game = NewGameFolder();
+        try
+        {
+            string Saves = Path.Combine(Game, "saves");
+            string World = Path.Combine(Saves, "我的世界");
+            string Region = Path.Combine(World, "region");
+            Directory.CreateDirectory(Region);
+            File.WriteAllText(Path.Combine(World, "level.dat"), "level");
+            string Chunk = Path.Combine(Region, "r.0.0.mca");
+            File.WriteAllText(Chunk, "chunks");
+            using (File.Open(Chunk, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                await Assert.That(() => SavedGames.BackupWorld(Game, "我的世界", DateTime.Now)).Throws<IOException>();
+
+            await Assert.That(SavedGames.RecentWorlds(Game, 10).Select(Entry => Entry.Folder).ToArray()).IsEquivalentTo(new[] { "我的世界" });
+            await Assert.That(Directory.GetFileSystemEntries(Path.Combine(Saves, ".pcl-world-backups"))).IsEmpty();
+            await Assert.That(File.ReadAllText(Chunk)).IsEqualTo("chunks");
+        }
+        finally { Directory.Delete(Game, true); }
+    }
+
+    [Test]
+    public async Task 同时备份同一个世界会发布到不同目录()
+    {
+        string Game = NewGameFolder();
+        try
+        {
+            string World = Path.Combine(Game, "saves", "我的世界");
+            Directory.CreateDirectory(World);
+            File.WriteAllText(Path.Combine(World, "level.dat"), "level");
+            File.WriteAllText(Path.Combine(World, "session.lock"), "lock");
+            var Now = new DateTime(2026, 11, 12, 9, 5, 0);
+            var Copies = await Task.WhenAll(Task.Run(() => SavedGames.BackupWorld(Game, "我的世界", Now)),
+                Task.Run(() => SavedGames.BackupWorld(Game, "我的世界", Now)));
+
+            await Assert.That(Copies).IsEquivalentTo(new[] { "我的世界 备份 2026-11-12 09-05", "我的世界 备份 2026-11-12 09-05 (2)" });
+            foreach (string Copy in Copies)
+                await Assert.That(File.ReadAllText(Path.Combine(Game, "saves", Copy, "level.dat"))).IsEqualTo("level");
+        }
+        finally { Directory.Delete(Game, true); }
+    }
+
+    [Test]
+    public async Task 会话锁仍被游戏占用时不创建备份()
+    {
+        string Game = NewGameFolder();
+        try
+        {
+            string Saves = Path.Combine(Game, "saves");
+            string World = Path.Combine(Saves, "我的世界");
+            Directory.CreateDirectory(World);
+            File.WriteAllText(Path.Combine(World, "level.dat"), "level");
+            using (File.Open(Path.Combine(World, "session.lock"), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite))
+                await Assert.That(() => SavedGames.BackupWorld(Game, "我的世界", DateTime.Now)).Throws<IOException>();
+
+            await Assert.That(Directory.GetDirectories(Saves)).IsEquivalentTo(new[] { World });
+        }
+        finally { Directory.Delete(Game, true); }
+    }
+
+    [Test]
     public async Task 不能备份不存在或越界的世界()
     {
         string Game = NewGameFolder();
