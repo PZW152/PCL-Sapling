@@ -526,12 +526,23 @@ namespace PCL
 
         private void BackupWorld(ModMinecraft.McInstance Instance, string Folder)
         {
+            string GameDirectory = Instance.PathIndie;
+            var LaunchingInstance = ModMinecraft.McInstanceSelected;
+            bool IsLaunching = ModLaunch.McLaunchLoader.State == ModBase.LoadState.Loading && LaunchingInstance is not null
+                && PathUtils.IsSame(LaunchingInstance.PathIndie, GameDirectory);
+            bool IsRunning = ModWatcher.McWatcherList.Any(Watcher => PathUtils.IsSame(Watcher.Instance.PathIndie, GameDirectory)
+                && (Watcher.State == ModWatcher.Watcher.MinecraftState.Loading || Watcher.GameProcess is not null && !Watcher.GameProcess.HasExited));
+            if (IsLaunching || IsRunning)
+            {
+                ModMain.Hint("请先关闭使用这个存档目录的 Minecraft，再备份世界。", ModMain.HintType.Red);
+                return;
+            }
             ModMain.Hint("正在备份世界 " + Folder + "……");
             ModBase.RunInBackground(() =>
             {
                 try
                 {
-                    string Name = SavedGames.BackupWorld(Instance.PathIndie, Folder, DateTime.Now);
+                    string Name = SavedGames.BackupWorld(GameDirectory, Folder, DateTime.Now);
                     ModMain.Hint("已备份为 " + Name + "。要还原时，在游戏里打开这个世界即可。", ModMain.HintType.Green);
                     ModBase.RunInUi(() => { if (PageInstanceLeft.Instance == Instance) RefreshSaves(); });
                 }
