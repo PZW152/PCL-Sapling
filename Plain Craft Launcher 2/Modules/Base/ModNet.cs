@@ -229,12 +229,15 @@ namespace PCL
             {
                 try
                 {
-                    FileUtils.Write(LocalPath, await SendRequestAsync(Url, HttpMethod.Get, SimulateBrowserHeaders: SimulateBrowserHeaders, Cancel: Cancel).ConfigureAwait(false));
+                    byte[] Data = await SendRequestAsync(Url, HttpMethod.Get, SimulateBrowserHeaders: SimulateBrowserHeaders, Cancel: Cancel).ConfigureAwait(false);
+                    using var Output = new DownloadOutput(LocalPath);
+                    FileUtils.Write(Output.StagingPath, Data);
+                    Cancel.ThrowIfCancellationRequested();
+                    Output.Publish();
                     return;
                 }
                 catch (Exception ex)
                 {
-                    FileUtils.Delete(LocalPath);
                     ex.ThrowIfCanceled();
                     if (RetryCount >= 2)
                         throw new HttpRequestException($"通过网络请求直接下载小文件失败（{LocalPath}）", ex);
@@ -818,7 +821,7 @@ namespace PCL
             /// <summary>
         /// 当前的下载状态。
         /// </summary>
-            public NetState State = NetState.WaitingToCheck;
+            public volatile NetState State = NetState.WaitingToCheck;
             /// <summary>
         /// 导致下载失败的原因。
         /// </summary>
@@ -1024,10 +1027,10 @@ namespace PCL
                     {
                         if (NetTaskThreadCount >= NetTaskThreadLimit || !HasAvailableSource() || IsNoSplit && Threads is not null && Threads.State != NetState.Canceled)
                             return null;
-                        if (State >= NetState.Merging || State == NetState.WaitingToCheck)
-                            return null;
                         lock (LockState)
                         {
+                            if (State >= NetState.Merging || State == NetState.WaitingToCheck)
+                                return null;
                             if (State < NetState.Connecting)
                                 State = NetState.Connecting;
                         }
@@ -1039,8 +1042,16 @@ namespace PCL
                         {
                             if (!IsNoSplit && SourcesOnce.First().SingleThread is not null && SourcesOnce.First().SingleThread.State != NetState.Canceled)
                                 return null;
-                            Reset();
-                            State = NetState.Reading;
+                            lock (LockChain)
+                            {
+                                lock (LockState)
+                                {
+                                    if (State >= NetState.Merging)
+                                        return null;
+                                    Reset();
+                                    State = NetState.Reading;
+                                }
+                            }
                         }
                     }
                     lock (LockChain)
@@ -1428,14 +1439,16 @@ namespace PCL
                             }
                             Reset();
                             lock (LockState)
-                                State = NetState.WaitingToDownload;
+                                if (State < NetState.Finished)
+                                    State = NetState.WaitingToDownload;
                         }
                         else if (HasAvailableSource() && IsMergeFailure)
                         {
                             // 合并失败且单个源失败：继续下一个源
                             Reset();
                             lock (LockState)
-                                State = NetState.WaitingToDownload;
+                                if (State < NetState.Finished)
+                                    State = NetState.WaitingToDownload;
                         }
                         else
                         {
@@ -1494,6 +1507,7 @@ namespace PCL
                     }
                 }
                 int RetryCount = 0;
+                MemoryStream MergeCache = null;
                 try
                 {
                     while (true)
@@ -1501,54 +1515,58 @@ namespace PCL
                         try
                         {
 
-                            // 创建文件夹
-                            DirectoryUtils.Create(PathUtils.RemoveLastPart(LocalPath));
-                            FileUtils.Delete(LocalPath);
+                            using var Output = new DownloadOutput(LocalPath);
                             lock (LockChain)
                             {
+                                if (State != NetState.Merging)
+                                    return;
                                 // 合并文件
                                 if (IsNoSplit)
                                 {
                                     // 仅有一个线程，从内存中输出
                                     Logger.Trace(() => $"{LocalName}：下载结束，从内存输出文件");
-                                    FileUtils.Write(LocalPath, Cache);
+                                    MergeCache = Cache;
+                                    FileUtils.Write(Output.StagingPath, MergeCache);
                                 }
                                 else if (Threads.DownloadDone == DownloadDone && Threads.Temp is not null)
                                 {
                                     // 仅有一个文件，直接复制
                                     Logger.Trace(() => $"{LocalName}：下载结束，仅有一个文件，无需合并");
-                                    FileUtils.Copy(Threads.Temp, LocalPath);
+                                    FileUtils.Copy(Threads.Temp, Output.StagingPath);
                                 }
                                 else
                                 {
                                     // 有多个线程，合并
                                     Logger.Trace(() => $"{LocalName}：下载结束，开始合并文件");
-                                    using (var MergeFile = FileUtils.CreateAsStream(LocalPath))
+                                    using (var MergeFile = FileUtils.CreateAsStream(Output.StagingPath))
                                     {
-                                        using (var AddWriter = new BinaryWriter(MergeFile))
+                                        byte[] Buffer = new byte[81920];
+                                        foreach (NetThread Thread in Threads)
                                         {
-                                            foreach (NetThread Thread in Threads)
+                                            if (Thread.DownloadDone == 0L || Thread.Temp is null)
+                                                continue;
+                                            using var Segment = FileUtils.ReadAsStream(Thread.Temp);
+                                            long Remaining = Thread.DownloadDone;
+                                            while (Remaining > 0)
                                             {
-                                                if (Thread.DownloadDone == 0L || Thread.Temp is null)
-                                                    continue;
-                                                using (var fs = FileUtils.ReadAsStream(Thread.Temp))
-                                                {
-                                                    using (var TempReader = new BinaryReader(fs))
-                                                    {
-                                                        AddWriter.Write(TempReader.ReadBytes((int)Thread.DownloadDone));
-                                                    }
-                                                }
+                                                if (State != NetState.Merging)
+                                                    return;
+                                                int Read = Segment.Read(Buffer, 0, (int)Math.Min(Remaining, Buffer.Length));
+                                                if (Read == 0)
+                                                    throw new EndOfStreamException($"下载分段 {Thread.Uuid} 的缓存文件不完整");
+                                                MergeFile.Write(Buffer, 0, Read);
+                                                Remaining -= Read;
                                             }
                                         }
                                     }
                                 }
                                 // 检查文件
-                                string CheckResult = Check?.Check(LocalPath);
+                                string CheckResult = Check?.Check(Output.StagingPath);
                                 if (CheckResult is null && !IsUnknownSize && Check is not null)
                                 {
                                     if (Check.ActualSize == -1)
                                     {
-                                        CheckResult = new FileChecker() { ActualSize = FileSize }.Check(LocalPath); // 不修改原始的 Checker，以免污染原始实例
+                                        CheckResult = new FileChecker() { ActualSize = FileSize }.Check(Output.StagingPath); // 不修改原始的 Checker，以免污染原始实例
                                     }
                                     else if (Check.ActualSize != FileSize)
                                     {
@@ -1562,17 +1580,28 @@ namespace PCL
                                         Logger.Info($"- {T.Uuid}#，状态 {T.State}，范围 {T.DownloadStart}~{T.DownloadEnd}，已下载 {T.DownloadDone}，未下载 {T.DownloadUndone}");
                                     throw new Exception(CheckResult);
                                 }
-                                // 后处理
+                                // 发布与完成状态一起提交。取消先取得状态锁时，不会替换目标。
+                                lock (LockState)
+                                {
+                                    if (State != NetState.Merging)
+                                        return;
+                                    Output.Publish();
+                                    State = NetState.Finished;
+                                }
+                                // 清理分段失败不会使已经发布的文件重新下载。
                                 if (!IsNoSplit)
                                 {
                                     foreach (NetThread Thread in Threads)
                                     {
                                         if (Thread.Temp is not null)
-                                            FileUtils.Delete(Thread.Temp);
+                                        {
+                                            try { FileUtils.Delete(Thread.Temp); }
+                                            catch (Exception ex) { Logger.Warn(ex, $"清理下载分段失败（{Thread.Temp}）"); }
+                                        }
                                     }
                                 }
-                                Finish();
                             }
+                            NotifyFinished(true);
                             break;
                         }
                         catch (Exception ex)
@@ -1587,15 +1616,7 @@ namespace PCL
                                 System.Threading.Thread.Sleep(500 * RetryCount);
                                 continue;
                             }
-                            // 失败，禁用当前下载源并重启下载
-                            try
-                            {
-                                FileUtils.Delete(LocalPath);
-                            }
-                            catch (Exception)
-                            {
-                                Logger.Warn(ex, $"删除合并失败的文件出错（{LocalPath}）");
-                            }
+                            // 失败，禁用当前下载源并重启下载；正式文件仍保持原样。
                             SourceFail(Th, ex, true);
                             break;
                         }
@@ -1603,7 +1624,7 @@ namespace PCL
                 }
                 finally
                 {
-                    Cache?.Dispose();
+                    MergeCache?.Dispose();
                 }
             }
             /// <summary>
@@ -1663,6 +1684,10 @@ namespace PCL
                         return;
                     State = NetState.Finished;
                 }
+                NotifyFinished(PrintLog);
+            }
+            private void NotifyFinished(bool PrintLog)
+            {
                 Interlocked.Decrement(ref NetManager.FileRemain);
                 if (PrintLog)
                     Logger.Info($"{LocalName}：已完成");
