@@ -278,6 +278,7 @@ namespace PCL
         }, "初始化", ThreadPriority.Lowest);
 
             Logger.Info($"第三阶段加载用时：{ModBase.GetTimeMs() - ModBase.ApplicationStartTick} ms");
+            ModBenchmark.OnWindowLoaded(); // 只在设置了 PCL_BENCHMARK 时运行（#13）
         }
         // 根据打开次数触发的事件
         private void RunCountSub()
