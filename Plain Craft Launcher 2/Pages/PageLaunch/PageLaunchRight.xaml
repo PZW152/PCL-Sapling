@@ -9,7 +9,7 @@
         <StackPanel Name="PanMain" Margin="25,25,25,10" Grid.IsSharedSizeScope="True">
             <!-- 主角卡（设计方向 B「轻主角」，取自 Sapling）：白色卡片顶部一层很淡的主题色，主题蓝的大号版本号、标签和“继续玩” -->
             <Grid x:Name="PanHero" Margin="0,0,0,15">
-                <local:MyDropShadow ShadowRadius="3" Opacity="0.09" Color="{DynamicResource ColorObject1}" CornerRadius="6" Margin="-3,-3,-3,-4" IsHitTestVisible="False" />
+                <local:MyDropShadow ShadowRadius="3" Opacity="0.09" Color="{DynamicResource ColorObjectShadow}" CornerRadius="6" Margin="-3,-3,-3,-4" IsHitTestVisible="False" />
                 <local:MyDropShadow ShadowRadius="12" Opacity="0.07" Color="{DynamicResource ColorObject2}" CornerRadius="6" Margin="-12,-8,-12,-16" IsHitTestVisible="False" />
                 <Border CornerRadius="6" Background="{DynamicResource ColorBrushSurface}">
                     <Border CornerRadius="6" Background="{DynamicResource ColorBrushHeroWash}">

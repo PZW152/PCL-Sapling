@@ -101,15 +101,30 @@ namespace PCL
                 ColorLightAdjust = Args.LightAdjust;
                 ColorHueTopbarDelta = Args.TopbarHueDelta;
 
-                Color1 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.2d, 25d + ColorLightAdjust * 0.3d);
-                Color2 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 45 + ColorLightAdjust);
-                Color3 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 55 + ColorLightAdjust);
-                Color4 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 65 + ColorLightAdjust);
-                Color5 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 80d + ColorLightAdjust * 0.4d);
-                Color6 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 91d + ColorLightAdjust * 0.1d);
-                Color7 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 95d);
-                Color8 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 97d);
-                ColorBg0 = Color4 * 0.4d + Color5 * 0.4d + ColorGray4 * 0.2d;
+                if (ModDarkMode.IsDark)
+                {
+                    // 深色：1 是浅色文字，2~4 是提亮的主题蓝，5~8 是很深的蓝灰底色
+                    Color1 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.15d, 88d);
+                    Color2 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.85d, 68d + ColorLightAdjust * 0.3d);
+                    Color3 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.85d, 62d + ColorLightAdjust * 0.3d);
+                    Color4 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.75d, 55d + ColorLightAdjust * 0.3d);
+                    Color5 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.45d, 36d);
+                    Color6 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.4d, 27d);
+                    Color7 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.35d, 22d);
+                    Color8 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.3d, 18d);
+                }
+                else
+                {
+                    Color1 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.2d, 25d + ColorLightAdjust * 0.3d);
+                    Color2 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 45 + ColorLightAdjust);
+                    Color3 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 55 + ColorLightAdjust);
+                    Color4 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 65 + ColorLightAdjust);
+                    Color5 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 80d + ColorLightAdjust * 0.4d);
+                    Color6 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 91d + ColorLightAdjust * 0.1d);
+                    Color7 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 95d);
+                    Color8 = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat, 97d);
+                }
+                ColorBg0 = ModDarkMode.IsDark ? new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.4d, 40d) : Color4 * 0.4d + Color5 * 0.4d + ColorGray4 * 0.2d; // 输入框、下拉框的边框
                 ColorBg1 = new ModBase.MyColor(190d, Color7);
 
                 ColorSemiTransparent = new ModBase.MyColor(1d, Color8);
@@ -159,22 +174,32 @@ namespace PCL
                 Brush.Freeze();
                 return Brush;
             }
-            Res["ColorBrushSurface"] = Solid(Color.FromArgb(245, 255, 255, 255));
+            bool Dark = ModDarkMode.IsDark;
+            Res["ColorBrushSurface"] = Solid(Dark ? Color.FromArgb(242, 0x24, 0x2B, 0x35) : Color.FromArgb(245, 255, 255, 255));
             Res["ColorBrushText"] = Solid(Color1);
-            Res["ColorBrushTextMuted"] = Solid(Hsl(ColorHue, 10, 47));
-            Res["ColorBrushAccentText"] = Solid(Hsl(ColorHue, ColorSat, 41 + ColorLightAdjust * 0.5));
-            Res["ColorBrushChip"] = Solid(Hsl(ColorHue, ColorSat * 0.9, 93.5));
-            Res["ColorBrushChipText"] = Solid(Hsl(ColorHue, ColorSat, 37 + ColorLightAdjust * 0.5));
-            Res["ColorBrushTile"] = Solid(Hsl(ColorHue, ColorSat * 0.6, 97.5));
-            Res["ColorBrushTileBorder"] = Solid(Hsl(ColorHue, ColorSat * 0.4, 90));
-            Res["ColorObjectTile"] = Hsl(ColorHue, ColorSat * 0.6, 97.5);
-            Res["ColorObjectTileHover"] = Hsl(ColorHue, ColorSat * 0.9, 94.5);
-            Res["ColorObjectTileBorder"] = Hsl(ColorHue, ColorSat * 0.4, 90);
-            Res["ColorObjectTileHoverBorder"] = Hsl(ColorHue, ColorSat * 0.8, 78);
+            Res["ColorBrushOnAccent"] = Solid(Dark ? Color.FromRgb(0xF2, 0xF6, 0xFA) : (Color)Color8); // 主题色底上的图标与文字
+            Res["ColorBrushTextMuted"] = Solid(Dark ? Hsl(ColorHue, 10, 64) : Hsl(ColorHue, 10, 47));
+            Res["ColorBrushAccentText"] = Solid(Dark ? Hsl(ColorHue, ColorSat * 0.9, 72) : Hsl(ColorHue, ColorSat, 41 + ColorLightAdjust * 0.5));
+            Res["ColorBrushChip"] = Solid(Dark ? Hsl(ColorHue, ColorSat * 0.45, 26) : Hsl(ColorHue, ColorSat * 0.9, 93.5));
+            Res["ColorBrushChipText"] = Solid(Dark ? Hsl(ColorHue, ColorSat * 0.9, 80) : Hsl(ColorHue, ColorSat, 37 + ColorLightAdjust * 0.5));
+            Color Tile = Dark ? Hsl(ColorHue, ColorSat * 0.22, 20) : Hsl(ColorHue, ColorSat * 0.6, 97.5);
+            Color TileBorder = Dark ? Hsl(ColorHue, ColorSat * 0.22, 27) : Hsl(ColorHue, ColorSat * 0.4, 90);
+            Res["ColorBrushTile"] = Solid(Tile);
+            Res["ColorBrushTileBorder"] = Solid(TileBorder);
+            Res["ColorObjectTile"] = Tile;
+            Res["ColorObjectTileHover"] = Dark ? Hsl(ColorHue, ColorSat * 0.4, 25) : Hsl(ColorHue, ColorSat * 0.9, 94.5);
+            Res["ColorObjectTileBorder"] = TileBorder;
+            Res["ColorObjectTileHoverBorder"] = Dark ? Hsl(ColorHue, ColorSat * 0.6, 45) : Hsl(ColorHue, ColorSat * 0.8, 78);
+            // 弹窗与阴影
+            Res["ColorBrushDialog"] = Solid(Dark ? Color.FromRgb(0x23, 0x2A, 0x33) : Color.FromRgb(0xFB, 0xFB, 0xFB));
+            Res["ColorBrushDialogText"] = Solid(Dark ? Color.FromRgb(0xC5, 0xCC, 0xD3) : Color.FromRgb(0x5C, 0x5C, 0x5C));
+            Res["ColorObjectShadow"] = Dark ? Color.FromRgb(0, 0, 0) : (Color)Color1;
             // 主角卡顶部很淡的一层主题色，往下渐隐成卡片底色
+            Color WashColor = Dark ? Hsl(ColorHue, ColorSat * 0.5, 25) : Hsl(ColorHue, ColorSat * 0.9, 95.5);
             var Wash = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(0, 1) };
-            Wash.GradientStops.Add(new GradientStop(Hsl(ColorHue, ColorSat * 0.9, 95.5), 0));
-            Wash.GradientStops.Add(new GradientStop(Hsl(ColorHue, ColorSat * 0.9, 95.5, 0), 0.55));
+            Wash.GradientStops.Add(new GradientStop(WashColor, 0));
+            WashColor.A = 0;
+            Wash.GradientStops.Add(new GradientStop(WashColor, 0.55));
             Wash.Freeze();
             Res["ColorBrushHeroWash"] = Wash;
         }
@@ -187,16 +212,18 @@ namespace PCL
             // 顶部条背景
             var Brush = new LinearGradientBrush() { EndPoint = new Point(1d, 0d), StartPoint = new Point(0d, 0d) };
             int[] Deltas = ColorHueTopbarDelta.Switch(d => new int[] { -d, 0, d }, d => d);
-            Brush.GradientStops.Add(new GradientStop() { Offset = 0d, Color = new ModBase.MyColor().FromHSL2(ColorHue + Deltas[0], ColorSat, 48 + ColorLightAdjust) });
-            Brush.GradientStops.Add(new GradientStop() { Offset = 0.5d, Color = new ModBase.MyColor().FromHSL2(ColorHue + Deltas[1], ColorSat, 54 + ColorLightAdjust) });
-            Brush.GradientStops.Add(new GradientStop() { Offset = 1d, Color = new ModBase.MyColor().FromHSL2(ColorHue + Deltas[2], ColorSat, 48 + ColorLightAdjust) });
+            double TitleSat = ModDarkMode.IsDark ? ColorSat * 0.8d : ColorSat, TitleEdge = ModDarkMode.IsDark ? 31 : 48 + ColorLightAdjust, TitleMid = ModDarkMode.IsDark ? 36 : 54 + ColorLightAdjust;
+            Brush.GradientStops.Add(new GradientStop() { Offset = 0d, Color = new ModBase.MyColor().FromHSL2(ColorHue + Deltas[0], TitleSat, TitleEdge) });
+            Brush.GradientStops.Add(new GradientStop() { Offset = 0.5d, Color = new ModBase.MyColor().FromHSL2(ColorHue + Deltas[1], TitleSat, TitleMid) });
+            Brush.GradientStops.Add(new GradientStop() { Offset = 1d, Color = new ModBase.MyColor().FromHSL2(ColorHue + Deltas[2], TitleSat, TitleEdge) });
             ModMain.FrmMain.PanTitle.Background = Brush;
             ModMain.FrmMain.PanTitle.Background.Freeze();
             // 主页面背景：随主题色变化的彩色渐变
             Brush = new LinearGradientBrush() { EndPoint = new Point(0.1d, 1d), StartPoint = new Point(0.9d, 0d) };
-            Brush.GradientStops.Add(new GradientStop() { Offset = -0.1d, Color = new ModBase.MyColor().FromHSL2(ColorHue - 15, ColorSat * 0.8d, 91d) });
-            Brush.GradientStops.Add(new GradientStop() { Offset = 0.4d, Color = new ModBase.MyColor().FromHSL2(ColorHue, ColorSat * 0.8d, 91d) });
-            Brush.GradientStops.Add(new GradientStop() { Offset = 1.1d, Color = new ModBase.MyColor().FromHSL2(ColorHue + 15, ColorSat * 0.8d, 91d) });
+            double FormSat = ModDarkMode.IsDark ? ColorSat * 0.3d : ColorSat * 0.8d, FormLight = ModDarkMode.IsDark ? 13d : 91d;
+            Brush.GradientStops.Add(new GradientStop() { Offset = -0.1d, Color = new ModBase.MyColor().FromHSL2(ColorHue - 15, FormSat, FormLight) });
+            Brush.GradientStops.Add(new GradientStop() { Offset = 0.4d, Color = new ModBase.MyColor().FromHSL2(ColorHue, FormSat, FormLight) });
+            Brush.GradientStops.Add(new GradientStop() { Offset = 1.1d, Color = new ModBase.MyColor().FromHSL2(ColorHue + 15, FormSat, FormLight) });
             ModMain.FrmMain.PanForm.Background = Brush;
             ModMain.FrmMain.PanForm.Background.Freeze();
         });

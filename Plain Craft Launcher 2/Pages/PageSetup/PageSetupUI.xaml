@@ -76,6 +76,20 @@
                             <local:MyRadioBox local:SettingService.Key="UiLanguage" local:SettingService.Value="1" Grid.Column="2" Text="简体中文" />
                             <local:MyRadioBox local:SettingService.Key="UiLanguage" local:SettingService.Value="2" Grid.Column="3" Text="繁體中文" />
                         </Grid>
+                        <Grid x:Name="PanDarkMode" Height="30" Margin="0,0,0,7">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Name1" />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="外观" Margin="0,0,20,0" />
+                            <local:MyRadioBox local:SettingService.Key="UiDarkMode" local:SettingService.Value="0" Grid.Column="1" Text="跟随系统" />
+                            <local:MyRadioBox local:SettingService.Key="UiDarkMode" local:SettingService.Value="1" Grid.Column="2" Text="浅色" />
+                            <local:MyRadioBox local:SettingService.Key="UiDarkMode" local:SettingService.Value="2" Grid.Column="3" Text="深色" />
+                        </Grid>
                     </StackPanel>
                 </Grid>
             </local:MyCard>

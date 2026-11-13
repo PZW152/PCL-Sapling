@@ -147,6 +147,8 @@ namespace PCL
                 }
                 // 界面语言（必须在任何窗口显示之前决定）
                 ModLanguage.Initialize();
+                // 深浅色（必须在任何窗口显示之前决定）
+                ModDarkMode.Initialize();
                 // 设置初始窗口
                 ModMain.FrmStart = new SplashScreen(@"Images\icon.ico");
                 ModMain.FrmStart.Show(false, true);

@@ -9,9 +9,9 @@
             <TranslateTransform x:Name="TransformPos" X="0" Y="40" />
         </TransformGroup>
     </Grid.RenderTransform>
-    <Border Name="PanBorder" MouseLeftButtonDown="Drag" CornerRadius="7" Background="#FBFBFB">
+    <Border Name="PanBorder" MouseLeftButtonDown="Drag" CornerRadius="7" Background="{DynamicResource ColorBrushDialog}">
         <Border.Effect>
-            <DropShadowEffect Color="{DynamicResource ColorObject1}" BlurRadius="20" ShadowDepth="4" RenderingBias="Performance" Opacity="0.8" x:Name="EffectShadow" />
+            <DropShadowEffect Color="{DynamicResource ColorObjectShadow}" BlurRadius="20" ShadowDepth="4" RenderingBias="Performance" Opacity="0.8" x:Name="EffectShadow" />
         </Border.Effect>
         <Grid Name="PanMain" VerticalAlignment="Top" Margin="22,22,22,23">
             <Grid.RowDefinitions>
@@ -31,7 +31,7 @@
                 <local:MyScrollViewer VerticalAlignment="Top" x:Name="PanCaption" Margin="0,0,0,17" Padding="7,0,15,0"
                                    VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" DeltaMult="0.7">
                     <TextBlock VerticalAlignment="Top" TextTrimming="None" TextWrapping="Wrap" Name="LabCaption" FontSize="15" LineHeight="18"
-                               Foreground="#FF5C5C5C" FontWeight="Normal" Padding="1" />
+                               Foreground="{DynamicResource ColorBrushDialogText}" FontWeight="Normal" Padding="1" />
                 </local:MyScrollViewer>
                 <!-- 微软登录页的二维码：网址固定，所以直接内嵌预先生成的图形（29×29，四周留 4 格空白） -->
                 <StackPanel x:Name="PanQr" Grid.Column="1" Visibility="Collapsed" VerticalAlignment="Top" Margin="6,2,8,17">
@@ -42,7 +42,7 @@
                             </Canvas>
                         </Viewbox>
                     </Border>
-                    <TextBlock Text="手机扫码打开登录页" FontSize="12" Foreground="#FF8C8C8C" HorizontalAlignment="Center" Margin="0,6,0,0" />
+                    <TextBlock Text="手机扫码打开登录页" FontSize="12" Foreground="{DynamicResource ColorBrushTextMuted}" HorizontalAlignment="Center" Margin="0,6,0,0" />
                 </StackPanel>
             </Grid>
             <StackPanel Grid.Row="4" Name="PanBtn" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="150,0,8,0" Orientation="Horizontal">

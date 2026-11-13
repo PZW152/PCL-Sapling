@@ -370,7 +370,7 @@
 <!--
     指不定能把这俩玩意儿提成新控件：
     <Grid Height="40">
-        <local:SystemDropShadowChrome Margin="-9.5,-9,0.5,-0.5" Opacity="0.1" CornerRadius="20" Color="{DynamicResource ColorObject1}" />
+        <local:SystemDropShadowChrome Margin="-9.5,-9,0.5,-0.5" Opacity="0.1" CornerRadius="20" Color="{DynamicResource ColorObjectShadow}" />
         <Border BorderThickness="0.001" Background="{DynamicResource ColorBrush3}" CornerRadius="20">
             <StackPanel Orientation="Horizontal" Margin="13,0" SnapsToDevicePixels="False" UseLayoutRounding="False" IsHitTestVisible="False">
                 <Path Stretch="Uniform" Height="13" VerticalAlignment="Center" Fill="{DynamicResource ColorBrush8}" RenderTransformOrigin="0.5,0.5"
@@ -379,7 +379,7 @@
         </Border>
     </Grid>
     <Grid Height="40" Grid.Column="2">
-        <local:SystemDropShadowChrome Margin="-9.5,-9,0.5,-0.5" Opacity="0.1" CornerRadius="20" Color="{DynamicResource ColorObject1}" />
+        <local:SystemDropShadowChrome Margin="-9.5,-9,0.5,-0.5" Opacity="0.1" CornerRadius="20" Color="{DynamicResource ColorObjectShadow}" />
         <Border BorderThickness="0.001" Background="{DynamicResource ColorBrush3}" CornerRadius="20">
             <StackPanel Orientation="Horizontal" Margin="20,0" SnapsToDevicePixels="False" UseLayoutRounding="False" IsHitTestVisible="False">
                 <Path Stretch="Uniform" Height="13" VerticalAlignment="Center" Fill="{DynamicResource ColorBrush8}" RenderTransformOrigin="0.5,0.5"
