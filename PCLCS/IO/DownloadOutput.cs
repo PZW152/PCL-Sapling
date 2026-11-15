@@ -20,6 +20,14 @@ public sealed class DownloadOutput : IDisposable {
         StagingPath = Path.Combine(directory, $".pcl-download-{Guid.NewGuid():N}.tmp");
     }
 
+    public static async Task SaveAsync(string targetPath, Func<CancellationToken, Task<byte[]>> receive, CancellationToken cancel) {
+        byte[] data = await receive(cancel).ConfigureAwait(false);
+        using var output = new DownloadOutput(targetPath);
+        FileUtils.Write(output.StagingPath, data);
+        cancel.ThrowIfCancellationRequested();
+        output.Publish();
+    }
+
     public void Publish() {
         string target = PathUtils.ForApi(targetPath);
         string staging = PathUtils.ForApi(StagingPath);
