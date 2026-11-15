@@ -54,6 +54,16 @@ public sealed class InstanceUpdatePlan {
                     throw new IOException($"安装清单同时将一个路径用作文件与文件夹：{directory}");
             }
         }
+        foreach (string target in destinations.Concat(recycle).Distinct(StringComparer.OrdinalIgnoreCase)) {
+            cancel.ThrowIfCancellationRequested();
+            string apiPath = PathUtils.ForApi(target);
+            if (!File.Exists(apiPath)) continue;
+            try {
+                using var existing = new FileStream(apiPath, FileMode.Open, FileAccess.Read, FileShare.None);
+            } catch (IOException ex) {
+                throw new IOException($"无法修改被占用的实例文件：{target}，请关闭正在使用它的程序", ex);
+            }
+        }
         return new InstanceUpdatePlan(resources, recycle, versionFiles, managedFiles);
     }
 

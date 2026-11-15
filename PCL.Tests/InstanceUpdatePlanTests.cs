@@ -49,4 +49,29 @@ public class InstanceUpdatePlanTests {
             await Assert.That(File.ReadAllText(Jar)).IsEqualTo("old jar");
         } finally { Directory.Delete(Root, true); }
     }
+
+    [Test]
+    public async Task 待移除的受管理文件被占用时预检失败() {
+        string Root = Path.Combine(Path.GetTempPath(), "PclInstance-" + Guid.NewGuid().ToString("N"));
+        string Build = Path.Combine(Root, "build");
+        string Game = Path.Combine(Root, "game");
+        Directory.CreateDirectory(Build);
+        Directory.CreateDirectory(Path.Combine(Game, "mods"));
+        try {
+            string Json = Path.Combine(Game, "Instance.json");
+            string Jar = Path.Combine(Game, "Instance.jar");
+            string OldMod = Path.Combine(Game, "mods", "retired.jar");
+            File.WriteAllText(Json, "old json");
+            File.WriteAllText(Jar, "old jar");
+            File.WriteAllText(OldMod, "old mod");
+            File.WriteAllText(Path.Combine(Build, "Instance.json"), "new json");
+            File.WriteAllText(Path.Combine(Build, "Instance.jar"), "new jar");
+            using (File.Open(OldMod, FileMode.Open, FileAccess.Read, FileShare.Read))
+                await Assert.That(() => InstanceUpdatePlan.Prepare(Build, Game, Json, Jar, new[] { "mods/retired.jar" }, Array.Empty<string>())).Throws<IOException>();
+
+            await Assert.That(File.ReadAllText(Json)).IsEqualTo("old json");
+            await Assert.That(File.ReadAllText(Jar)).IsEqualTo("old jar");
+            await Assert.That(File.ReadAllText(OldMod)).IsEqualTo("old mod");
+        } finally { Directory.Delete(Root, true); }
+    }
 }
