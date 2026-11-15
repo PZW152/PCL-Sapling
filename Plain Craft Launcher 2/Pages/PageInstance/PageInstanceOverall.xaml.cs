@@ -530,7 +530,7 @@ namespace PCL
             var LaunchingInstance = ModMinecraft.McInstanceSelected;
             bool IsLaunching = ModLaunch.McLaunchLoader.State == ModBase.LoadState.Loading && LaunchingInstance is not null
                 && PathUtils.IsSame(LaunchingInstance.PathIndie, GameDirectory);
-            bool IsRunning = ModWatcher.McWatcherList.Any(Watcher => PathUtils.IsSame(Watcher.Instance.PathIndie, GameDirectory)
+            bool IsRunning = ModWatcher.McWatcherList.Any(Watcher => Watcher.Instance is not null && PathUtils.IsSame(Watcher.Instance.PathIndie, GameDirectory)
                 && (Watcher.State == ModWatcher.Watcher.MinecraftState.Loading || Watcher.GameProcess is not null && !Watcher.GameProcess.HasExited));
             if (IsLaunching || IsRunning)
             {
@@ -538,6 +538,7 @@ namespace PCL
                 return;
             }
             ModMain.Hint("正在备份世界 " + Folder + "……");
+            ModMinecraft.GameDirectoriesBackingUp.Add(GameDirectory);
             ModBase.RunInBackground(() =>
             {
                 try
@@ -549,6 +550,10 @@ namespace PCL
                 catch (Exception ex)
                 {
                     Logger.Error(ex, "备份世界失败", LogBehavior.Alert);
+                }
+                finally
+                {
+                    ModMinecraft.GameDirectoriesBackingUp.Remove(GameDirectory);
                 }
             }, "Backup World");
         }

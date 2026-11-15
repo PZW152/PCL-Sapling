@@ -186,7 +186,7 @@ public static class SavedGames {
         string sessionLock = PathUtils.ForApi(Path.Combine(source, "session.lock"));
         using FileStream? worldLock = OpenWorldLock(sessionLock);
         try {
-            CopyDirectory(source, staging);
+            CopyDirectory(source, staging, isWorldRoot: true);
             for (int i = 1; ; i++) {
                 string name = i == 1 ? baseName : $"{baseName} ({i})";
                 string target = PathUtils.ForApi(Path.Combine(saves, name));
@@ -218,13 +218,12 @@ public static class SavedGames {
         catch (IOException ex) { throw new IOException("无法取得世界的会话锁，请先关闭正在使用这个世界的 Minecraft。", ex); }
     }
 
-    private static void CopyDirectory(string source, string target) {
+    private static void CopyDirectory(string source, string target, bool isWorldRoot = false) {
         Directory.CreateDirectory(PathUtils.ForApi(target));
         foreach (string file in Directory.EnumerateFiles(PathUtils.ForApi(source))) {
-            if (Path.GetFileName(file).Equals("session.lock", StringComparison.OrdinalIgnoreCase)) continue;
+            if (isWorldRoot && Path.GetFileName(file).Equals("session.lock", StringComparison.OrdinalIgnoreCase)) continue;
             if (IsReparsePoint(file)) throw new IOException("无法备份存档内的链接文件：" + file);
-            // 允许读取被其他程序以共享方式打开的文件。
-            using FileStream input = new(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using FileStream input = new(file, FileMode.Open, FileAccess.Read, FileShare.Read);
             using FileStream output = new(PathUtils.ForApi(Path.Combine(target, Path.GetFileName(file))), FileMode.CreateNew, FileAccess.Write);
             input.CopyTo(output);
         }
