@@ -229,12 +229,12 @@ namespace PCL
             {
                 try
                 {
-                    FileUtils.Write(LocalPath, await SendRequestAsync(Url, HttpMethod.Get, SimulateBrowserHeaders: SimulateBrowserHeaders, Cancel: Cancel).ConfigureAwait(false));
+                    await DownloadOutput.SaveAsync(LocalPath,
+                        Token => SendRequestAsync(Url, HttpMethod.Get, SimulateBrowserHeaders: SimulateBrowserHeaders, Cancel: Token), Cancel).ConfigureAwait(false);
                     return;
                 }
                 catch (Exception ex)
                 {
-                    FileUtils.Delete(LocalPath);
                     ex.ThrowIfCanceled();
                     if (RetryCount >= 2)
                         throw new HttpRequestException($"通过网络请求直接下载小文件失败（{LocalPath}）", ex);
@@ -603,6 +603,7 @@ namespace PCL
         /// 该线程的缓存文件。
         /// </summary>
             public string Temp;
+            public volatile bool TransferClosed;
 
             /// <summary>
         /// 线程下载起始位置。
@@ -818,7 +819,7 @@ namespace PCL
             /// <summary>
         /// 当前的下载状态。
         /// </summary>
-            public NetState State = NetState.WaitingToCheck;
+            public volatile NetState State = NetState.WaitingToCheck;
             /// <summary>
         /// 导致下载失败的原因。
         /// </summary>
@@ -861,6 +862,15 @@ namespace PCL
         /// 文件的校验规则。
         /// </summary>
             public FileChecker Check;
+
+            internal bool HasSameChecks(NetFile Other) =>
+                Check is null || Other.Check is null
+                    ? Check is null && Other.Check is null
+                    : Check.ActualSize == Other.Check.ActualSize && Check.MinSize == Other.Check.MinSize
+                        && Check.IsJson == Other.Check.IsJson
+                        && string.Equals(Check.Hash ?? "", Other.Check.Hash ?? "", StringComparison.OrdinalIgnoreCase);
+
+            internal IOException ConflictingRequest() => new IOException($"同一目标的下载校验要求冲突：{LocalPath}");
             /// <summary>
         /// 是否模拟浏览器的 UserAgent 和 Referer。
         /// </summary>
@@ -1020,14 +1030,15 @@ namespace PCL
                     Thread Th;
                     NetThread ThreadInfo;
                     // 条件检测
+                    lock (LockChain)
                     lock (LockSource)
                     {
                         if (NetTaskThreadCount >= NetTaskThreadLimit || !HasAvailableSource() || IsNoSplit && Threads is not null && Threads.State != NetState.Canceled)
                             return null;
-                        if (State >= NetState.Merging || State == NetState.WaitingToCheck)
-                            return null;
                         lock (LockState)
                         {
+                            if (State >= NetState.Merging || State == NetState.WaitingToCheck)
+                                return null;
                             if (State < NetState.Connecting)
                                 State = NetState.Connecting;
                         }
@@ -1039,12 +1050,14 @@ namespace PCL
                         {
                             if (!IsNoSplit && SourcesOnce.First().SingleThread is not null && SourcesOnce.First().SingleThread.State != NetState.Canceled)
                                 return null;
-                            Reset();
-                            State = NetState.Reading;
+                            lock (LockState)
+                            {
+                                if (State >= NetState.Merging)
+                                    return null;
+                                Reset();
+                                State = NetState.Reading;
+                            }
                         }
-                    }
-                    lock (LockChain)
-                    {
                         // 决定新线程从哪里开始下载；返回 False 表示不需要再开新线程
                         bool FindStartPoint()
                         {
@@ -1359,12 +1372,22 @@ namespace PCL
                     Response?.Dispose();
                     ResponseStream?.Dispose();
                     CancelToken?.Dispose();
-                    if (!IsNoSplit)
-                        ResultStream?.Dispose();
-                    // 改变计数
-                    Interlocked.Decrement(ref NetTaskThreadCount);
+                    try
+                    {
+                        if (Th.Temp is not null)
+                            ResultStream?.Dispose();
+                    }
+                    catch (IOException ex)
+                    {
+                        Fail(ex);
+                    }
+                    finally
+                    {
+                        Th.TransferClosed = true;
+                        Interlocked.Decrement(ref NetTaskThreadCount);
+                    }
                     // 合并
-                    if ((FileSize >= 0L && DownloadDone >= FileSize || FileSize == -1 && DownloadDone > 0L) && State < NetState.Merging && Th.State != NetState.Canceled)
+                    if (State < NetState.Merging && (FileSize >= 0L && DownloadDone >= FileSize || IsUnknownSize && Th.State == NetState.Finished))
                         Merge(Th);
                 }
             }
@@ -1428,14 +1451,16 @@ namespace PCL
                             }
                             Reset();
                             lock (LockState)
-                                State = NetState.WaitingToDownload;
+                                if (State < NetState.Finished)
+                                    State = NetState.WaitingToDownload;
                         }
                         else if (HasAvailableSource() && IsMergeFailure)
                         {
                             // 合并失败且单个源失败：继续下一个源
                             Reset();
                             lock (LockState)
-                                State = NetState.WaitingToDownload;
+                                if (State < NetState.Finished)
+                                    State = NetState.WaitingToDownload;
                         }
                         else
                         {
@@ -1482,18 +1507,17 @@ namespace PCL
             private void Merge(NetThread Th)
             {
                 // 状态判断
+                lock (LockChain)
                 lock (LockState)
                 {
-                    if (State < NetState.Merging)
-                    {
-                        State = NetState.Merging;
-                    }
-                    else
-                    {
+                    if (State >= NetState.Merging || Threads is null || Threads.Any(Segment => !Segment.TransferClosed))
                         return;
-                    }
+                    if (IsUnknownSize ? Threads.State != NetState.Finished : FileSize < 0L || DownloadDone != FileSize || Threads.Any(Segment => Segment.DownloadUndone != 0L))
+                        return;
+                    State = NetState.Merging;
                 }
                 int RetryCount = 0;
+                MemoryStream MergeCache = null;
                 try
                 {
                     while (true)
@@ -1501,54 +1525,58 @@ namespace PCL
                         try
                         {
 
-                            // 创建文件夹
-                            DirectoryUtils.Create(PathUtils.RemoveLastPart(LocalPath));
-                            FileUtils.Delete(LocalPath);
+                            using var Output = new DownloadOutput(LocalPath);
                             lock (LockChain)
                             {
+                                if (State != NetState.Merging)
+                                    return;
                                 // 合并文件
                                 if (IsNoSplit)
                                 {
                                     // 仅有一个线程，从内存中输出
                                     Logger.Trace(() => $"{LocalName}：下载结束，从内存输出文件");
-                                    FileUtils.Write(LocalPath, Cache);
+                                    MergeCache = Cache;
+                                    FileUtils.Write(Output.StagingPath, MergeCache);
                                 }
                                 else if (Threads.DownloadDone == DownloadDone && Threads.Temp is not null)
                                 {
                                     // 仅有一个文件，直接复制
                                     Logger.Trace(() => $"{LocalName}：下载结束，仅有一个文件，无需合并");
-                                    FileUtils.Copy(Threads.Temp, LocalPath);
+                                    FileUtils.Copy(Threads.Temp, Output.StagingPath);
                                 }
                                 else
                                 {
                                     // 有多个线程，合并
                                     Logger.Trace(() => $"{LocalName}：下载结束，开始合并文件");
-                                    using (var MergeFile = FileUtils.CreateAsStream(LocalPath))
+                                    using (var MergeFile = FileUtils.CreateAsStream(Output.StagingPath))
                                     {
-                                        using (var AddWriter = new BinaryWriter(MergeFile))
+                                        byte[] Buffer = new byte[81920];
+                                        foreach (NetThread Thread in Threads)
                                         {
-                                            foreach (NetThread Thread in Threads)
+                                            if (Thread.DownloadDone == 0L || Thread.Temp is null)
+                                                continue;
+                                            using var Segment = FileUtils.ReadAsStream(Thread.Temp);
+                                            long Remaining = Thread.DownloadDone;
+                                            while (Remaining > 0)
                                             {
-                                                if (Thread.DownloadDone == 0L || Thread.Temp is null)
-                                                    continue;
-                                                using (var fs = FileUtils.ReadAsStream(Thread.Temp))
-                                                {
-                                                    using (var TempReader = new BinaryReader(fs))
-                                                    {
-                                                        AddWriter.Write(TempReader.ReadBytes((int)Thread.DownloadDone));
-                                                    }
-                                                }
+                                                if (State != NetState.Merging)
+                                                    return;
+                                                int Read = Segment.Read(Buffer, 0, (int)Math.Min(Remaining, Buffer.Length));
+                                                if (Read == 0)
+                                                    throw new EndOfStreamException($"下载分段 {Thread.Uuid} 的缓存文件不完整");
+                                                MergeFile.Write(Buffer, 0, Read);
+                                                Remaining -= Read;
                                             }
                                         }
                                     }
                                 }
                                 // 检查文件
-                                string CheckResult = Check?.Check(LocalPath);
-                                if (CheckResult is null && !IsUnknownSize && Check is not null)
+                                string CheckResult = Check?.Check(Output.StagingPath);
+                                if (CheckResult is null && !IsUnknownSize)
                                 {
-                                    if (Check.ActualSize == -1)
+                                    if (Check is null || Check.ActualSize == -1)
                                     {
-                                        CheckResult = new FileChecker() { ActualSize = FileSize }.Check(LocalPath); // 不修改原始的 Checker，以免污染原始实例
+                                        CheckResult = new FileChecker() { ActualSize = FileSize }.Check(Output.StagingPath); // 不修改原始的 Checker，以免污染原始实例
                                     }
                                     else if (Check.ActualSize != FileSize)
                                     {
@@ -1562,17 +1590,23 @@ namespace PCL
                                         Logger.Info($"- {T.Uuid}#，状态 {T.State}，范围 {T.DownloadStart}~{T.DownloadEnd}，已下载 {T.DownloadDone}，未下载 {T.DownloadUndone}");
                                     throw new Exception(CheckResult);
                                 }
-                                // 后处理
+                                // 发布与完成状态一起提交。取消先取得状态锁时，不会替换目标。
+                                if (!TryComplete(Output))
+                                    return;
+                                // 清理分段失败不会使已经发布的文件重新下载。
                                 if (!IsNoSplit)
                                 {
                                     foreach (NetThread Thread in Threads)
                                     {
                                         if (Thread.Temp is not null)
-                                            FileUtils.Delete(Thread.Temp);
+                                        {
+                                            try { FileUtils.Delete(Thread.Temp); }
+                                            catch (Exception ex) { Logger.Warn(ex, $"清理下载分段失败（{Thread.Temp}）"); }
+                                        }
                                     }
                                 }
-                                Finish();
                             }
+                            NotifyFinished(true);
                             break;
                         }
                         catch (Exception ex)
@@ -1587,15 +1621,7 @@ namespace PCL
                                 System.Threading.Thread.Sleep(500 * RetryCount);
                                 continue;
                             }
-                            // 失败，禁用当前下载源并重启下载
-                            try
-                            {
-                                FileUtils.Delete(LocalPath);
-                            }
-                            catch (Exception)
-                            {
-                                Logger.Warn(ex, $"删除合并失败的文件出错（{LocalPath}）");
-                            }
+                            // 失败，禁用当前下载源并重启下载；正式文件仍保持原样。
                             SourceFail(Th, ex, true);
                             break;
                         }
@@ -1603,7 +1629,7 @@ namespace PCL
                 }
                 finally
                 {
-                    Cache?.Dispose();
+                    MergeCache?.Dispose();
                 }
             }
             /// <summary>
@@ -1630,14 +1656,10 @@ namespace PCL
         /// </summary>
             public void Cancel(LoaderDownload CanceledTask)
             {
-                // 从特定任务中移除，如果它还属于其他任务，则继续下载
-                Tasks.Remove(CanceledTask);
-                if (Tasks.Any())
-                    return;
-                // 确认中断
                 lock (LockState)
                 {
-                    if (State >= NetState.Finished)
+                    // 未登记的任务不能取消文件。其他任务仍在等待时继续下载。
+                    if (!Tasks.Remove(CanceledTask) || Tasks.Any() || State >= NetState.Finished)
                         return;
                     Logger.Info($"{LocalName}：已中断，当前状态 {State}");
                     State = NetState.Canceled;
@@ -1652,17 +1674,51 @@ namespace PCL
             }
 
             // 状态改变接口
-            /// <summary>
-        /// 将该文件设置为已下载完成。
-        /// </summary>
-            public void Finish(bool PrintLog = true)
+            private bool TryComplete(DownloadOutput Output)
             {
                 lock (LockState)
                 {
                     if (State >= NetState.Finished)
-                        return;
+                        return false;
+                    Output?.Publish();
                     State = NetState.Finished;
+                    return true;
                 }
+            }
+            internal void ReuseExistingFile(string Source)
+            {
+                if (PathUtils.IsSame(Source, LocalPath))
+                {
+                    if (!TryComplete(null))
+                        return;
+                }
+                else
+                {
+                    using var Output = new DownloadOutput(LocalPath);
+                    if (FileUtils.GetInfo(Source).IsReadOnly)
+                        FileUtils.Copy(Source, Output.StagingPath);
+                    else
+                        FileLinker.LinkOrCopy(Source, Output.StagingPath);
+                    if (Check.Check(Output.StagingPath) is { } Error)
+                        throw new IOException(Error);
+                    if (!TryComplete(Output))
+                        return;
+                }
+                IsCopy = true;
+                NotifyFinished(false);
+            }
+            internal void QueueDownload()
+            {
+                lock (LockState)
+                {
+                    if (State != NetState.WaitingToCheck)
+                        return;
+                    IsCopy = false;
+                    State = NetState.WaitingToDownload;
+                }
+            }
+            private void NotifyFinished(bool PrintLog)
+            {
                 Interlocked.Decrement(ref NetManager.FileRemain);
                 if (PrintLog)
                     Logger.Info($"{LocalName}：已完成");
@@ -1793,11 +1849,24 @@ namespace PCL
             {
                 if (Input is not null)
                     Files = new ConcurrentQueue<NetFile>((IEnumerable<NetFile>)Input);
-                // 去重
-                Files = new ConcurrentQueue<NetFile>(Files.DistinctBy(a => PathUtils.ForCompare(a.LocalPath).Lower()));
+                // 同一批次中的同名请求须先核对校验规则，再去重。
+                var Requests = Files.GroupBy(File => PathUtils.ForCompare(File.LocalPath), StringComparer.OrdinalIgnoreCase);
+                var UniqueFiles = new List<NetFile>();
+                foreach (var Group in Requests)
+                {
+                    var First = Group.First();
+                    if (Group.Any(Other => !First.HasSameChecks(Other)))
+                    {
+                        State = ModBase.LoadState.Loading;
+                        OnFail(new List<Exception> { First.ConflictingRequest() });
+                        return;
+                    }
+                    UniqueFiles.Add(First);
+                }
+                Files = new ConcurrentQueue<NetFile>(UniqueFiles);
                 // 设置剩余文件数
                 lock (FileRemainLock)
-                    FileRemain += Files.Where(f => f.State != NetState.Finished).Count();
+                    FileRemain = Files.Count(f => f.State != NetState.Finished);
                 State = ModBase.LoadState.Loading;
                 // 开始执行
                 // 输入检测
@@ -1811,7 +1880,7 @@ namespace PCL
                 // 整理允许进行查找的文件
                 // 获取 MC 文件夹列表
                 // 平均分配到多个检查线程
-                ModBase.RunInDedicatedThread(() => { try { if (!Files.Any()) { OnFinish(); return; } foreach (NetFile File in Files) { if (File is null) throw new ArgumentException("存在空文件请求！"); foreach (NetSource Source in File.Sources) { if (!(Source.Url.StartsWithF("https://", true) || Source.Url.StartsWithF("http://", true))) { Source.Ex = new ArgumentException("输入的下载链接不正确：" + Source.Url); Source.IsFailed = true; } } if (!File.HasAvailableSource()) throw new ArgumentException("输入的下载链接不正确！"); File.LocalPath = File.LocalPath.Replace("/", @"\"); if (!File.LocalPath.Contains(@":\")) throw new ArgumentException("输入的本地文件地址不正确：" + File.LocalPath); if (File.LocalPath.EndsWithF(@"\")) throw new ArgumentException("请输入含文件名的完整文件路径：" + File.LocalPath); DirectoryUtils.Create(PathUtils.RemoveLastPart(File.LocalPath)); } var NewFiles = NetManager.Start(this); var FilesToCheck = new List<NetFile>(); foreach (var File in NewFiles) { if (File.Check is not null) { FilesToCheck.Add(File); } else { lock (LockState) { File.State = NetState.WaitingToDownload; File.IsCopy = false; } } } if (!FilesToCheck.Any()) return; var Folders = new List<string>(); Folders.Add(Paths.AppData + @".minecraft\"); Folders.AddRange(ModMinecraft.McFolderList.Select(f => f.Location)); Folders = Folders.Distinct().Where(f => DirectoryUtils.Exists(f)).ToList(); int ThreadCount = (FilesToCheck.Count / 40).Clamp(1, 8); if (ThreadCount == 1) { CheckExistingFiles(FilesToCheck, Folders); } else { int BaseSize = FilesToCheck.Count / ThreadCount; int Remainder = FilesToCheck.Count % ThreadCount; int Index = 0; for (int i = 0, loopTo = ThreadCount - 1; i <= loopTo; i++) { int Size = BaseSize + (i < Remainder ? 1 : 0); var ThreadFiles = FilesToCheck.GetRange(Index, Size); Index += Size; ModBase.RunInDedicatedThread(() => CheckExistingFiles(ThreadFiles, Folders), $"下载 文件复制 {Uuid}/{ModBase.GetUuid()}"); } } } catch (Exception ex) { OnFail(new List<Exception>() { new Exception("下载初始化失败", ex) }); } }, "L/下载 " + Uuid); // 创建目标文件夹
+                ModBase.RunInDedicatedThread(() => { try { if (Files.All(File => File.State == NetState.Finished)) { OnFinish(); return; } foreach (NetFile File in Files) { if (File is null) throw new ArgumentException("存在空文件请求！"); foreach (NetSource Source in File.Sources) { if (!(Source.Url.StartsWithF("https://", true) || Source.Url.StartsWithF("http://", true))) { Source.Ex = new ArgumentException("输入的下载链接不正确：" + Source.Url); Source.IsFailed = true; } } if (!File.HasAvailableSource()) throw new ArgumentException("输入的下载链接不正确！"); File.LocalPath = File.LocalPath.Replace("/", @"\"); if (!File.LocalPath.Contains(@":\")) throw new ArgumentException("输入的本地文件地址不正确：" + File.LocalPath); if (File.LocalPath.EndsWithF(@"\")) throw new ArgumentException("请输入含文件名的完整文件路径：" + File.LocalPath); DirectoryUtils.Create(PathUtils.RemoveLastPart(File.LocalPath)); } var NewFiles = NetManager.Start(this); var FilesToCheck = new List<NetFile>(); foreach (var File in NewFiles) { if (File.Check is not null) { FilesToCheck.Add(File); } else { File.QueueDownload(); } } if (!FilesToCheck.Any()) return; var Folders = new List<string>(); Folders.Add(Paths.AppData + @".minecraft\"); Folders.AddRange(ModMinecraft.McFolderList.Select(f => f.Location)); Folders = Folders.Distinct().Where(f => DirectoryUtils.Exists(f)).ToList(); int ThreadCount = (FilesToCheck.Count / 40).Clamp(1, 8); if (ThreadCount == 1) { CheckExistingFiles(FilesToCheck, Folders); } else { int BaseSize = FilesToCheck.Count / ThreadCount; int Remainder = FilesToCheck.Count % ThreadCount; int Index = 0; for (int i = 0, loopTo = ThreadCount - 1; i <= loopTo; i++) { int Size = BaseSize + (i < Remainder ? 1 : 0); var ThreadFiles = FilesToCheck.GetRange(Index, Size); Index += Size; ModBase.RunInDedicatedThread(() => CheckExistingFiles(ThreadFiles, Folders), $"下载 文件复制 {Uuid}/{ModBase.GetUuid()}"); } } } catch (Exception ex) { OnFail(new List<Exception>() { new Exception("下载初始化失败", ex) }); } }, "L/下载 " + Uuid); // 创建目标文件夹
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // 没有校验信息，直接开始下载
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // 总是添加官启文件夹，因为 HMCL 会把所有文件存在这里
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // 每个线程至少 40 个文件，最多 8 线程
@@ -1839,13 +1908,9 @@ namespace PCL
                                       // 已找到相同文件
                         if (Target is not null)
                         {
-                            File.IsCopy = true;
                             try
                             {
-                                // 同一磁盘内用硬链接共用同一份内容，不重复占用空间；否则复制
-                                if (!string.Equals(Target, File.LocalPath, StringComparison.OrdinalIgnoreCase))
-                                    FileLinker.LinkOrCopy(Target, File.LocalPath);
-                                File.Finish(false);
+                                File.ReuseExistingFile(Target);
                                 continue;
                             }
                             catch
@@ -1853,11 +1918,7 @@ namespace PCL
                             }
                         }
                         // 回退到下载
-                        lock (LockState)
-                        {
-                            File.State = NetState.WaitingToDownload;
-                            File.IsCopy = false;
-                        }
+                        File.QueueDownload();
                     }
                 }
                 catch (Exception ex)
@@ -2036,7 +2097,8 @@ namespace PCL
             /// <summary>
         /// 需要下载的文件。为“本地地址 - 文件对象”键值对。
         /// </summary>
-            public ConcurrentDictionary<string, NetFile> AllFiles = new ConcurrentDictionary<string, NetFile>();
+            public ConcurrentDictionary<string, NetFile> AllFiles = new ConcurrentDictionary<string, NetFile>(StringComparer.OrdinalIgnoreCase);
+            private readonly object FileRegistryLock = new object();
 
             /// <summary>
         /// 当前的所有下载任务。
@@ -2125,7 +2187,7 @@ namespace PCL
                 // 为进行中的文件追加线程
                 // 线程种类计数
                 // 新增线程
-                void ThreadStarter(int Id) { try { while (true) { Thread.Sleep(20); var WaitingFiles = new List<NetFile>(); var OngoingFiles = new List<NetFile>(); if (Id == 0 && FileRemain == 0) AllFiles.Clear(); foreach (NetFile File in AllFiles.Values) { if (File.Uuid % 2 == Id) continue; if (File.State == NetState.WaitingToDownload) { WaitingFiles.Add(File); } else if (File.State < NetState.Merging && File.State >= NetState.WaitingToDownload) { OngoingFiles.Add(File); } } bool continueWhile = false; foreach (NetFile File in WaitingFiles) { if (NetTaskThreadCount >= NetTaskThreadLimit) { continueWhile = true; break; } var NewThread = File.TryBeginThread(); } if (continueWhile) { continue; } if (Speed >= NetTaskSpeedLimitLow) continue; bool continueWhile1 = false; foreach (NetFile File in OngoingFiles) { if (NetTaskThreadCount >= NetTaskThreadLimit) { continueWhile1 = true; break; } int PreparingCount = 0; int DownloadingCount = 0; if (File.Threads is not null) { foreach (NetThread Thread in File.Threads.ToList()) { if (Thread.State < NetState.Downloading) { PreparingCount += 1; } else if (Thread.State == NetState.Downloading) { DownloadingCount += 1; } } } if (PreparingCount > DownloadingCount) continue; var NewThread = File.TryBeginThread(); } if (continueWhile1) { continue; } } } catch (Exception ex) { Logger.Error(ex, $"下载管理启动线程 {Id} 出错", LogBehavior.AlertThenCrash); } }; // 0 或 1
+                void ThreadStarter(int Id) { try { while (true) { Thread.Sleep(20); var WaitingFiles = new List<NetFile>(); var OngoingFiles = new List<NetFile>(); if (Id == 0) ClearCompletedFiles(); foreach (NetFile File in AllFiles.Values) { if (File.Uuid % 2 == Id) continue; if (File.State == NetState.WaitingToDownload) { WaitingFiles.Add(File); } else if (File.State < NetState.Merging && File.State >= NetState.WaitingToDownload) { OngoingFiles.Add(File); } } bool continueWhile = false; foreach (NetFile File in WaitingFiles) { if (NetTaskThreadCount >= NetTaskThreadLimit) { continueWhile = true; break; } var NewThread = File.TryBeginThread(); } if (continueWhile) { continue; } if (Speed >= NetTaskSpeedLimitLow) continue; bool continueWhile1 = false; foreach (NetFile File in OngoingFiles) { if (NetTaskThreadCount >= NetTaskThreadLimit) { continueWhile1 = true; break; } int PreparingCount = 0; int DownloadingCount = 0; if (File.Threads is not null) { foreach (NetThread Thread in File.Threads.ToList()) { if (Thread.State < NetState.Downloading) { PreparingCount += 1; } else if (Thread.State == NetState.Downloading) { DownloadingCount += 1; } } } if (PreparingCount > DownloadingCount) continue; var NewThread = File.TryBeginThread(); } if (continueWhile1) { continue; } } } catch (Exception ex) { Logger.Error(ex, $"下载管理启动线程 {Id} 出错", LogBehavior.AlertThenCrash); } }; // 0 或 1
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              // 若已完成，则清空
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              // 最大线程数检查
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              // 减少 BMCLAPI 请求频率
@@ -2141,14 +2203,24 @@ namespace PCL
                 ModBase.RunInDedicatedThread(() => { try { long NextTick = ModBase.GetTimeMs(); while (true) { if (NetTaskSpeedLimitHigh > 0L) Interlocked.Add(ref NetTaskSpeedLimitLeft, (long)Math.Round(NetTaskSpeedLimitHigh / 10d)); RefreshStat(); NextTick += 100L; long SleepTime = NextTick - ModBase.GetTimeMs(); if (SleepTime > 0L) { Thread.Sleep((int)SleepTime); } else { NextTick = ModBase.GetTimeMs(); } } } catch (Exception ex) { Logger.Error(ex, "下载管理刷新线程出错", LogBehavior.AlertThenCrash); } }, "NetManager StatRefresher"); // 超时，直接追帧，不等待
             }
 
-            private object DownloadCacheLock = new object();
+            private void ClearCompletedFiles()
+            {
+                if (Volatile.Read(ref FileRemain) != 0)
+                    return;
+                lock (FileRegistryLock)
+                {
+                    if (Volatile.Read(ref FileRemain) == 0)
+                        AllFiles.Clear();
+                }
+            }
+
+            private readonly object DownloadCacheLock = new object();
             private bool IsDownloadCacheCleared = false;
             /// <summary>
         /// 开始一个下载任务。
         /// </summary>
             public List<NetFile> Start(LoaderDownload Task)
             {
-                StartManager();
                 // 清理缓存
                 lock (DownloadCacheLock) // 防止同时开启多个下载任务时重复清理
                 {
@@ -2166,33 +2238,53 @@ namespace PCL
                         }
                         IsDownloadCacheCleared = true;
                     }
+                    StartManager();
                 }
-                // 添加每个文件
                 var NewFiles = new List<NetFile>();
-                var NewFilesList = new List<NetFile>();
-                foreach (var RawFile in Task.Files)
+                lock (Task.LockState)
+                lock (FileRegistryLock)
                 {
-                    var File = RawFile;
-                    NetFile OngoingFile = null;
-                    if (AllFiles.TryGetValue(File.LocalPath, out OngoingFile) && OngoingFile.State < NetState.Finished)
+                    if (Task.State != ModBase.LoadState.Loading)
+                        return NewFiles;
+                    var Requests = Task.Files.Select(File => (File, Path: PathUtils.ForCompare(File.LocalPath))).ToList();
+                    // 整批检查，出现冲突时避免留下部分已登记的文件。
+                    foreach (var Request in Requests)
                     {
-                        // 该文件正在被另一个任务下载
-                        Logger.Trace(() => $"{File.LocalName}：无需开始，该文件已在下载中，目标 {File.LocalPath}");
-                        File = OngoingFile; // 将列表中的文件替换成下载中的文件，即两个任务指向同一个文件；抛弃现在的 File 对象
+                        if (Request.File.State != NetState.Finished && AllFiles.TryGetValue(Request.Path, out var Ongoing)
+                            && Ongoing.State < NetState.Finished && !Ongoing.HasSameChecks(Request.File))
+                            throw Request.File.ConflictingRequest();
                     }
-                    else
+                    var Registered = new List<NetFile>(Requests.Count);
+                    foreach (var (File, Path) in Requests)
                     {
-                        // 常规情况（该文件可能已在其他任务中下载完成，但这并不影响）
+                        if (File.State == NetState.Finished)
+                        {
+                            Registered.Add(File);
+                            continue;
+                        }
+                        if (AllFiles.TryGetValue(Path, out var Ongoing))
+                        {
+                            lock (Ongoing.LockState)
+                            {
+                                if (Ongoing.State < NetState.Finished)
+                                {
+                                    Ongoing.Tasks.Add(Task);
+                                    Registered.Add(Ongoing);
+                                    Logger.Trace(() => $"{File.LocalName}：已加入现有下载任务");
+                                    continue;
+                                }
+                            }
+                        }
                         Logger.Trace(() => $"{File.LocalName}：开始，目标 {File.LocalPath}");
-                        AllFiles[File.LocalPath] = File;
+                        File.Tasks.Add(Task);
                         NewFiles.Add(File);
+                        Registered.Add(File);
                         Interlocked.Increment(ref FileRemain);
+                        AllFiles[Path] = File;
                     }
-                    NewFilesList.Add(File);
-                    File.Tasks.Add(Task);
+                    Task.Files = new ConcurrentQueue<NetFile>(Registered);
+                    Tasks.Add(Task);
                 }
-                Task.Files = new ConcurrentQueue<NetFile>(NewFilesList);
-                Tasks.Add(Task);
                 return NewFiles;
             }
 
