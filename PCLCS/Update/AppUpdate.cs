@@ -18,7 +18,8 @@ public record UpdateInfo(string Version, string Url, string Sha256, string Notes
 /// </summary>
 public static class AppUpdate {
 
-    public const string LatestReleaseApi = "https://api.github.com/repos/PZW152/PCL-Sapling/releases/latest";
+    private const string Repository = "PZW152/PCL-Sapling";
+    public const string LatestReleaseApi = "https://api.github.com/repos/" + Repository + "/releases/latest";
     public const string AssetPrefix = "PCL-Sapling-";
     public const string AssetSuffix = ".exe";
     private const string DigestPrefix = "sha256:";
@@ -33,17 +34,25 @@ public static class AppUpdate {
         var Current = ParseVersion(CurrentVersion);
         if (Latest is null || Current is null || Compare(Latest.Value, Current.Value) <= 0)
             return null;
+        string Version = FormattableString.Invariant($"{Latest.Value.Major}.{Latest.Value.Minor}.{Latest.Value.Patch}");
+        if (!string.Equals(Tag, "v" + Version, StringComparison.Ordinal))
+            return null;
         if (Release["draft"]?.ToObject<bool>() == true || Release["prerelease"]?.ToObject<bool>() == true)
             return null;
+        string ExpectedName = AssetPrefix + Version + AssetSuffix;
+        string ExpectedUrl = $"https://github.com/{Repository}/releases/download/{Tag}/{ExpectedName}";
         foreach (var Asset in Release["assets"] as JArray ?? []) {
             string Name = Asset["name"]?.ToString() ?? "";
-            if (!IsReleaseFile(Name))
+            if (!string.Equals(Name, ExpectedName, StringComparison.Ordinal))
                 continue;
             string Digest = Asset["digest"]?.ToString() ?? "";
             string Url = Asset["browser_download_url"]?.ToString() ?? "";
-            if (!Digest.StartsWith(DigestPrefix, StringComparison.OrdinalIgnoreCase) || Url.Length == 0)
-                return null; // 没有校验值的文件不下载
-            return new UpdateInfo(Tag.TrimStart('v', 'V'), Url, Digest.Substring(DigestPrefix.Length).ToLowerInvariant(), Release["body"]?.ToString() ?? "");
+            if (!string.Equals(Url, ExpectedUrl, StringComparison.Ordinal) || !Digest.StartsWith(DigestPrefix, StringComparison.OrdinalIgnoreCase))
+                return null;
+            string Sha256 = Digest.Substring(DigestPrefix.Length);
+            if (Sha256.Length != 64 || !Sha256.All(Uri.IsHexDigit))
+                return null;
+            return new UpdateInfo(Version, Url, Sha256.ToLowerInvariant(), Release["body"]?.ToString() ?? "");
         }
         return null;
     }

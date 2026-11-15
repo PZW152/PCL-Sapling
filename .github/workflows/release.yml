@@ -110,5 +110,6 @@ jobs:
         sha=$(sha256sum "$file" | cut -d' ' -f1)
         git fetch --depth=1 origin "+refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
         notes=$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")
-        printf '%s\n\nSHA256：`%s`\n\n建置來源：提交 `%s`，由 GitHub Actions 建置並附有建置來源證明，可用 `gh attestation verify PCL-Sapling-%s.exe -R %s` 驗證。\n\n本軟體是第三方基於 PCL 獨立進行二次創作的修改版，並非 PCL 官方版本。\n' "$notes" "$sha" "$GITHUB_SHA" "$VERSION" "$GITHUB_REPOSITORY" > notes.md
+        printf '%s\n\nSHA256：`%s`\n\n建置來源為提交 `%s`。可用以下指令驗證 EXE 的建置來源證明。\n\n```sh\ngh attestation verify PCL-Sapling-%s.exe -R %s --signer-workflow %s/.github/workflows/release.yml --source-ref %s --source-digest %s\n```\n\n本軟體是第三方基於 PCL 獨立進行二次創作的修改版，並非 PCL 官方版本。\n' \
+          "$notes" "$sha" "$GITHUB_SHA" "$VERSION" "$GITHUB_REPOSITORY" "$GITHUB_REPOSITORY" "$GITHUB_REF" "$GITHUB_SHA" > notes.md
         gh release create "$GITHUB_REF_NAME" "$file" --title "PCL 樹苗修改版 ${VERSION}" --notes-file notes.md

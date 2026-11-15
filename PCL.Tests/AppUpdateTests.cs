@@ -5,9 +5,12 @@ namespace PCL.Tests;
 
 public class AppUpdateTests
 {
-    private static JObject Release(string Tag, string? Digest, string AssetName = "PCL-Sapling-1.1.0.exe", bool Prerelease = false)
+    private static readonly string Digest = "sha256:" + new string('A', 64);
+
+    private static JObject Release(string Tag, string? Digest, string? AssetName = null, bool Prerelease = false, string? Url = null)
     {
-        var Asset = new JObject { ["name"] = AssetName, ["browser_download_url"] = "https://github.com/PZW152/PCL-Sapling/releases/download/" + Tag + "/" + AssetName };
+        AssetName ??= "PCL-Sapling-" + Tag.TrimStart('v') + ".exe";
+        var Asset = new JObject { ["name"] = AssetName, ["browser_download_url"] = Url ?? "https://github.com/PZW152/PCL-Sapling/releases/download/" + Tag + "/" + AssetName };
         if (Digest is not null)
             Asset["digest"] = Digest;
         return new JObject
@@ -22,21 +25,21 @@ public class AppUpdateTests
     [Test]
     public async Task 找到更新的版本()
     {
-        var Update = AppUpdate.FromRelease(Release("v1.10.0", "sha256:ABC"), "1.9.9");
+        var Update = AppUpdate.FromRelease(Release("v1.10.0", Digest), "1.9.9");
         await Assert.That(Update).IsNotNull();
         await Assert.That(Update!.Version).IsEqualTo("1.10.0");
-        await Assert.That(Update.Sha256).IsEqualTo("abc");
-        await Assert.That(Update.Url).EndsWith("/PCL-Sapling-1.1.0.exe");
+        await Assert.That(Update.Sha256).IsEqualTo(new string('a', 64));
+        await Assert.That(Update.Url).EndsWith("/PCL-Sapling-1.10.0.exe");
         await Assert.That(Update.Notes).IsEqualTo("更新说明");
     }
 
     [Test]
     public async Task 相同或更旧的版本不更新()
     {
-        await Assert.That(AppUpdate.FromRelease(Release("v1.0.0", "sha256:abc"), "1.0.0")).IsNull();
-        await Assert.That(AppUpdate.FromRelease(Release("v0.9.9", "sha256:abc"), "1.0.0")).IsNull();
-        await Assert.That(AppUpdate.FromRelease(Release("v1.1.0", "sha256:abc", Prerelease: true), "1.0.0")).IsNull();
-        await Assert.That(AppUpdate.FromRelease(Release("nightly", "sha256:abc"), "1.0.0")).IsNull();
+        await Assert.That(AppUpdate.FromRelease(Release("v1.0.0", Digest), "1.0.0")).IsNull();
+        await Assert.That(AppUpdate.FromRelease(Release("v0.9.9", Digest), "1.0.0")).IsNull();
+        await Assert.That(AppUpdate.FromRelease(Release("v1.1.0", Digest, Prerelease: true), "1.0.0")).IsNull();
+        await Assert.That(AppUpdate.FromRelease(Release("nightly", Digest), "1.0.0")).IsNull();
     }
 
     [Test]
@@ -44,7 +47,17 @@ public class AppUpdateTests
     {
         await Assert.That(AppUpdate.FromRelease(Release("v1.1.0", null), "1.0.0")).IsNull();
         await Assert.That(AppUpdate.FromRelease(Release("v1.1.0", "md5:abc"), "1.0.0")).IsNull();
-        await Assert.That(AppUpdate.FromRelease(Release("v1.1.0", "sha256:abc", AssetName: "Plain Craft Launcher 2.exe"), "1.0.0")).IsNull();
+        await Assert.That(AppUpdate.FromRelease(Release("v1.1.0", "sha256:abc"), "1.0.0")).IsNull();
+        await Assert.That(AppUpdate.FromRelease(Release("v1.1.0", "sha256:" + new string('Z', 64)), "1.0.0")).IsNull();
+    }
+
+    [Test]
+    public async Task 更新资产必须来自本仓库并对应发布标签()
+    {
+        await Assert.That(AppUpdate.FromRelease(Release("v1.1.0", Digest, AssetName: "Plain Craft Launcher 2.exe"), "1.0.0")).IsNull();
+        await Assert.That(AppUpdate.FromRelease(Release("v1.1.0", Digest, AssetName: "PCL-Sapling-1.2.0.exe"), "1.0.0")).IsNull();
+        await Assert.That(AppUpdate.FromRelease(Release("v1.1.0", Digest, Url: "https://example.invalid/PCL-Sapling-1.1.0.exe"), "1.0.0")).IsNull();
+        await Assert.That(AppUpdate.FromRelease(Release("v1.01.0", Digest), "1.0.0")).IsNull();
     }
 
     [Test]
