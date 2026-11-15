@@ -97,6 +97,12 @@ namespace PCL
                 ModMain.Hint($"版本 {ModMinecraft.McInstanceSelected.Name} 正在被修改，请稍后再启动！", ModMain.HintType.Red);
                 return false;
             }
+            if (CurrentLaunchOptions.SaveBatch is null && ModMinecraft.McInstanceSelected is { } Instance
+                && ModMinecraft.GameDirectoriesBackingUp.Any(Directory => PathUtils.IsSame(Directory, Instance.PathIndie)))
+            {
+                ModMain.Hint("正在备份此游戏目录中的世界，请等备份完成再启动 Minecraft。", ModMain.HintType.Red);
+                return false;
+            }
             // 禁止进入版本选择页面（否则就可以在启动中切换 McInstanceSelected 了）
             ModMain.FrmMain.PageStack = ModMain.FrmMain.PageStack.Where(p => p.Page != FormMain.PageType.InstanceSelect).ToList();
             // 实际启动加载器

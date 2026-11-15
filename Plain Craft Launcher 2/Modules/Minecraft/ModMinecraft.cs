@@ -52,6 +52,7 @@ namespace PCL
     /// 当前的 Minecraft 文件夹列表。
     /// </summary>
         public static List<McFolder> McFolderList = new List<McFolder>();
+        internal static readonly ConcurrentList<string> GameDirectoriesBackingUp = new();
 
         public class McFolder
         {
