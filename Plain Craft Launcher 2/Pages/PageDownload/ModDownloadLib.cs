@@ -2547,7 +2547,7 @@ pause";
                 SubLoaders.Add(new ModLoader.LoaderTask<int, int>("修改版本", Task =>
         {
             // TODO: 提交前显示文件修改列表（大量文件按“XXX 文件夹下 XXX 项”汇总），可以询问玩家是否覆盖原版本或作为新版本安装（不覆盖）？
-            McInstallCommit(Instance, Configs.McInstallManifest.Get(new ModMinecraft.McInstance(BuildFolder).Config), BuildFolder, TargetFolder);
+            McInstallCommit(Instance, Configs.McInstallManifest.Get(new ModMinecraft.McInstance(BuildFolder).Config), BuildFolder, TargetFolder, Task.RunToken);
             // 重命名和引用交接
             ModMinecraft.McInstance NewInstance = null;
             if (Request.NewInstanceName is null)
@@ -2620,49 +2620,25 @@ pause";
         /// <summary>
     /// 将安装好的临时版本文件夹覆盖到一个现有文件夹中。
     /// </summary>
-        public static void McInstallCommit(ModMinecraft.McInstance Instance, McInstallManifest NewManifest, string BuildFolder, string TargetFolder)
+        public static void McInstallCommit(ModMinecraft.McInstance Instance, McInstallManifest NewManifest, string BuildFolder, string TargetFolder, CancellationToken Cancel = default)
         {
+            if (NewManifest is null)
+                throw new InvalidDataException("未生成新版本的安装清单，无法修改实例。");
             var OldFiles = (Configs.McInstallManifest.Get(Instance.Config)?.ManagedFiles) ?? Array.Empty<McInstallManifest.ManagedFile>();
             var NewFiles = NewManifest.ManagedFiles;
-
-            // ============== 整理变更的文件列表 ==============
-
-            var FilesToDelete = new List<string>();
-            var FilesToMove = new List<(string Source, string Target)>();
-            // ManagedFiles
-            // 新版里有：添加或覆盖新版文件
-            foreach (var NewFile in NewFiles)
-                FilesToMove.Add((Path.Combine(BuildFolder, NewFile.RelativePath), Path.Combine(TargetFolder, NewFile.RelativePath)));
-            // 新版里没有，老版里有：删除本地文件到回收站
-            var NewFilePaths = new HashSet<string>(NewFiles.Select(File => File.RelativePath));
-            foreach (var OldFile in OldFiles)
-            {
-                if (NewFilePaths.Contains(OldFile.RelativePath))
-                    continue;
-                FilesToDelete.Add(PathUtils.ForCompare(Path.Combine(TargetFolder, OldFile.RelativePath)));
-            }
-            // 老版本 MC 的 assets 文件
-            if (DirectoryUtils.Exists(BuildFolder + @"resources\"))
-                DirectoryUtils.Copy(BuildFolder + @"resources\", TargetFolder + @"resources\");
-            // json 与 jar
             string OldJsonPath = Instance.GetJsonPath();
-            FilesToDelete.Add(OldJsonPath);
-            FilesToDelete.Add(Path.ChangeExtension(OldJsonPath, ".jar"));
-            FilesToDelete.Add(Instance.PathVersion + Instance.Name + ".jar");
-            FilesToDelete = FilesToDelete.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-
-            // ============== 实际修改 ==============
-
+            var Plan = InstanceUpdatePlan.Prepare(BuildFolder, TargetFolder, OldJsonPath, Instance.PathVersion + Instance.Name + ".jar",
+                OldFiles.Select(File => File.RelativePath), NewFiles.Select(File => File.RelativePath), Cancel);
+            Cancel.ThrowIfCancellationRequested();
             Instance.Config.Save();
-            foreach (var TargetPath in FilesToDelete)
-                FileUtils.Delete(TargetPath, true);
-            FileUtils.Move(BuildFolder + Instance.Name + ".jar", Instance.PathVersion + Instance.Name + ".jar");
-            FileUtils.Move(BuildFolder + Instance.Name + ".json", OldJsonPath);
-            foreach (var File in FilesToMove)
-            {
-                DirectoryUtils.Create(PathUtils.RemoveLastPart(File.Target));
+            foreach (var File in Plan.Resources)
                 FileUtils.Copy(File.Source, File.Target);
-            }
+            foreach (var TargetPath in Plan.Recycle)
+                FileUtils.Delete(TargetPath, true);
+            foreach (var File in Plan.VersionFiles)
+                FileUtils.Move(File.Source, File.Target);
+            foreach (var File in Plan.ManagedFiles)
+                FileUtils.Copy(File.Source, File.Target);
             var ManagedFiles = NewFiles.Select(File => new McInstallManifest.ManagedFile(File.RelativePath, File.Sha1, FileUtils.GetInfo(Path.Combine(TargetFolder, File.RelativePath)).LastWriteTimeUtc, File.Component)).ToList();
             Configs.McInstallManifest.Set(new McInstallManifest(NewManifest.SchemaVersion, NewManifest.Components, NewManifest.LastModifiedUtc, ManagedFiles), Instance.Config);
             Instance.Config.Save();
