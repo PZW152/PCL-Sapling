@@ -717,7 +717,7 @@ namespace PCL
         /// <summary>
     /// 弹出崩溃弹窗，并指导导出崩溃报告。
     /// </summary>
-        public void Output(bool IsManualAnalyze, List<string> ExtraFiles = null)
+        public void Output(bool IsManualAnalyze, List<string> ExtraFiles = null, GameSessionLog SessionLog = null)
         {
             // 弹窗提示
             ModMain.FrmMain.ShowWindowToTop();
@@ -769,7 +769,10 @@ namespace PCL
                                 if (!FileUtils.Exists(OutputFile))
                                     continue;
                                 string FileContent = FileUtils.ReadAsString(OutputFile, FileEncoding);
-                                FileContent = ModMinecraft.FilterUserName(ModMinecraft.FilterAccessToken(FileContent, Coerce.ToChar(FileName == "启动脚本.bat" ? "F" : "*")), '*');
+                                char MaskChar = FileName == "启动脚本.bat" ? 'F' : '*';
+                                if (SessionLog is not null)
+                                    FileContent = SessionLog.ScrubText(FileContent, MaskChar);
+                                FileContent = ModMinecraft.FilterUserName(ModMinecraft.FilterAccessToken(FileContent, MaskChar), '*');
                                 FileUtils.Write(TempFolder + @"Report\" + FileName, FileContent, FileEncoding);
                                 Logger.Info($"导出错误报告文件：{FileName}");
                             }

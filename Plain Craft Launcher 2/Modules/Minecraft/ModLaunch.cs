@@ -183,8 +183,25 @@ namespace PCL
                     ModMinecraft.SetFullVerify(ModMinecraft.McInstanceSelected, false);
                 }
                 // 构造主加载器
-                var Loaders = new List<ModLoader.LoaderBase>() { new ModLoader.LoaderTask<int, int>("获取 Java", McLaunchJava) { ProgressWeight = 4d, Block = false }, McLoginLoader, new ModLoader.LoaderCombo<string>("补全文件", ModDownload.DlClientFix(ModMinecraft.McInstanceSelected, FullVerify, true, CheckLibraryHash: FullVerify)) { ProgressWeight = 15d, Show = false }, new ModLoader.LoaderTask<string, int>("获取启动参数", McLaunchArgumentMain) { ProgressWeight = 2d }, new ModLoader.LoaderTask<int, int>("解压文件", McLaunchNatives) { ProgressWeight = 2d }, new ModLoader.LoaderTask<int, int>("预启动处理", (_) => McLaunchPrerun()) { ProgressWeight = 1d }, new ModLoader.LoaderTask<int, int>("执行自定义命令", McLaunchCustom) { ProgressWeight = 1d }, new ModLoader.LoaderTask<int, Process>("启动进程", McLaunchRun) { ProgressWeight = 2d }, new ModLoader.LoaderTask<Process, int>("等待游戏窗口出现", McLaunchWait) { ProgressWeight = 1d }, new ModLoader.LoaderTask<int, int>("结束处理", (_) => McLaunchEnd()) { ProgressWeight = 1d } }; // .ProgressWeight = 15, .Block = False
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // 内存优化
+                McLoginResult Login = default;
+                var Loaders = new List<ModLoader.LoaderBase>
+                {
+                    new ModLoader.LoaderTask<int, int>("获取 Java", McLaunchJava) { ProgressWeight = 4d, Block = false },
+                    McLoginLoader,
+                    new ModLoader.LoaderCombo<string>("补全文件", ModDownload.DlClientFix(ModMinecraft.McInstanceSelected, FullVerify, true, CheckLibraryHash: FullVerify)) { ProgressWeight = 15d, Show = false },
+                    new ModLoader.LoaderTask<string, int>("获取启动参数", _ =>
+                    {
+                        // 启动参数、脚本和游戏日志都使用同一次登录，之后玩家可以切换账号。
+                        Login = McLoginLoader.Output;
+                        McLaunchArgumentMain(Login);
+                    }) { ProgressWeight = 2d },
+                    new ModLoader.LoaderTask<int, int>("解压文件", McLaunchNatives) { ProgressWeight = 2d },
+                    new ModLoader.LoaderTask<int, int>("预启动处理", _ => McLaunchPrerun()) { ProgressWeight = 1d },
+                    new ModLoader.LoaderTask<int, int>("执行自定义命令", Task => McLaunchCustom(Task, Login)) { ProgressWeight = 1d },
+                    new ModLoader.LoaderTask<int, Process>("启动进程", McLaunchRun) { ProgressWeight = 2d },
+                    new ModLoader.LoaderTask<Process, int>("等待游戏窗口出现", Task => McLaunchWait(Task, Login)) { ProgressWeight = 1d },
+                    new ModLoader.LoaderTask<int, int>("结束处理", _ => McLaunchEnd()) { ProgressWeight = 1d }
+                };
                 var LaunchLoader = new ModLoader.LoaderCombo<object>("Minecraft 启动", Loaders) { Show = false };
                 if (McLoginLoader.State == ModBase.LoadState.Finished)
                     McLoginLoader.State = ModBase.LoadState.Waiting; // 要求重启登录主加载器，它会自行决定是否启动副加载器
@@ -395,6 +412,8 @@ namespace PCL
             public string Name;
             public string Uuid;
             public string AccessToken;
+            // 离线登录使用 UUID 填充令牌参数，日志中的这个标识可以保留。
+            public readonly string OnlineAccessToken => AccessToken == Uuid ? null : AccessToken;
             public string Type;
             public string ClientToken;
             /// <summary>
@@ -1027,7 +1046,7 @@ namespace PCL
         private static Encoding McLaunchEncoding;
 
         // 主方法
-        private static void McLaunchArgumentMain(ModLoader.LoaderTask<string, int> Loader)
+        private static void McLaunchArgumentMain(McLoginResult Login)
         {
             // 获取基础参数
             var Arguments = new List<string>();
@@ -1037,10 +1056,10 @@ namespace PCL
             Arguments.AddRange(McLaunchArgumentsGame()); // 游戏参数
                                                          // 替换
             McLaunchLog("=================== 启动参数开始 ===================");
-            var Replacements = McLaunchArgumentsReplace(Arguments).ToList();
+            var Replacements = McLaunchArgumentsReplace(Arguments, Login).ToList();
             var FinalArguments = LaunchArgumentBuilder.Build(Arguments, Replacements);
             foreach (var Arg in FinalArguments)
-                McLaunchLog(Arg);
+                McLaunchLog(SecretScrubber.ScrubText(Arg, Login.OnlineAccessToken));
             McLaunchLog("=================== 启动参数结束 ===================");
             // 输出
             McLaunchArgument = string.Join(" ", FinalArguments);
@@ -1359,7 +1378,7 @@ namespace PCL
             return JavaArguments.Deduplicate(Args, false, Text => McLaunchLog(Text));
         }
         // 获取替换标记
-        private static IEnumerable<(string Key, string Value)> McLaunchArgumentsReplace(List<string> Arguments)
+        private static IEnumerable<(string Key, string Value)> McLaunchArgumentsReplace(List<string> Arguments, McLoginResult Login)
         {
             // 基础参数
             yield return ("${classpath_separator}", ";");
@@ -1373,11 +1392,11 @@ namespace PCL
             yield return ("${game_directory}", PathUtils.ToShortPath(Coerce.Left(ModMinecraft.McInstanceSelected.PathIndie, ModMinecraft.McInstanceSelected.PathIndie.Count() - 1)));
             yield return ("${assets_root}", PathUtils.ToShortPath(ModMinecraft.McFolderSelected + "assets"));
             yield return ("${user_properties}", "{}");
-            yield return ("${auth_player_name}", McLoginLoader.Output.Name);
-            yield return ("${auth_uuid}", McLoginLoader.Output.Uuid);
-            yield return ("${auth_access_token}", McLoginLoader.Output.AccessToken);
-            yield return ("${access_token}", McLoginLoader.Output.AccessToken);
-            yield return ("${auth_session}", McLoginLoader.Output.AccessToken);
+            yield return ("${auth_player_name}", Login.Name);
+            yield return ("${auth_uuid}", Login.Uuid);
+            yield return ("${auth_access_token}", Login.AccessToken);
+            yield return ("${access_token}", Login.AccessToken);
+            yield return ("${auth_session}", Login.AccessToken);
             yield return ("${user_type}", "msa"); // #1221
             yield return ("${primary_jar}", PathUtils.ToShortPath(ModMinecraft.McInstanceSelected.PathVersion + ModMinecraft.McInstanceSelected.Name + ".jar")); // #6942
             yield return ("${game_assets}", PathUtils.ToShortPath(ModMinecraft.McFolderSelected + @"assets\virtual\legacy")); // 1.5.2 的 pre-1.6 资源索引应与 legacy 合并
@@ -1939,7 +1958,7 @@ namespace PCL
             }
 
         }
-        private static void McLaunchCustom(ModLoader.LoaderTask<int, int> Loader)
+        private static void McLaunchCustom(ModLoader.LoaderTask<int, int> Loader, McLoginResult Login)
         {
 
             // 获取自定义命令
@@ -1954,7 +1973,8 @@ namespace PCL
             try
             {
                 string CmdString = $"chcp {(McLaunchEncoding.CodePage == 54936 && ModBase.IsGBKEncoding ? 936 : McLaunchEncoding.CodePage)}>nul" + ModBase.CrLf + "@echo off" + ModBase.CrLf + $"title 启动 - {ModMinecraft.McInstanceSelected.Name}" + ModBase.CrLf + "echo 游戏正在启动，请稍候。" + ModBase.CrLf + $"cd /D \"{PathUtils.ToShortPath(ModMinecraft.McInstanceSelected.PathIndie)}\"" + ModBase.CrLf + CustomCommandGlobal + ModBase.CrLf + CustomCommandVersion + ModBase.CrLf + $"\"{McLaunchJavaSelected.JavaExePath}\" {McLaunchArgument}" + ModBase.CrLf + "echo 游戏已退出。" + ModBase.CrLf + "pause";
-                FileUtils.Write(filePath: CurrentLaunchOptions.SaveBatch ?? Paths.Base + @"PCL\LatestLaunch.bat", text: ModMinecraft.FilterAccessToken(CmdString, 'F').Replace("%", "%%"), encoding: McLaunchEncoding);
+                string Script = SecretScrubber.ScrubText(CmdString, Login.OnlineAccessToken, 'F');
+                FileUtils.Write(filePath: CurrentLaunchOptions.SaveBatch ?? Paths.Base + @"PCL\LatestLaunch.bat", text: ModMinecraft.FilterAccessToken(Script, 'F').Replace("%", "%%"), encoding: McLaunchEncoding);
                 if (CurrentLaunchOptions.SaveBatch is not null)
                 {
                     McLaunchLog("导出启动脚本完成，强制结束启动过程");
@@ -2090,7 +2110,7 @@ namespace PCL
             }
 
         }
-        private static void McLaunchWait(ModLoader.LoaderTask<Process, int> Loader)
+        private static void McLaunchWait(ModLoader.LoaderTask<Process, int> Loader, McLoginResult Login)
         {
 
             // 输出信息
@@ -2109,11 +2129,11 @@ namespace PCL
             McLaunchLog("Natives 文件夹：" + GetNativesFolder());
             McLaunchLog("");
             McLaunchLog("~ 登录参数 ~");
-            McLaunchLog("玩家用户名：" + McLoginLoader.Output.Name);
-            McLaunchLog("AccessToken：" + McLoginLoader.Output.AccessToken);
-            McLaunchLog("ClientToken：" + McLoginLoader.Output.ClientToken);
-            McLaunchLog("UUID：" + McLoginLoader.Output.Uuid);
-            McLaunchLog("登录方式：" + McLoginLoader.Output.Type);
+            McLaunchLog("玩家用户名：" + Login.Name);
+            McLaunchLog(SecretScrubber.ScrubText("AccessToken：" + Login.AccessToken, Login.OnlineAccessToken));
+            McLaunchLog("ClientToken：" + Login.ClientToken);
+            McLaunchLog("UUID：" + Login.Uuid);
+            McLaunchLog("登录方式：" + Login.Type);
             McLaunchLog("");
 
             // 获取窗口标题
@@ -2121,7 +2141,7 @@ namespace PCL
             WindowTitle = ModMain.ArgumentReplace(WindowTitle, ReplaceTime: false);
 
             // 初始化等待
-            var Watcher = new ModWatcher.Watcher(Loader, ModMinecraft.McInstanceSelected, WindowTitle);
+            var Watcher = new ModWatcher.Watcher(Loader, ModMinecraft.McInstanceSelected, WindowTitle, Login.OnlineAccessToken);
             McLaunchWatcher = Watcher;
 
             // 等待

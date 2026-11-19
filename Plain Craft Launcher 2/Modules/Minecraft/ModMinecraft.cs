@@ -2672,13 +2672,7 @@ namespace PCL
                 foreach (var Token in Raw.RegexSearch("(?<=accessToken ([^ ]{5}))[^ ]+(?=[^ ]{5})"))
                     Raw = Raw.Replace(Token, new string(FilterChar, Token.Count()));
             }
-            // 打码当前登录的结果
-            string AccessToken = ModLaunch.McLoginLoader.Output.AccessToken;
-            if (AccessToken is not null && AccessToken.Length >= 10 && Raw.ContainsIgnoreCase(AccessToken) && (ModLaunch.McLoginLoader.Output.Uuid ?? "") != (ModLaunch.McLoginLoader.Output.AccessToken ?? "")) // UUID 和 AccessToken 一样则不打码
-            {
-                Raw = Raw.Replace(AccessToken, Coerce.Left(AccessToken, 5) + new string(FilterChar, AccessToken.Length - 10) + Coerce.Right(AccessToken, 5));
-            }
-            return Raw;
+            return SecretScrubber.ScrubText(Raw, ModLaunch.McLoginLoader.Output.OnlineAccessToken, FilterChar);
         }
         /// <summary>
     /// 打码字符串中的 Windows 用户名。
