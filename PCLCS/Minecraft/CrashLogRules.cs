@@ -346,6 +346,13 @@ public sealed class CrashLogRules {
                 Append(CrashReason.Fabric报错并给出解决方案, (LogMc.RegexSeek(@"(?<=A potential solution has been determined, this may resolve your problem:\n)(\s+ - [^\n]+\n)+") ?? "").Split('\n').Select(Line => Line.Trim()).Where(Line => Line.Length > 0).Join("\n"));
             if (LogMc.Contains("确定了一种可能的解决方法，这样做可能会解决你的问题："))
                 Append(CrashReason.Fabric报错并给出解决方案, (LogMc.RegexSeek(@"(?<=确定了一种可能的解决方法，这样做可能会解决你的问题：\n)(\s+ - [^\n]+\n)+") ?? "").Split('\n').Select(Line => Line.Trim()).Where(Line => Line.Length > 0).Join("\n"));
+            // 旧版 Forge 的 Coremod 在主线程抛出异常时，错误信息里常带有自身 jar 的路径（例如 Ksyxis 的 coremodLocation=...\mods\Ksyxis-1.4.6.jar）
+            if (LogMc.Contains("Exception in thread \"main\"") && LogMc.Contains("coremodLocation="))
+            {
+                var Jars = LogMc.RegexSearch(@"(?<=coremodLocation=[^,}\n]*?[\\/])[^\\/,}\n]+?\.jar", RegexOptions.IgnoreCase).Distinct().ToList();
+                if (Jars.Any())
+                    Append(CrashReason.确定Mod导致游戏崩溃, Jars);
+            }
             if (!IsMixin && LogMc.Contains("due to errors, provided by ")) // 在 #3104 的情况下，这一句导致 OptiFabric 的 Mixin 失败错判为 Fabric Loader 加载失败
             {
                 Append(CrashReason.确定Mod导致游戏崩溃, TryModName((LogMc.RegexSeek("(?<=due to errors, provided by ')[^']+") ?? "").TrimEnd('\r', '\n', ' ')));

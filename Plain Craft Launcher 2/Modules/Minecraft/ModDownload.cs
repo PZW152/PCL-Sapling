@@ -1028,7 +1028,7 @@ namespace PCL
         /// <summary>
     /// OptiFabric 列表，官方源。
     /// </summary>
-        public static ModLoader.LoaderTask<int, List<ResourceVersion>> DlOptiFabricLoader = new ModLoader.LoaderTask<int, List<ResourceVersion>>("OptiFabric List Loader", (Task) => Task.Output = ResourceVersion.FromProjectId("322385", ResourcePlatforms.CurseForge, LoadDependencies: false));
+        public static ModLoader.LoaderTask<int, List<ResourceVersion>> DlOptiFabricLoader = new ModLoader.LoaderTask<int, List<ResourceVersion>>("OptiFabric List Loader", (Task) => Task.Output = ModSecret.HasCurseForgeKey ? ResourceVersion.FromProjectId("322385", ResourcePlatforms.CurseForge, LoadDependencies: false) : new List<ResourceVersion>()); // OptiFabric 只在 CurseForge 上发布；没有密钥时视为无可用版本，不让版本修改页整体失败
 
         #endregion
 
@@ -1050,7 +1050,9 @@ namespace PCL
         public static async System.Threading.Tasks.Task<JToken> DlModRequestAsync(string Url, HttpMethod Method = null, string Content = null, string ContentType = null, CancellationToken Cancel = default)
         {
             // 只使用 Modrinth / CurseForge 官方 API
-            var Urls = new List<(string Url, int Timeout)>() { (Url, Url.Contains("modrinth") ? 20 : 10), (Url, 30) }; // Modrinth 至少 20s，要不然返回不过来
+            if (Url.Contains("api.curseforge.com") && !ModSecret.HasCurseForgeKey)
+                throw new InvalidOperationException("此版本编译时未配置 CurseForge API 密钥，无法使用 CurseForge");
+            var Urls =new List<(string Url, int Timeout)>() { (Url, Url.Contains("modrinth") ? 20 : 10), (Url, 30) }; // Modrinth 至少 20s，要不然返回不过来
             var Errors = new List<Exception>();
             foreach (var Source in Urls)
             {

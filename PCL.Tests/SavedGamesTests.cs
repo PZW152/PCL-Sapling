@@ -139,7 +139,7 @@ public class SavedGamesTests
                 await Assert.That(() => SavedGames.BackupWorld(Game, "我的世界", DateTime.Now)).Throws<IOException>();
 
             await Assert.That(SavedGames.RecentWorlds(Game, 10).Select(Entry => Entry.Folder).ToArray()).IsEquivalentTo(new[] { "我的世界" });
-            await Assert.That(Directory.GetFileSystemEntries(Path.Combine(Saves, ".pcl-world-backups"))).IsEmpty();
+            await Assert.That(Directory.Exists(Path.Combine(Saves, ".pcl-world-backups"))).IsFalse(); // 空的暂存目录也一并删除
             await Assert.That(File.ReadAllText(Chunk)).IsEqualTo("chunks");
         }
         finally { Directory.Delete(Game, true); }

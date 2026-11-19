@@ -2631,17 +2631,56 @@ pause";
                 OldFiles.Select(File => File.RelativePath), NewFiles.Select(File => File.RelativePath), Cancel);
             Cancel.ThrowIfCancellationRequested();
             Instance.Config.Save();
-            foreach (var File in Plan.Resources)
-                FileUtils.Copy(File.Source, File.Target);
-            foreach (var TargetPath in Plan.Recycle)
-                FileUtils.Delete(TargetPath, true);
-            foreach (var File in Plan.VersionFiles)
-                FileUtils.Move(File.Source, File.Target);
-            foreach (var File in Plan.ManagedFiles)
-                FileUtils.Copy(File.Source, File.Target);
-            var ManagedFiles = NewFiles.Select(File => new McInstallManifest.ManagedFile(File.RelativePath, File.Sha1, FileUtils.GetInfo(Path.Combine(TargetFolder, File.RelativePath)).LastWriteTimeUtc, File.Component)).ToList();
-            Configs.McInstallManifest.Set(new McInstallManifest(NewManifest.SchemaVersion, NewManifest.Components, NewManifest.LastModifiedUtc, ManagedFiles), Instance.Config);
-            Instance.Config.Save();
+            var OldManifest = Configs.McInstallManifest.Get(Instance.Config);
+            // 每个文件改动前先备份，中途失败时还原，避免留下新旧混杂的半套版本（#15）
+            var Transaction = new InstanceUpdateTransaction(Instance.PathVersion + @"PCL\UpdateBackup\");
+            try
+            {
+                foreach (var File in Plan.Resources)
+                {
+                    Transaction.Protect(File.Target);
+                    FileUtils.Copy(File.Source, File.Target);
+                }
+                foreach (var TargetPath in Plan.Recycle)
+                {
+                    Transaction.Protect(TargetPath);
+                    FileUtils.Delete(TargetPath, true);
+                }
+                foreach (var File in Plan.VersionFiles)
+                {
+                    Transaction.Protect(File.Target);
+                    FileUtils.Move(File.Source, File.Target);
+                }
+                foreach (var File in Plan.ManagedFiles)
+                {
+                    Transaction.Protect(File.Target);
+                    FileUtils.Copy(File.Source, File.Target);
+                }
+                var ManagedFiles = NewFiles.Select(File => new McInstallManifest.ManagedFile(File.RelativePath, File.Sha1, FileUtils.GetInfo(Path.Combine(TargetFolder, File.RelativePath)).LastWriteTimeUtc, File.Component)).ToList();
+                Configs.McInstallManifest.Set(new McInstallManifest(NewManifest.SchemaVersion, NewManifest.Components, NewManifest.LastModifiedUtc, ManagedFiles), Instance.Config);
+                Instance.Config.Save();
+                Transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, $"修改实例 {Instance.Name} 失败，开始还原原有文件");
+                try
+                {
+                    Transaction.Rollback();
+                    if (OldManifest is not null)
+                    {
+                        Configs.McInstallManifest.Set(OldManifest, Instance.Config);
+                        Instance.Config.Save();
+                    }
+                    Logger.Info($"已还原实例 {Instance.Name} 的原有文件");
+                }
+                catch (Exception RollbackEx)
+                {
+                    Logger.Error(RollbackEx, $"还原实例 {Instance.Name} 失败");
+                    throw new AggregateException("修改实例失败，且未能完全还原原有文件", ex, RollbackEx);
+                }
+                throw;
+            }
         }
 
         /// <summary>

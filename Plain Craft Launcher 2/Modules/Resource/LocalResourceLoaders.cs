@@ -277,6 +277,8 @@ return new[] { "jar", "zip", "litemod" }.Contains(PathUtils.GetExtension(FullNam
         {
             try
             {
+                if (!ModSecret.HasCurseForgeKey)
+                    return; // 没有密钥时只用 Modrinth 的信息
                 // 步骤 1：获取 Hash 与对应的工程 ID
                 var Hashes = new List<uint>();
                 foreach (var Entry in Mods)

@@ -863,12 +863,20 @@ namespace PCL
         /// </summary>
             public FileChecker Check;
 
-            internal bool HasSameChecks(NetFile Other) =>
-                Check is null || Other.Check is null
-                    ? Check is null && Other.Check is null
-                    : Check.ActualSize == Other.Check.ActualSize && Check.MinSize == Other.Check.MinSize
-                        && Check.IsJson == Other.Check.IsJson
-                        && string.Equals(Check.Hash ?? "", Other.Check.Hash ?? "", StringComparison.OrdinalIgnoreCase);
+            /// <summary>
+            /// 两个请求能否合并为同一个下载：只要没有给出不同的 Hash 就可以。
+            /// 同一个支持库常在多个 json 中出现，有的带 Hash 有的不带，以前直接合并，不能因此让整个安装失败。
+            /// </summary>
+            internal bool IsCompatibleWith(NetFile Other)
+            {
+                string Hash = Check?.Hash ?? "", OtherHash = Other.Check?.Hash ?? "";
+                return Hash.Length == 0 || OtherHash.Length == 0 || string.Equals(Hash, OtherHash, StringComparison.OrdinalIgnoreCase);
+            }
+            /// <summary>
+            /// 校验规则的严格程度：有 Hash 最严格，其次是精确大小、最小大小、JSON 格式。
+            /// </summary>
+            internal int CheckStrength() =>
+                Check is null ? 0 : (string.IsNullOrEmpty(Check.Hash) ? 0 : 8) + (Check.ActualSize >= 0 ? 4 : 0) + (Check.MinSize >= 0 ? 2 : 0) + (Check.IsJson ? 1 : 0);
 
             internal IOException ConflictingRequest() => new IOException($"同一目标的下载校验要求冲突：{LocalPath}");
             /// <summary>
@@ -1854,8 +1862,9 @@ namespace PCL
                 var UniqueFiles = new List<NetFile>();
                 foreach (var Group in Requests)
                 {
-                    var First = Group.First();
-                    if (Group.Any(Other => !First.HasSameChecks(Other)))
+                    // 校验规则不同时取最严格的一个；只有两个请求给出不同的 Hash 才算真正冲突
+                    var First = Group.OrderByDescending(File => File.CheckStrength()).First();
+                    if (Group.Any(Other => !First.IsCompatibleWith(Other)))
                     {
                         State = ModBase.LoadState.Loading;
                         OnFail(new List<Exception> { First.ConflictingRequest() });
@@ -2251,7 +2260,7 @@ namespace PCL
                     foreach (var Request in Requests)
                     {
                         if (Request.File.State != NetState.Finished && AllFiles.TryGetValue(Request.Path, out var Ongoing)
-                            && Ongoing.State < NetState.Finished && !Ongoing.HasSameChecks(Request.File))
+                            && Ongoing.State < NetState.Finished && !Ongoing.IsCompatibleWith(Request.File))
                             throw Request.File.ConflictingRequest();
                     }
                     var Registered = new List<NetFile>(Requests.Count);

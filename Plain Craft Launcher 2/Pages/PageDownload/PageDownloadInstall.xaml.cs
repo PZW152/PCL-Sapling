@@ -1534,6 +1534,9 @@ namespace PCL
         {
             if (VanillaDrop >= 140 && VanillaDrop <= 150)
                 return "不兼容老版本 Fabric，请手动下载 OptiFabric Origins";
+            // OptiFabric 只在 CurseForge 上发布
+            if (!ModSecret.HasCurseForgeKey)
+                return "此版本未配置 CurseForge 密钥，无法获取";
             // 检查 Loader
             if (this.GetLoaderError(this.LoadOptiFabric) is not null)
                 return this.GetLoaderError(this.LoadOptiFabric);

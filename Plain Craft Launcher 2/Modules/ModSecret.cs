@@ -24,6 +24,10 @@ namespace PCL
         public static string OAuthClientId = NonEmpty(Environment.GetEnvironmentVariable("PCL_MS_CLIENT_ID")) ?? BuildSecrets.MsClientId; // 運行時環境變量優先，否則用編譯時注入的值
         // CurseForge API Key
         public static string CurseForgeAPIKey = NonEmpty(Environment.GetEnvironmentVariable("PCL_CURSEFORGE_API_KEY")) ?? BuildSecrets.CurseForgeApiKey;
+        /// <summary>
+        /// 是否配置了 CurseForge API 密钥。没有密钥时 CurseForge 的请求必定 401/403，应直接跳过。
+        /// </summary>
+        public static bool HasCurseForgeKey => !string.IsNullOrEmpty(CurseForgeAPIKey);
         private static string NonEmpty(string Value) => string.IsNullOrEmpty(Value) ? null : Value;
 
         #region 网络鉴权

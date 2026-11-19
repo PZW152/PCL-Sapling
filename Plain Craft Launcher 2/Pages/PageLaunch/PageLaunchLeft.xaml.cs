@@ -680,6 +680,10 @@ namespace PCL
         /// 一键开始安装的版本名；安装完成并被选中后自动启动。
         /// </summary>
         private string QuickStartPending = null;
+        /// <summary>
+        /// 一键开始的安装任务。只有它真正完成后才自动启动：取消安装时，版本列表可能在清理半成品文件夹前刷新并选中它。
+        /// </summary>
+        private ModLoader.LoaderBase QuickStartLoader = null;
 
         private void QuickStartPrepare()
         {
@@ -724,11 +728,45 @@ namespace PCL
                 return;
             Logger.Info($"一键开始：安装 {Name}，完成后自动启动");
             QuickStartPending = Name;
+            var Loader = ModLoader.LoaderTaskbar.LastOrDefault(l => l.Name == Name + " 安装");
+            QuickStartLoader = Loader;
+            // 安装结束后再检查一次：版本可能在安装途中就已被选中，结束时不会再触发按钮状态变化
+            ModBase.RunInThread(() =>
+            {
+                while (Loader is not null && (Loader.State == ModBase.LoadState.Waiting || Loader.State == ModBase.LoadState.Loading))
+                    Thread.Sleep(300);
+                Thread.Sleep(500); // 让版本列表先按 PCL.ini 刷新并选中新版本
+                ModBase.RunInUi(QuickStartTryLaunch);
+            });
             BtnLaunchState = -1; // 安装失败或取消后，版本列表刷新时会恢复按钮
             this.BtnLaunch.Text = "正在下载";
             this.BtnLaunch.IsEnabled = false;
             this.LabVersion.Text = $"Minecraft {Latest}，完成后自动启动";
             ModMain.Hint($"正在下载 Minecraft {Latest}，完成后会自动启动", ModMain.HintType.Blue);
+        }
+
+        /// <summary>
+        /// 一键开始的安装真正完成、且新版本已被选中时启动游戏；安装取消或失败时放弃等待。
+        /// </summary>
+        private void QuickStartTryLaunch()
+        {
+            if (QuickStartPending is null || QuickStartLoader is null)
+                return;
+            var State = QuickStartLoader.State;
+            if (State == ModBase.LoadState.Waiting || State == ModBase.LoadState.Loading)
+                return;
+            if (State != ModBase.LoadState.Finished)
+            {
+                Logger.Info($"一键开始：安装未完成（{State}），不自动启动");
+                QuickStartPending = null;
+                QuickStartLoader = null;
+                return;
+            }
+            if (BtnLaunchState != 3 || ModMinecraft.McInstanceSelected?.Name != QuickStartPending)
+                return; // 等版本列表刷新后由按钮状态变化再次触发
+            QuickStartPending = null;
+            QuickStartLoader = null;
+            ModBase.RunInUi(() => ModLaunch.McLaunchStart(), true); // 等按钮状态更新完再启动
         }
 
         #endregion
@@ -778,7 +816,11 @@ namespace PCL
                             ModMain.FrmLaunchLeft.LabVersion.Text = "未找到可用的游戏版本";
                             ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = true;
                             ModMain.FrmLaunchLeft.BtnMore.Visibility = Visibility.Collapsed;
-                            QuickStartPending = null; // 安装失败或取消
+                            if (QuickStartLoader is null || (QuickStartLoader.State != ModBase.LoadState.Waiting && QuickStartLoader.State != ModBase.LoadState.Loading))
+                            {
+                                QuickStartPending = null; // 安装失败或取消
+                                QuickStartLoader = null;
+                            }
                             if (QuickStartEntry is null)
                                 QuickStartPrepare();
                             break;
@@ -790,11 +832,7 @@ namespace PCL
                             ModMain.FrmLaunchLeft.BtnVersion.IsEnabled = true;
                             ModMain.FrmLaunchLeft.BtnLaunch.IsEnabled = true;
                             ModMain.FrmLaunchLeft.LabVersion.Text = ModMinecraft.McInstanceSelected.Name;
-                            if (QuickStartPending is not null && ModMinecraft.McInstanceSelected.Name == QuickStartPending)
-                            {
-                                QuickStartPending = null;
-                                ModBase.RunInUi(() => ModLaunch.McLaunchStart(), true); // 等按钮状态更新完再启动
-                            }
+                            QuickStartTryLaunch();
                             break;
                         }
                 }

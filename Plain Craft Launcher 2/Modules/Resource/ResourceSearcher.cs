@@ -359,7 +359,7 @@ return true;
                 {
 
                     // CurseForge 搜索
-                    if (Request.Sources.HasFlagF(ResourcePlatforms.CurseForge) && !(Storage.CurseForgeTotal > -1 && Storage.CurseForgeTotal <= Storage.CurseForgeOffset) && (!IsChineseSearch || IsChineseSearch && !string.IsNullOrEmpty(CurseForgeAltSearchText))) // 剩余的未显示的搜索结果不足
+                    if (ModSecret.HasCurseForgeKey && Request.Sources.HasFlagF(ResourcePlatforms.CurseForge) && !(Storage.CurseForgeTotal > -1 && Storage.CurseForgeTotal <= Storage.CurseForgeOffset) && (!IsChineseSearch || IsChineseSearch && !string.IsNullOrEmpty(CurseForgeAltSearchText))) // 剩余的未显示的搜索结果不足
                                                                                                                                                                                                                                                                      // 如果是中文搜索，就只在有对应搜索关键词的时候才继续
                     {
                         WorkTasks.Add(ModBase.RunInBackgroundAsync(async () =>

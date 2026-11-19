@@ -39,6 +39,16 @@ public class CrashLogRulesTests
     }
 
     [Test]
+    public async Task Coremod报错时从路径取出Mod文件名()
+    {
+        var Log = "Exception in thread \"main\" \n[main/INFO] [STDERR]: java.lang.reflect.InvocationTargetException\n"
+            + @"java.lang.RuntimeException: Ksyxis: Unexpected core error. (data: {coremodLocation=C:\Users\x\.minecraft\versions\1.8.9\mods\Ksyxis-1.4.6.jar, mcLocation=null})" + "\n\tat ru.vidtu.ksyxis.platform.KCore.<init>\n";
+        var Result = Rules(Mc: Log);
+        Result.Crit2();
+        await Assert.That(Result.Reasons[CrashReason.确定Mod导致游戏崩溃]).IsEquivalentTo(new[] { "Ksyxis-1.4.6.jar" });
+    }
+
+    [Test]
     public async Task 关键词交给调用方换成Mod名称()
     {
         var Result = new CrashLogRules("Caught exception from examplemod\n", null, null, null, Keywords => Keywords.Select(k => "Example Mod (" + k + ")").ToList());

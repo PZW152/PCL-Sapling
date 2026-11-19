@@ -202,6 +202,9 @@ public static class SavedGames {
             // 清理这次任务自己的文件，保留原来的复制错误。
             try {
                 if (Directory.Exists(PathUtils.ForApi(staging))) Directory.Delete(PathUtils.ForApi(staging), recursive: true);
+                // 暂存根目录空了就一并删除，不在 saves 里留下多余的文件夹；其他备份正在使用时删除会失败，忽略即可
+                if (Directory.Exists(PathUtils.ForApi(stagingRoot)) && !Directory.EnumerateFileSystemEntries(PathUtils.ForApi(stagingRoot)).Any())
+                    Directory.Delete(PathUtils.ForApi(stagingRoot));
             }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
