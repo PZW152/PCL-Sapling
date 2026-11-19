@@ -2088,7 +2088,8 @@ namespace PCL
             StartInfo.Arguments = McLaunchArgument;
 
             // 开始进程
-            var GameProcess = ModBase.StartProcess(StartInfo);
+            // 已在构建参数时记录打码后的内容，这里只把原始参数交给游戏。
+            var GameProcess = ModBase.StartProcess(StartInfo, LogArguments: false);
             McLaunchLog("已启动游戏进程：" + McLaunchJavaSelected.JavaExePath);
             if (Loader.IsCanceled)
             {

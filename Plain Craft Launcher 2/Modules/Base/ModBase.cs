@@ -1091,12 +1091,12 @@ namespace PCL
     /// 启动进程并返回进程实例，若失败则抛出异常。
     /// 会自动进行长路径处理。
     /// </summary>
-        public static Process StartProcess(ProcessStartInfo StartInfo)
+        public static Process StartProcess(ProcessStartInfo StartInfo, bool LogArguments = true)
         {
             StartInfo.FileName = PathUtils.ToShortPath(StartInfo.FileName);
             if (!string.IsNullOrEmpty(StartInfo.WorkingDirectory))
                 StartInfo.WorkingDirectory = PathUtils.ToShortPath(StartInfo.WorkingDirectory);
-            Logger.Info($"启动进程：{StartInfo.FileName} {StartInfo.Arguments}");
+            Logger.Info(LogArguments ? $"启动进程：{StartInfo.FileName} {StartInfo.Arguments}" : $"启动进程：{StartInfo.FileName}");
             return Process.Start(StartInfo);
         }
 

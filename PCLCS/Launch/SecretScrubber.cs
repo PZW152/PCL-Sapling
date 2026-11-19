@@ -17,7 +17,7 @@ public static class SecretScrubber {
 
     /// <summary>只替换完整匹配的令牌。普通日志行直接返回原字符串。</summary>
     public static string ScrubText(string text, string? secret, char maskChar = '*') {
-        if (string.IsNullOrEmpty(secret) || text.IndexOf(secret, StringComparison.Ordinal) < 0) return text;
+        if (secret is null or "" || text.IndexOf(secret, StringComparison.Ordinal) < 0) return text;
         return text.Replace(secret, Mask(secret, maskChar));
     }
 
