@@ -18,6 +18,16 @@ public class SecretScrubberTests
     {
         await Assert.That(SecretScrubber.Mask("0123456789abcdef")).IsEqualTo("01234******bcdef");
         await Assert.That(SecretScrubber.Mask("short")).IsEqualTo("*****");
+        await Assert.That(SecretScrubber.Mask("0123456789")).IsEqualTo("**********");
+    }
+
+    [Test]
+    public async Task 启动脚本可以使用等长的F替换且令牌区分大小写()
+    {
+        const string Secret = "abcde012345XYZab";
+        string Line = Secret + " " + Secret.ToUpperInvariant() + " " + Secret;
+        await Assert.That(SecretScrubber.ScrubText(Line, Secret, 'F'))
+            .IsEqualTo("abcdeFFFFFFXYZab " + Secret.ToUpperInvariant() + " abcdeFFFFFFXYZab");
     }
 
     [Test]

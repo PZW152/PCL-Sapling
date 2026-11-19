@@ -8,10 +8,18 @@ namespace PCLCS;
 public static class SecretScrubber {
 
     /// <summary>
-    /// 打码后的形式：保留首尾各 5 个字符，中间替换为 *。
+    /// 保留首尾各 5 个字符，中间替换为 *。长度不超过 10 时全部打码。
     /// </summary>
-    public static string Mask(string secret) =>
-        secret.Length < 10 ? new string('*', secret.Length) : secret.Substring(0, 5) + new string('*', secret.Length - 10) + secret.Substring(secret.Length - 5);
+    public static string Mask(string secret) => Mask(secret, '*');
+
+    private static string Mask(string secret, char maskChar) =>
+        secret.Length <= 10 ? new string(maskChar, secret.Length) : secret.Substring(0, 5) + new string(maskChar, secret.Length - 10) + secret.Substring(secret.Length - 5);
+
+    /// <summary>只替换完整匹配的令牌。普通日志行直接返回原字符串。</summary>
+    public static string ScrubText(string text, string? secret, char maskChar = '*') {
+        if (secret is null or "" || text.IndexOf(secret, StringComparison.Ordinal) < 0) return text;
+        return text.Replace(secret, Mask(secret, maskChar));
+    }
 
     /// <summary>
     /// 若文件中含有该敏感内容，把它替换为打码后的形式。文件的其余字节保持不变（不改变编码与换行）。
@@ -25,8 +33,9 @@ public static class SecretScrubber {
         using (FileStream stream = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
         using (StreamReader reader = new(stream, raw, detectEncodingFromByteOrderMarks: false))
             text = reader.ReadToEnd();
-        if (text.IndexOf(secret, StringComparison.Ordinal) < 0) return false;
-        File.WriteAllBytes(filePath, raw.GetBytes(text.Replace(secret, Mask(secret))));
+        string scrubbed = ScrubText(text, secret);
+        if (scrubbed == text) return false;
+        File.WriteAllBytes(filePath, raw.GetBytes(scrubbed));
         return true;
     }
 

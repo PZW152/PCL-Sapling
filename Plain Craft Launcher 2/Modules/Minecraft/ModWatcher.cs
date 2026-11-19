@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -95,11 +94,12 @@ namespace PCL
             private int PID;
             private readonly DateTime StartedAt = DateTime.Now;
             public ModLoader.LoaderTask<Process, int> Loader;
-            public Watcher(ModLoader.LoaderTask<Process, int> Loader, ModMinecraft.McInstance Instance, string WindowTitle)
+            public Watcher(ModLoader.LoaderTask<Process, int> Loader, ModMinecraft.McInstance Instance, string WindowTitle, string OnlineAccessToken)
             {
                 this.Loader = Loader;
                 this.Instance = Instance;
                 this.WindowTitle = WindowTitle;
+                SessionLog = new GameSessionLog(OnlineAccessToken);
                 PID = Loader.Input.Id;
                 WatcherLog("开始 Minecraft 日志监控");
                 if (!string.IsNullOrEmpty(this.WindowTitle))
@@ -119,10 +119,10 @@ namespace PCL
 
                 // 初始化进程与日志读取
                 GameProcess = Loader.Input;
-                GameProcess.BeginOutputReadLine();
-                GameProcess.BeginErrorReadLine();
                 GameProcess.OutputDataReceived += LogReceived;
                 GameProcess.ErrorDataReceived += LogReceived;
+                GameProcess.BeginOutputReadLine();
+                GameProcess.BeginErrorReadLine();
 
                 // 初始化时钟
                 // 设置窗口标题
@@ -155,28 +155,34 @@ namespace PCL
             }
 
             // 日志
-            public List<string> WaitingLog = new List<string>(1000);
+            private List<string> WaitingLog = new List<string>(1000);
             private readonly object WaitingLogLock = new object();
             private void LogReceived(object sender, DataReceivedEventArgs e)
             {
+                if (e.Data is null) return; // 标准输出或错误流已关闭
+                string Line = e.Data.ReplaceLineEndings(ModBase.CrLf);
                 lock (WaitingLogLock)
-                    WaitingLog.Add(e.Data);
+                    WaitingLog.Add(SessionLog.Append(Line));
             }
             private void TimerLog()
             {
                 try
                 {
                     // 输出文本
-                    var Copyed = new List<string>();
+                    List<string> Pending = null;
                     lock (WaitingLogLock)
                     {
-                        if (!WaitingLog.Any())
-                            return;
-                        Copyed = WaitingLog;
-                        WaitingLog = new List<string>(1000);
+                        if (WaitingLog.Count > 0)
+                        {
+                            Pending = WaitingLog;
+                            WaitingLog = new List<string>(1000);
+                        }
                     }
-                    foreach (string Str in Copyed)
-                        GameLog(Str);
+                    if (Pending is not null)
+                    {
+                        foreach (string Line in Pending)
+                            GameLog(Line);
+                    }
                     if (State == MinecraftState.Loading)
                         ProgressUpdate();
                     // 游戏退出检查
@@ -214,21 +220,9 @@ namespace PCL
                     Logger.Error(ex, "输出 Minecraft 日志失败");
                 }
             }
-            public ConcurrentQueue<string> LatestLog = new ConcurrentQueue<string>();
+            public GameSessionLog SessionLog { get; }
             private void GameLog(string Text)
             {
-                // 预处理
-                if (Text is null)
-                    return;
-                Text = Text.ReplaceLineEndings(ModBase.CrLf);
-                // If Text.Contains("�����") Then Hint("检测到错误的日志编码：" & Text)
-                // 加入预存储
-                LatestLog.Enqueue(Text);
-                if (LatestLog.Count >= 501)
-                {
-                    string argresult = null;
-                    LatestLog.TryDequeue(out argresult);
-                }
                 Logger.Trace(Text);
                 // 进度处理
                 if (LogProgress < 1)
@@ -440,12 +434,9 @@ namespace PCL
             {
                 try
                 {
-                    var Login = ModLaunch.McLoginLoader.Output;
-                    if (Login.AccessToken is null || Login.AccessToken == Login.Uuid)
-                        return; // 离线登录没有真正的令牌
                     foreach (string Name in new[] { "latest.log", "debug.log" })
                     {
-                        if (SecretScrubber.ScrubFile(Instance.PathIndie + @"logs\" + Name, Login.AccessToken))
+                        if (SessionLog.ScrubFile(Instance.PathIndie + @"logs\" + Name))
                             WatcherLog("已从游戏日志中移除登录令牌：" + Name);
                     }
                 }
@@ -486,7 +477,20 @@ namespace PCL
                 WatcherLog("Minecraft 已崩溃，将在 2 秒后开始崩溃分析", LogLevel.Error);
                 ModMain.Hint("检测到 Minecraft 出现错误，错误分析已开始……", ModMain.HintType.Red);
                 ModMain.FeedbackInfo();
-                ModBase.RunInDedicatedThread(() => { try { Thread.Sleep(2000); WatcherLog("崩溃分析开始"); var Analyzer = new CrashAnalyzer(Instance); Analyzer.Collect(Instance.PathIndie, LatestLog.ToList()); Analyzer.Prepare(); Analyzer.Analyze(); Analyzer.Output(false, new List<string>() { Instance.PathVersion + Instance.Name + ".json", Paths.Base + @"PCL\Log1.txt", Paths.Base + @"PCL\LatestLaunch.bat" }); } catch (Exception ex) { Logger.Error(ex, "崩溃分析失败"); } }, "Crash Analyzer");
+                ModBase.RunInDedicatedThread(() =>
+                {
+                    try
+                    {
+                        Thread.Sleep(2000);
+                        WatcherLog("崩溃分析开始");
+                        var Analyzer = new CrashAnalyzer(Instance);
+                        Analyzer.Collect(Instance.PathIndie, SessionLog.Snapshot().ToList());
+                        Analyzer.Prepare();
+                        Analyzer.Analyze();
+                        Analyzer.Output(false, new List<string> { Instance.PathVersion + Instance.Name + ".json", Paths.Base + @"PCL\Log1.txt", Paths.Base + @"PCL\LatestLaunch.bat" }, SessionLog);
+                    }
+                    catch (Exception ex) { Logger.Error(ex, "崩溃分析失败"); }
+                }, "Crash Analyzer");
             }
 
             // 强制关闭

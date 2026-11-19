@@ -92,8 +92,7 @@ namespace PCL
 
         private readonly System.Windows.Threading.DispatcherTimer LogTimer = new() { Interval = TimeSpan.FromMilliseconds(700) };
         private ModWatcher.Watcher LogWatcher = null;
-        private string LogLastLine = null;
-        private int LogLastCount = -1;
+        private IReadOnlyList<string> LogLines;
 
         /// <summary>
         /// 显示当前实例最近一次运行的输出（最多 500 行），游戏运行中在主角卡右上角标出。
@@ -110,19 +109,18 @@ namespace PCL
             {
                 this.CardGameLog.Visibility = Visibility.Collapsed;
                 LogWatcher = null;
+                LogLines = null;
                 return;
             }
             this.CardGameLog.Visibility = Visibility.Visible;
             this.CardGameLog.Title = Running ? "游戏日志" : Watcher.State == ModWatcher.Watcher.MinecraftState.Crashed ? "游戏日志（游戏崩溃了）" : "游戏日志（游戏已退出）";
-            string[] Lines = Watcher.LatestLog.ToArray();
-            string Last = Lines.LastOrDefault();
-            if (ReferenceEquals(Watcher, LogWatcher) && Lines.Length == LogLastCount && Last == LogLastLine)
+            var Lines = Watcher.SessionLog.Snapshot();
+            if (ReferenceEquals(Watcher, LogWatcher) && ReferenceEquals(Lines, LogLines))
                 return;
             LogWatcher = Watcher;
-            LogLastCount = Lines.Length;
-            LogLastLine = Last;
+            LogLines = Lines;
             bool AtEnd = this.TextGameLog.VerticalOffset + this.TextGameLog.ViewportHeight >= this.TextGameLog.ExtentHeight - 4;
-            this.TextGameLog.Text = Lines.Length == 0 ? "还没有输出……" : string.Join(ModBase.CrLf, Lines);
+            this.TextGameLog.Text = Lines.Count == 0 ? "还没有输出……" : string.Join(ModBase.CrLf, Lines);
             if (AtEnd)
                 this.TextGameLog.ScrollToEnd(); // 用户往上翻时不打扰
         }
